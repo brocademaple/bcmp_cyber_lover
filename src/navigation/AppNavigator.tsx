@@ -1,0 +1,82 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
+import { useThemeColors } from '../utils/theme';
+
+import HomeScreen from '../screens/HomeScreen';
+import ChatScreen from '../screens/ChatScreen';
+import CallScreen from '../screens/CallScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import LifeSettingsScreen from '../screens/LifeSettingsScreen';
+import MemorySettingsScreen from '../screens/MemorySettingsScreen';
+import AdvancedSettingsScreen from '../screens/AdvancedSettingsScreen';
+import ServiceSettingsScreen from '../screens/ServiceSettingsScreen';
+import CharacterEditorScreen from '../screens/CharacterEditorScreen';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+export default function AppNavigator() {
+  const C = useThemeColors();
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Main"
+        screenOptions={{
+          headerStyle: { backgroundColor: C.primaryDark },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: '600' },
+          headerBackTitleVisible: false,
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen
+          name="Main"
+          component={HomeScreen}
+          options={{ title: 'AI 伴侣', headerShown: false }}
+        />
+        <Stack.Screen
+          name="Chat"
+          component={ChatScreen}
+          options={{ title: '' }}
+        />
+        <Stack.Screen
+          name="Call"
+          component={CallScreen}
+          options={{ headerShown: false, animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: '设置' }}
+        />
+        <Stack.Screen
+          name="LifeSettings"
+          component={LifeSettingsScreen}
+          options={{ title: '生命' }}
+        />
+        <Stack.Screen
+          name="MemorySettings"
+          component={MemorySettingsScreen}
+          options={{ title: '记忆' }}
+        />
+        <Stack.Screen
+          name="AdvancedSettings"
+          component={AdvancedSettingsScreen}
+          options={{ title: '高级' }}
+        />
+        <Stack.Screen
+          name="ServiceSettings"
+          component={ServiceSettingsScreen}
+          options={{ title: '服务提供商' }}
+        />
+        <Stack.Screen
+          name="CharacterEditor"
+          component={CharacterEditorScreen}
+          options={{ title: '角色编辑' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}

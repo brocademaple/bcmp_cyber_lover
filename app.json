@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "AI伴侣",
+    "slug": "bcmp-cyber-lover",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7b3f5e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bcmp.cyberlover",
+      "infoPlist": {
+        "NSCameraUsageDescription": "用于视频通话功能",
+        "NSMicrophoneUsageDescription": "用于语音和视频通话功能"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#7b3f5e"
+      },
+      "package": "com.bcmp.cyberlover",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "INTERNET",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "用于视频通话功能"
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "用于语音通话功能"
+        }
+      ],
+      "expo-notifications"
+    ]
+  }
+}
