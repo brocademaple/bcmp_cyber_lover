@@ -41,6 +41,7 @@ export default function CharacterEditorScreen({ route, navigation }: Props) {
     }
 
     const character: Character = {
+      ...(existing || {}),
       id: characterId || `custom_${Date.now()}`,
       name: name.trim(),
       avatar,

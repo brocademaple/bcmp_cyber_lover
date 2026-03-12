@@ -30,12 +30,36 @@ function buildSystemMessage(
 ): string {
   let systemContent = character.systemPrompt;
 
+  // 添加角色档案信息
+  if (character.profile) {
+    systemContent += `\n\n【你的背景】${character.profile.backstory}`;
+    systemContent += `\n【兴趣爱好】${character.profile.hobbies.join('、')}`;
+    systemContent += `\n【口头禅】${character.profile.catchphrases.join('、')}`;
+  }
+
+  // 添加情感状态
+  if (character.emotionalState) {
+    const { mood, intimacy, energy } = character.emotionalState;
+    systemContent += `\n\n【当前状态】心情：${mood}，亲密度：${intimacy}/100，精力：${energy}/100`;
+    systemContent += `\n请根据当前情感状态调整你的回复风格和语气。`;
+  }
+
+  // 添加关键记忆
+  if (character.memories && character.memories.length > 0) {
+    const importantMemories = character.memories
+      .filter(m => m.importance >= 7)
+      .slice(-5)
+      .map(m => `- ${m.content} (${m.tags.join(', ')})`);
+    if (importantMemories.length > 0) {
+      systemContent += `\n\n【重要记忆】\n${importantMemories.join('\n')}`;
+    }
+  }
+
   if (memory.enabled && chatHistory.length > 0) {
     const memoryPrompt = memory.memorySystemPrompt;
     systemContent = `${systemContent}\n\n${memoryPrompt}`;
   }
 
-  // Add current time awareness
   const now = new Date();
   const timeStr = now.toLocaleString('zh-CN', {
     year: 'numeric',
@@ -216,7 +240,6 @@ export async function testConnection(config: ServiceConfig): Promise<boolean> {
   }
 }
 
-// Analyze a video frame using vision model
 export async function analyzeFrame(
   imageBase64: string,
   context: string,
@@ -257,4 +280,54 @@ export async function analyzeFrame(
   if (!response.ok) return '';
   const data = await response.json();
   return data.choices?.[0]?.message?.content || '';
+}
+
+export async function analyzeFrameWithEmotion(
+  imageBase64: string,
+  character: Character,
+  config: ServiceConfig
+): Promise<{ response: string; detectedEmotion: string }> {
+  const baseUrl = getBaseUrl(config);
+  if (!baseUrl || !config.apiKey || !config.visionModel) {
+    return { response: '', detectedEmotion: 'neutral' };
+  }
+
+  const prompt = `你正在和${character.name}视频通话。请分析画面中用户的情绪状态（开心/难过/疲惫/中性），然后用${character.name}的语气说一句关心的话（不超过30字）。格式：[情绪:xxx] 回复内容`;
+
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.visionModel,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+            },
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      max_tokens: 256,
+    }),
+  });
+
+  if (!response.ok) return { response: '', detectedEmotion: 'neutral' };
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || '';
+
+  const emotionMatch = content.match(/\[情绪:(.*?)\]/);
+  const detectedEmotion = emotionMatch ? emotionMatch[1] : 'neutral';
+  const cleanResponse = content.replace(/\[情绪:.*?\]\s*/, '');
+
+  return { response: cleanResponse, detectedEmotion };
 }

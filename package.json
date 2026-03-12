@@ -1,5 +1,5 @@
 {
-  "name": "bcmp-cyber-lover",
+  "name": "heartbeat-companion",
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -25,6 +25,7 @@
     "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "~15.0.8",
     "expo-notifications": "~0.32.16",
+    "expo-secure-store": "^55.0.8",
     "expo-speech": "~14.0.8",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
@@ -39,8 +40,8 @@
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@types/react": "~19.1.10",
+    "babel-preset-expo": "^55.0.10",
     "typescript": "^5.3.3"
-
   },
   "private": true
 }

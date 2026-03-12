@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AI伴侣",
-    "slug": "bcmp-cyber-lover",
+    "name": "心动伴侣",
+    "slug": "heartbeat-companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

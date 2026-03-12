@@ -17,7 +17,8 @@ import * as Speech from 'expo-speech';
 import { RootStackParamList, CallType } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { sendMessage, analyzeFrame } from '../services/aiService';
+import { sendMessage, analyzeFrameWithEmotion } from '../services/aiService';
+import { calculateEmotionChange } from '../services/emotionService';
 import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Call'>;
@@ -28,7 +29,7 @@ export default function CallScreen({ route, navigation }: Props) {
   const { characterId, callType } = route.params;
   const C = useThemeColors();
 
-  const { getCharacter, messages, addMessage } = useChatStore();
+  const { getCharacter, messages, addMessage, updateEmotionalState } = useChatStore();
   const { settings } = useSettingsStore();
   const character = getCharacter(characterId);
 
@@ -120,13 +121,26 @@ export default function CallScreen({ route, navigation }: Props) {
       if (!photo || !photo.base64) return;
 
       setIsProcessing(true);
-      const context = `你正在和${character.name}进行视频通话。请根据视频画面中用户的状态，用${character.name}的语气说一句关心或互动的话（不超过30字）。`;
-      const response = await analyzeFrame(photo.base64, context, settings.service);
+      const { response, detectedEmotion } = await analyzeFrameWithEmotion(
+        photo.base64,
+        character,
+        settings.service
+      );
 
       if (response) {
         setAiResponse(response);
         if (!callState.isMuted) {
           Speech.speak(response, { language: 'zh-CN', rate: 1.0, pitch: 1.2 });
+        }
+
+        // 根据检测到的用户情绪更新角色情感状态
+        if (detectedEmotion === '难过' && character.emotionalState) {
+          await updateEmotionalState(characterId, { mood: 'sad' });
+        } else if (detectedEmotion === '开心' && character.emotionalState) {
+          await updateEmotionalState(characterId, {
+            mood: 'happy',
+            intimacy: Math.min(100, character.emotionalState.intimacy + 2)
+          });
         }
       }
     } catch (e) {
@@ -134,7 +148,7 @@ export default function CallScreen({ route, navigation }: Props) {
     } finally {
       setIsProcessing(false);
     }
-  }, [callState, isProcessing, character, settings.service]);
+  }, [callState, isProcessing, character, settings.service, characterId, updateEmotionalState]);
 
   const startVoiceRecording = async () => {
     if (!audioPermission) return;

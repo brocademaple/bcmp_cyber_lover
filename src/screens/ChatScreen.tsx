@@ -17,6 +17,8 @@ import { RootStackParamList, Message } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { sendMessage } from '../services/aiService';
+import { checkAnniversaries, getAnniversaryMessage } from '../services/anniversaryService';
+import { calculateEmotionChange } from '../services/emotionService';
 import ChatBubble from '../components/ChatBubble';
 import MessageInput from '../components/MessageInput';
 import { useThemeColors } from '../utils/theme';
@@ -33,7 +35,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const C = useThemeColors();
   const flatListRef = useRef<FlatList>(null);
 
-  const { messages, addMessage, loadMessages, setTyping, isTyping, getCharacter } = useChatStore();
+  const { messages, addMessage, loadMessages, setTyping, isTyping, getCharacter, updateEmotionalState } = useChatStore();
   const { settings } = useSettingsStore();
 
   const character = getCharacter(characterId);
@@ -50,12 +52,12 @@ export default function ChatScreen({ route, navigation }: Props) {
     navigation.setOptions({
       title: character.name,
       headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ marginRight: 8 }}>
+        <TouchableOpacity onPress={() => navigation.navigate('CharacterSettings', { characterId })} style={{ marginRight: 8 }}>
           <Text style={{ fontSize: 22 }}>⚙️</Text>
         </TouchableOpacity>
       ),
     });
-  }, [character]);
+  }, [character, characterId]);
 
   // Send greeting if first time
   useEffect(() => {
@@ -70,6 +72,31 @@ export default function ChatScreen({ route, navigation }: Props) {
       addMessage(characterId, greeting);
     }
   }, [character, characterId]);
+
+  // Check anniversaries
+  useEffect(() => {
+    if (!character || !character.anniversaries) return;
+    const todayAnniversaries = checkAnniversaries(character.anniversaries);
+    todayAnniversaries.forEach(ann => {
+      const msg: Message = {
+        id: genId(),
+        role: 'assistant',
+        content: getAnniversaryMessage(ann, character.name),
+        timestamp: Date.now(),
+      };
+      addMessage(characterId, msg);
+    });
+  }, [character, characterId]);
+
+  // Update emotional state on interaction
+  useEffect(() => {
+    if (!character || !character.emotionalState) return;
+    const timeSince = Date.now() - character.emotionalState.lastInteraction;
+    const updates = calculateEmotionChange(character.emotionalState, chatMessages, timeSince);
+    if (Object.keys(updates).length > 0) {
+      updateEmotionalState(characterId, updates);
+    }
+  }, [chatMessages.length]);
 
   const handleSend = useCallback(
     async (text: string, imageUri?: string) => {
@@ -177,8 +204,16 @@ export default function ChatScreen({ route, navigation }: Props) {
     );
   }
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: C.background }]} edges={['bottom']}>
+  // 人设图作聊天背景：竖屏完整显示，横屏截取部分；无图时用纯色
+  const backgroundSource =
+    character.imageUri != null
+      ? typeof character.imageUri === 'number'
+        ? character.imageUri
+        : { uri: character.imageUri }
+      : null;
+
+  const content = (
+    <>
       <StatusBar barStyle="light-content" backgroundColor={C.primaryDark} />
       <KeyboardAvoidingView
         style={styles.flex}
@@ -207,6 +242,23 @@ export default function ChatScreen({ route, navigation }: Props) {
           disabled={isTyping}
         />
       </KeyboardAvoidingView>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: C.background }]} edges={['bottom']}>
+      {backgroundSource ? (
+        <ImageBackground
+          source={backgroundSource}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <View style={[styles.backgroundOverlay, { backgroundColor: C.chatBackgroundOverlay }]} />
+          {content}
+        </ImageBackground>
+      ) : (
+        content
+      )}
     </SafeAreaView>
   );
 }
@@ -214,6 +266,8 @@ export default function ChatScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
+  backgroundImage: { flex: 1 },
+  backgroundOverlay: StyleSheet.absoluteFillObject,
   messageList: {
     paddingVertical: 12,
     paddingBottom: 8,

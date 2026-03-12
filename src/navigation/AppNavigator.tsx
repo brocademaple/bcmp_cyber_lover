@@ -13,6 +13,7 @@ import MemorySettingsScreen from '../screens/MemorySettingsScreen';
 import AdvancedSettingsScreen from '../screens/AdvancedSettingsScreen';
 import ServiceSettingsScreen from '../screens/ServiceSettingsScreen';
 import CharacterEditorScreen from '../screens/CharacterEditorScreen';
+import CharacterSettingsScreen from '../screens/CharacterSettingsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,7 +35,7 @@ export default function AppNavigator() {
         <Stack.Screen
           name="Main"
           component={HomeScreen}
-          options={{ title: 'AI 伴侣', headerShown: false }}
+          options={{ title: '心动伴侣', headerShown: false }}
         />
         <Stack.Screen
           name="Chat"
@@ -75,6 +76,11 @@ export default function AppNavigator() {
           name="CharacterEditor"
           component={CharacterEditorScreen}
           options={{ title: '角色编辑' }}
+        />
+        <Stack.Screen
+          name="CharacterSettings"
+          component={CharacterSettingsScreen}
+          options={{ title: '角色设置' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

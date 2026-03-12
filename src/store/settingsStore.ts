@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppSettings, ServiceProvider } from '../types';
+import { saveSecure, getSecure } from '../services/secureStorage';
 
 const STORAGE_KEY = '@bcmp_settings';
+const API_KEY_SECURE = 'bcmp_api_key';
 
 const defaultSettings: AppSettings = {
   service: {
@@ -36,8 +38,9 @@ const defaultSettings: AppSettings = {
     compatibilityMode: false,
     deepThinking: false,
     customRequestParams: {},
-    darkMode: 'auto',
+    darkMode: 'light',
     sendDelayMs: 0,
+    theme: 'pink',
   },
   selectedCharacterId: 'qingning',
 };
@@ -61,8 +64,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   loadSettings: async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      const apiKey = await getSecure(API_KEY_SECURE);
       if (stored) {
         const parsed = JSON.parse(stored);
+        if (apiKey) {
+          parsed.service.apiKey = apiKey;
+        }
         set({ settings: { ...defaultSettings, ...parsed }, isLoaded: true });
       } else {
         set({ isLoaded: true });
@@ -116,7 +123,20 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   saveSettings: async () => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(get().settings));
+      const currentSettings = get().settings;
+      const apiKey = currentSettings.service.apiKey;
+
+      // 保存 API Key 到安全存储
+      if (apiKey) {
+        await saveSecure(API_KEY_SECURE, apiKey);
+      }
+
+      // 保存其他设置到 AsyncStorage（不包含 API Key）
+      const settingsToSave = {
+        ...currentSettings,
+        service: { ...currentSettings.service, apiKey: '' }
+      };
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToSave));
     } catch (e) {
       console.error('Failed to save settings', e);
     }

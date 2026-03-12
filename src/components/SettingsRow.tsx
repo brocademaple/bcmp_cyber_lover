@@ -71,6 +71,8 @@ export function SettingsSection({ title, children }: { title: string; children: 
   );
 }
 
+export default SettingsRow;
+
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',

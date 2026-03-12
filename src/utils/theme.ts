@@ -1,14 +1,13 @@
 import { useColorScheme } from 'react-native';
-import { Colors, DarkColors } from './colors';
+import { ThemeMap, ThemeMapDark } from './colors';
 import { useSettingsStore } from '../store/settingsStore';
 
 export function useThemeColors() {
+  const theme = useSettingsStore((s) => s.settings.advanced.theme);
+  const darkMode = useSettingsStore((s) => s.settings.advanced.darkMode);
   const systemScheme = useColorScheme();
-  const darkModeSetting = useSettingsStore((s) => s.settings.advanced.darkMode);
 
-  const isDark =
-    darkModeSetting === 'dark' ||
-    (darkModeSetting === 'auto' && systemScheme === 'dark');
+  const isDark = darkMode === 'dark' || (darkMode === 'auto' && systemScheme === 'dark');
 
-  return isDark ? DarkColors : Colors;
+  return isDark ? (ThemeMapDark[theme] || ThemeMapDark.pink) : (ThemeMap[theme] || ThemeMap.pink);
 }

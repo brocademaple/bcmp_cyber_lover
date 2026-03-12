@@ -1,0 +1,31 @@
+---
+description: 终端命令优先使用 PowerShell 语法（Windows）
+alwaysApply: true
+---
+
+# 终端命令：首选 PowerShell 语法
+
+本规则适用于在 Cursor 中执行终端命令时，优先使用 **PowerShell 兼容语法**（用户环境为 Windows）。
+
+## 命令连接符
+
+- **不要用** `&&` 连接多条命令（在旧版 PowerShell 中无效）。
+- **改用** 分号 `;` 连接：`cmd1; cmd2`
+
+```powershell
+# ❌ 可能报错：标记 "&&" 不是有效语句分隔符
+cd d:\code\bcmp_cyber_lover && npm install
+
+# ✅ 正确
+cd d:\code\bcmp_cyber_lover; npm install
+```
+
+## 多步骤执行
+
+需要先后执行多条命令时，在同一行用 `;` 分隔，或拆成多次 `run_terminal_cmd` 调用。
+
+## 其他注意
+
+- 路径可继续使用正斜杠或反斜杠；PowerShell 通常都接受。
+- 涉及环境变量时使用 PowerShell 语法，如 `$env:VAR`。
+- 需要 Bash 特有语法时，说明改用 Git Bash 或 WSL，或给出 PowerShell 等价写法。
