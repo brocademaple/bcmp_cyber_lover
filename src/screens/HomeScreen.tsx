@@ -202,12 +202,7 @@ export default function HomeScreen({ navigation }: Props) {
       >
         <Text style={styles.headerTitle}>心动伴侣 {themeEmojis[settings.advanced.theme]}</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleToggleDarkMode}>
-            <Text style={styles.iconBtnText}>{darkModeIcons[settings.advanced.darkMode]}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setShowThemeModal(true)}>
-            <Text style={styles.iconBtnText}>🎨</Text>
-          </TouchableOpacity>
+          {/* 主题切换和深色模式按钮已在MVP中隐藏，固定为粉色主题 */}
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Settings')}>
             <Text style={styles.iconBtnText}>⚙️</Text>
           </TouchableOpacity>

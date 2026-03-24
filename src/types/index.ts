@@ -73,6 +73,7 @@ export interface LifeConfig {
   backgroundToastEnabled: boolean;
   backgroundExitConfirm: boolean;
   enhancedMomentProactivity: boolean;
+  notificationHour: number; // 0-23, default 20 (8pm)
 }
 
 export interface MemoryConfig {
@@ -116,8 +117,9 @@ export interface CallState {
 }
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   Main: undefined;
-  Chat: { characterId: string };
+  Chat: { characterId: string; autoGreet?: boolean };
   Call: { characterId: string; callType: CallType };
   Settings: undefined;
   LifeSettings: undefined;

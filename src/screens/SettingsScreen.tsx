@@ -68,21 +68,10 @@ export default function SettingsScreen({ navigation }: Props) {
           <MenuItem
             icon="💖"
             label="生命"
-            description="主动消息、后台推送"
+            description="主动消息、每日通知时间"
             onPress={() => navigation.navigate('LifeSettings')}
           />
-          <MenuItem
-            icon="🧠"
-            label="记忆"
-            description="聊天记录、记忆库管理"
-            onPress={() => navigation.navigate('MemorySettings')}
-          />
-          <MenuItem
-            icon="⚙️"
-            label="高级"
-            description="兼容模式、深度思考、发送延时"
-            onPress={() => navigation.navigate('AdvancedSettings')}
-          />
+          {/* 记忆设置和高级设置入口已在MVP中隐藏 */}
         </View>
       </ScrollView>
     </SafeAreaView>
