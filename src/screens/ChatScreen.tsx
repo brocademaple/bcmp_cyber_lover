@@ -43,10 +43,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   const inputRef = useRef<{ focus: () => void }>(null);
   const autoGreetSentRef = useRef(false);
 
-  const { messages, addMessage, loadMessages, setTyping, isTyping, getCharacter } = useChatStore();
+  const { messages, addMessage, loadMessages, setTyping, isTyping, getCharacter, generateDiariesForCharacter } = useChatStore();
   const { settings } = useSettingsStore();
 
   const character = getCharacter(characterId);
+  const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
   const chatMessages = messages[characterId] || [];
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingId, setStreamingId] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         id: genId(),
         role: 'assistant',
         content: character.greeting,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
       };
       addMessage(characterId, greeting);
     }
@@ -106,7 +107,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           id: aiMsgId,
           role: 'assistant',
           content: greeting || character.greeting,
-          timestamp: Date.now(),
+          timestamp: getEffectiveNow(),
         };
         await addMessage(characterId, aiMsg);
       } catch {
@@ -114,7 +115,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           id: aiMsgId,
           role: 'assistant',
           content: character.greeting,
-          timestamp: Date.now(),
+          timestamp: getEffectiveNow(),
         };
         await addMessage(characterId, aiMsg);
       } finally {
@@ -142,7 +143,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         id: genId(),
         role: 'user',
         content: text,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
         imageUri,
       };
       await addMessage(characterId, userMsg);
@@ -178,9 +179,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           id: aiMsgId,
           role: 'assistant',
           content: fullContent || '...',
-          timestamp: Date.now(),
+          timestamp: getEffectiveNow(),
         };
         await addMessage(characterId, aiMsg);
+        // 每次有效聊天后刷新该角色的日报/周记/月记
+        await generateDiariesForCharacter(characterId);
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : '发送失败';
         Alert.alert('发送失败', errorMsg);
@@ -190,7 +193,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         setStreamingContent('');
       }
     },
-    [character, characterId, chatMessages, settings, addMessage, navigation]
+    [character, characterId, chatMessages, settings, addMessage, navigation, generateDiariesForCharacter]
   );
 
   const handleQuickReply = useCallback(
@@ -212,14 +215,14 @@ export default function ChatScreen({ route, navigation }: Props) {
         id: streamingId,
         role: 'assistant',
         content: streamingContent,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
       });
     } else {
       displayMessages.push({
         id: streamingId + '_thinking',
         role: 'assistant',
         content: '',
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
         isThinking: true,
       });
     }
