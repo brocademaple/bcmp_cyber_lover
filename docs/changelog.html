@@ -8,17 +8,19 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="noise"></div>
     <div class="container">
       <nav class="topnav">
         <a class="brand" href="./index.html">心动伴侣 HeartBeat Companion</a>
         <div class="links">
           <a href="./index.html">首页</a>
           <a href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub</a>
+          <button id="themeToggle" class="theme-toggle" type="button" aria-label="切换主题">🌙</button>
         </div>
       </nav>
     </div>
 
-    <header class="hero">
+    <header class="hero hero-gradient reveal">
       <div class="container">
         <p class="badge">Release Notes</p>
         <h1>项目更新日志</h1>
@@ -27,7 +29,7 @@
     </header>
 
     <main class="container">
-      <section>
+      <section class="reveal">
         <h2>最近版本</h2>
         <div class="timeline">
           <article class="release">
@@ -62,7 +64,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="reveal">
         <h2>维护建议</h2>
         <ul class="list">
           <li>每次发布后同步更新该页，建议保持“最新 3~6 条”可读性。</li>
@@ -77,6 +79,7 @@
         <p>© HeartBeat Companion · <a href="./index.html">返回首页</a></p>
       </div>
     </footer>
+    <script src="./site.js"></script>
   </body>
 </html>
 

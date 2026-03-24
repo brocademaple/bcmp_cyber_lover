@@ -1,4 +1,29 @@
-# 心动伴侣 HeartBeat Companion
+# 💖 心动伴侣 — AI Social Companion
+
+## 🌸 一个“会在意你”的 AI 关系产品
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/qingning.png" alt="HeartBeat Companion Banner" width="280" />
+</p>
+
+<p align="center">
+  <a href="https://brocademaple.github.io/bcmp_cyber_lover/"><img alt="Live Demo" src="https://img.shields.io/badge/LIVE-GitHub%20Pages-ff4f9f?style=for-the-badge&logo=github"></a>
+  <a href="https://github.com/brocademaple/bcmp_cyber_lover"><img alt="Repository" src="https://img.shields.io/badge/REPO-bcmp__cyber__lover-111827?style=for-the-badge&logo=github"></a>
+  <img alt="Build" src="https://img.shields.io/badge/BUILD-PASSING-3bb273?style=for-the-badge">
+  <img alt="Version" src="https://img.shields.io/badge/RELEASE-2026.3-6b7bff?style=for-the-badge">
+  <img alt="Platform" src="https://img.shields.io/badge/ANDROID-READY-00b894?style=for-the-badge&logo=android">
+  <img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-2d3436?style=for-the-badge">
+</p>
+
+> 心动伴侣是一款以“长期关系体验”为核心的 AI 社交应用。它不只回答问题，而是通过角色人设、记忆沉淀、主动触达与情绪反馈，持续建立“被理解、被记住、被惦记”的体验。
+
+> 🌐 项目展示页（GitHub Pages）：**[https://brocademaple.github.io/bcmp_cyber_lover/](https://brocademaple.github.io/bcmp_cyber_lover/)**
+
+| 🔗 入口 | 地址 |
+|:---|:---|
+| 项目展示站 | [brocademaple.github.io/bcmp_cyber_lover](https://brocademaple.github.io/bcmp_cyber_lover/) |
+| 更新日志页 | [docs/changelog.html](https://brocademaple.github.io/bcmp_cyber_lover/changelog.html) |
+| 仓库地址 | [github.com/brocademaple/bcmp_cyber_lover](https://github.com/brocademaple/bcmp_cyber_lover) |
 
 | | |
 |:---|:---|
@@ -48,7 +73,7 @@ flowchart LR
 | 角色日记 | 隐藏 | **日 / 周 / 月记**可见，便于看长期聚合 |
 | 虚拟时间 | — | **±小时 / 天 / 周 / 月** 快进快退，验证记忆与 rollup **无需真等** |
 
-> 视频通话、高级记忆参数、主题切换等 **仍在仓库中，UI 入口已收敛**；需要时可直接恢复导航，详见 [`LEARNING.md`](./LEARNING.md)。
+> 视频通话、高级记忆参数、主题切换等 **仍在仓库中，UI 入口已收敛**；需要时可直接恢复导航，可结合下方「仓库地图」快速定位代码。
 
 ---
 
@@ -132,7 +157,7 @@ src/
 └── types/           Character · Message · CharacterDiary · …
 ```
 
-**进阶产品与工程笔记**（决策、隐藏功能清单、待办）：[`LEARNING.md`](./LEARNING.md)
+**进阶阅读建议**：结合 `store / services / screens` 目录，从消息流、记忆存储、通知唤回三条主链路入手。
 
 ---
 
