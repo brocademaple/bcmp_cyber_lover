@@ -1,9 +1,12 @@
 (function () {
   const root = document.documentElement;
   const btn = document.getElementById('themeToggle');
+  const paletteBtn = document.getElementById('paletteToggle');
   const saved = localStorage.getItem('hb-theme');
+  const savedPalette = localStorage.getItem('hb-palette');
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const initial = saved || (prefersDark ? 'dark' : 'light');
+  const initialPalette = savedPalette === 'mint' ? 'mint' : 'sweet';
 
   function setTheme(theme) {
     root.setAttribute('data-theme', theme);
@@ -11,12 +14,26 @@
     if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
   }
 
+  function setPalette(palette) {
+    root.setAttribute('data-palette', palette);
+    localStorage.setItem('hb-palette', palette);
+    if (paletteBtn) paletteBtn.textContent = palette === 'mint' ? '薄荷' : '甜粉';
+  }
+
   setTheme(initial);
+  setPalette(initialPalette);
 
   if (btn) {
     btn.addEventListener('click', function () {
       const now = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       setTheme(now);
+    });
+  }
+
+  if (paletteBtn) {
+    paletteBtn.addEventListener('click', function () {
+      const now = root.getAttribute('data-palette') === 'mint' ? 'sweet' : 'mint';
+      setPalette(now);
     });
   }
 
