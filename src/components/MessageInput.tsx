@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle, useRef } from 'react';
 import {
   View,
   TextInput,
@@ -14,91 +14,98 @@ import { useThemeColors } from '../utils/theme';
 
 interface Props {
   onSend: (text: string, imageUri?: string) => void;
-  onAudioCall: () => void;
-  onVideoCall: () => void;
+  // onAudioCall and onVideoCall are hidden for MVP — kept as optional props
+  onAudioCall?: () => void;
+  onVideoCall?: () => void;
   disabled?: boolean;
 }
 
-export default function MessageInput({ onSend, onAudioCall, onVideoCall, disabled }: Props) {
-  const [text, setText] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | undefined>();
-  const C = useThemeColors();
+export interface MessageInputHandle {
+  focus: () => void;
+}
 
-  const handleSend = () => {
-    const trimmed = text.trim();
-    if (!trimmed && !selectedImage) return;
-    onSend(trimmed, selectedImage);
-    setText('');
-    setSelectedImage(undefined);
-  };
+const MessageInput = forwardRef<MessageInputHandle, Props>(
+  ({ onSend, disabled }, ref) => {
+    const [text, setText] = useState('');
+    const [selectedImage, setSelectedImage] = useState<string | undefined>();
+    const inputRef = useRef<TextInput>(null);
+    const C = useThemeColors();
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return;
+    useImperativeHandle(ref, () => ({
+      focus: () => inputRef.current?.focus(),
+    }));
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-      base64: false,
-    });
+    const handleSend = () => {
+      const trimmed = text.trim();
+      if (!trimmed && !selectedImage) return;
+      onSend(trimmed, selectedImage);
+      setText('');
+      setSelectedImage(undefined);
+    };
 
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
+    const pickImage = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') return;
 
-  const canSend = (text.trim().length > 0 || !!selectedImage) && !disabled;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        base64: false,
+      });
 
-  return (
-    <View style={[styles.container, { backgroundColor: C.surface, borderTopColor: C.border }]}>
-      {selectedImage && (
-        <View style={styles.imagePreviewRow}>
-          <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-          <TouchableOpacity onPress={() => setSelectedImage(undefined)} style={styles.removeImageBtn}>
-            <Text style={styles.removeImageText}>✕</Text>
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    };
+
+    const canSend = (text.trim().length > 0 || !!selectedImage) && !disabled;
+
+    return (
+      <View style={[styles.container, { backgroundColor: C.surface, borderTopColor: C.border }]}>
+        {selectedImage && (
+          <View style={styles.imagePreviewRow}>
+            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <TouchableOpacity onPress={() => setSelectedImage(undefined)} style={styles.removeImageBtn}>
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.inputRow}>
+          <TouchableOpacity onPress={pickImage} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
+            <Text style={styles.iconText}>🖼</Text>
+          </TouchableOpacity>
+
+          <TextInput
+            ref={inputRef}
+            style={[styles.input, { backgroundColor: C.inputBg, color: C.text }]}
+            value={text}
+            onChangeText={setText}
+            placeholder="输入消息..."
+            placeholderTextColor={C.textSecondary}
+            multiline
+            maxLength={2000}
+            returnKeyType="default"
+            editable={!disabled}
+          />
+
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={!canSend}
+            style={[styles.sendBtn, { backgroundColor: canSend ? C.primary : C.border }]}
+          >
+            {disabled ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.sendIcon}>↑</Text>
+            )}
           </TouchableOpacity>
         </View>
-      )}
-      <View style={styles.inputRow}>
-        <TouchableOpacity onPress={pickImage} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-          <Text style={styles.iconText}>🖼</Text>
-        </TouchableOpacity>
-
-        <TextInput
-          style={[styles.input, { backgroundColor: C.inputBg, color: C.text }]}
-          value={text}
-          onChangeText={setText}
-          placeholder="输入消息..."
-          placeholderTextColor={C.textSecondary}
-          multiline
-          maxLength={2000}
-          returnKeyType="default"
-          editable={!disabled}
-        />
-
-        <TouchableOpacity onPress={onAudioCall} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-          <Text style={styles.iconText}>📞</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onVideoCall} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-          <Text style={styles.iconText}>📹</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleSend}
-          disabled={!canSend}
-          style={[styles.sendBtn, { backgroundColor: canSend ? C.primary : C.border }]}
-        >
-          {disabled ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.sendIcon}>↑</Text>
-          )}
-        </TouchableOpacity>
       </View>
-    </View>
-  );
-}
+    );
+  }
+);
+
+export default MessageInput;
 
 const styles = StyleSheet.create({
   container: {

@@ -25,6 +25,18 @@ export interface MemoryFragment {
   timestamp: number;
 }
 
+export type DiaryPeriod = 'daily' | 'weekly' | 'monthly';
+
+export interface CharacterDiary {
+  id: string;
+  period: DiaryPeriod;
+  periodKey: string; // daily: YYYY-MM-DD, weekly: YYYY-Wxx, monthly: YYYY-MM
+  title: string;
+  content: string;
+  timestamp: number;
+  relatedMemoryIds?: string[];
+}
+
 export interface CharacterProfile {
   backstory: string;
   hobbies: string[];
@@ -52,6 +64,7 @@ export interface Character {
   emotionalState?: EmotionalState;
   profile?: CharacterProfile;
   memories?: MemoryFragment[];
+  diaries?: CharacterDiary[];
   anniversaries?: Anniversary[];
 }
 
@@ -73,6 +86,7 @@ export interface LifeConfig {
   backgroundToastEnabled: boolean;
   backgroundExitConfirm: boolean;
   enhancedMomentProactivity: boolean;
+  notificationHour: number; // 0-23, default 20 (8pm)
 }
 
 export interface MemoryConfig {
@@ -94,9 +108,13 @@ export interface AdvancedConfig {
   darkMode: 'auto' | 'light' | 'dark';
   sendDelayMs: number;
   theme: 'pink' | 'blue' | 'yellow' | 'purple';
+  debugNowTs?: number; // Admin 调试时间：覆盖当前时间戳
 }
 
+export type AppMode = 'admin' | 'explore';
+
 export interface AppSettings {
+  appMode: AppMode;
   service: ServiceConfig;
   life: LifeConfig;
   memory: MemoryConfig;
@@ -116,8 +134,9 @@ export interface CallState {
 }
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   Main: undefined;
-  Chat: { characterId: string };
+  Chat: { characterId: string; autoGreet?: boolean };
   Call: { characterId: string; callType: CallType };
   Settings: undefined;
   LifeSettings: undefined;

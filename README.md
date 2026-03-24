@@ -1,171 +1,176 @@
-# 心动伴侣 (HeartBeat Companion)
+# 💖 心动伴侣 — AI Social Companion
 
-一款支持安卓的 AI 虚拟伴侣移动应用，复刻并扩展了原版功能，新增**音视频通话 + 多模态模型**支持。
+## 🌸 一个“会在意你”的 AI 关系产品
 
-## 功能特性
+<p align="center">
+  <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/qingning.png" alt="HeartBeat Companion Banner" width="280" />
+</p>
 
-### 💬 聊天功能
-- 与多种性格的 AI 角色对话（青柠娘、小樱、月华等）
-- 流式输出（Streaming）回复，打字效果
-- 图片消息支持（发送图片，视觉模型解析）
-- 聊天历史本地持久化
+<p align="center">
+  <a href="https://brocademaple.github.io/bcmp_cyber_lover/"><img alt="Live Demo" src="https://img.shields.io/badge/LIVE-GitHub%20Pages-ff4f9f?style=for-the-badge&logo=github"></a>
+  <a href="https://github.com/brocademaple/bcmp_cyber_lover"><img alt="Repository" src="https://img.shields.io/badge/REPO-bcmp__cyber__lover-111827?style=for-the-badge&logo=github"></a>
+  <img alt="Build" src="https://img.shields.io/badge/BUILD-PASSING-3bb273?style=for-the-badge">
+  <img alt="Version" src="https://img.shields.io/badge/RELEASE-2026.3-6b7bff?style=for-the-badge">
+  <img alt="Platform" src="https://img.shields.io/badge/ANDROID-READY-00b894?style=for-the-badge&logo=android">
+  <img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-2d3436?style=for-the-badge">
+</p>
 
-### 💖 情感状态系统（新增）
-- **动态情绪**：角色根据互动频率和内容动态调整心情（开心/难过/兴奋/疲惫等）
-- **亲密度系统**：0-100 亲密度值，影响对话风格和语气
-- **精力值**：角色精力随时间恢复，影响互动积极性
-- **情感可视化**：主页实时显示角色当前情感状态
+> 心动伴侣是一款以“长期关系体验”为核心的 AI 社交应用。它不只回答问题，而是通过角色人设、记忆沉淀、主动触达与情绪反馈，持续建立“被理解、被记住、被惦记”的体验。
 
-### 📞 音视频通话
-- **语音通话**：按住说话，AI 实时回复并用 TTS 朗读
-- **视频通话**：前置摄像头实时画面，AI 每隔 8 秒通过多模态模型分析画面并回应
-- **情感识别**：视频通话时自动识别用户情绪（开心/难过/疲惫），角色据此调整回应
-- 通话控制：静音、关摄像头、扬声器切换
-- 通话记录保存至聊天历史
+> 🌐 项目展示页（GitHub Pages）：**[https://brocademaple.github.io/bcmp_cyber_lover/](https://brocademaple.github.io/bcmp_cyber_lover/)**
 
-### 🧠 增强记忆系统
-- **关键记忆提取**：自动标记重要对话片段（用户喜好、重要日期、情感事件）
-- **记忆重要性评分**：1-10 分，高分记忆优先在对话中引用
-- **智能记忆检索**：根据当前话题自动调用相关历史记忆
-- 记忆库：长期记忆存储（最多保留 50 条）
-- 可配置保留条数、发送条数
-- 自定义记忆提示词
+| 🔗 入口 | 地址 |
+|:---|:---|
+| 项目展示站 | [brocademaple.github.io/bcmp_cyber_lover](https://brocademaple.github.io/bcmp_cyber_lover/) |
+| 更新日志页 | [docs/changelog.html](https://brocademaple.github.io/bcmp_cyber_lover/changelog.html) |
+| 仓库地址 | [github.com/brocademaple/bcmp_cyber_lover](https://github.com/brocademaple/bcmp_cyber_lover) |
 
-### 🎭 深度角色系统
-- **角色档案**：每个角色包含背景故事、兴趣爱好、口头禅、禁忌话题、人生目标
-- **性格一致性**：AI 根据角色档案保持对话风格统一
-- 3 个内置角色（可编辑）
-- 自定义新角色：头像、性格、开场白、系统提示词
+| | |
+|:---|:---|
+| **定位** | 安卓优先的 AI 虚拟伴侣 —— 用**持续对话 + 本地记忆 + 定时触达**模拟「她记得你、会来找你」的关系感 |
+| **一句话** | 不是更会答题的 Chatbot，而是能**陪你聊下去、人设不漂、数据留在你手机里**的轻量关系型客户端 |
+| **技术底座** | React Native · Expo ~54 · 任意 **OpenAI-compatible** API|
 
-### 📅 纪念日系统（新增）
-- **重要日期提醒**：生日、纪念日、自定义日期
-- **主动祝福**：到达纪念日时角色主动发送祝福消息
-- 支持多个纪念日管理
+---
 
-### 🔌 多服务商支持
-- **DeepSeek**：`api.deepseek.com`
-- **硅基流动（SiliconFlow）**：`api.siliconflow.cn`（支持 Qwen、GLM 等）
-- **自定义**：任意 OpenAI 兼容接口
-- 一键获取模型列表，支持独立设置文字模型和视觉模型
+## 产品叙事：我们在优化什么？
 
-### 🔒 安全与隐私（新增）
-- **加密存储**：使用 expo-secure-store 加密存储 API Key
-- **本地数据**：所有聊天记录和角色数据仅存储在本地设备
-- **隐私保护**：敏感信息不会明文保存
+```mermaid
+flowchart LR
+  A[人设稳定] --> R[关系可信]
+  B[记忆与日记] --> R
+  C[主动触达] --> R
+  R --> D[次日还想打开]
+```
 
-### 💖 生命系统
-- 主动消息推送（可设置时间间隔）
-- 后台消息提醒
-- 动态主动性增强
+| 维度 | 普通 AI 工具 | 本项目的取舍 |
+|:---|:---|:---|
+| 成功标准 | 答对、答全 | **像同一个人、有温度、有回访理由** |
+| 记忆 | 可选 | **角色档案 + 消息持久化 +（Admin）日/周/月记** |
+| 界面 | 功能堆满 | **MVP 主路径极简**；高级能力进设置或保留在代码层 |
 
-### ⚙️ 高级设置
-- 兼容模式（解决多 system 消息限制）
-- 深度思考模式（enable_thinking）
-- 自定义请求参数
-- 深色/浅色/跟随系统主题
-- 发送延时配置
+---
 
-### 👤 角色系统
-- 3 个内置角色（可编辑）
-- 自定义新角色：头像、性格、开场白、系统提示词
+## 当前版本：主路径上你能玩到什么
+
+| 模块 | 能力 | 说明 |
+|:---|:---|:---|
+| **Onboarding** | 3 步上手 | 选角 → 填 API Key → 注册每日通知（默认 20:00） |
+| **首页** | 横滑选角 | 多角色「橱窗感」切换，进入对应聊天 |
+| **聊天** | 流式回复 · 发图 | SSE 打字感；支持图片（视觉模型） |
+| **快捷回应** | 5 + 1 | 底部一键短语降低「不知道聊什么」的摩擦 |
+| **角色档案** | 从聊天页进入 | 档案 / 记忆 / 纪念日；（**Admin** 下多一个 **角色日记** 页签） |
+| **每日提醒** | 本地通知 | 文案按角色人设预写；点击进聊天并触发 **AI 生成当日开场白** |
+| **设置 · 探索 / Admin** | 双模式 | 见下表 |
+| **隐私** | Key 加密 | API Key 走 `expo-secure-store`；聊天记录与角色数据本地存储 |
+
+### 探索模式 vs Admin 模式
+
+| | **探索模式**（默认） | **Admin 模式** |
+|:---|:---|:---|
+| 目标用户 | 想纯聊天、少配置 | 创作者 / 开发者 / 想验记忆与日记的人 |
+| 角色编辑 | 隐藏 | **编辑角色**入口开启 |
+| 角色日记 | 隐藏 | **日 / 周 / 月记**可见，便于看长期聚合 |
+| 虚拟时间 | — | **±小时 / 天 / 周 / 月** 快进快退，验证记忆与 rollup **无需真等** |
+
+> 视频通话、高级记忆参数、主题切换等 **仍在仓库中，UI 入口已收敛**；需要时可直接恢复导航，可结合下方「仓库地图」快速定位代码。
+
+---
+
+## 角色阵容（内置三人）
+
+人设与 `systemPrompt` 集中在 `src/store/chatStore.ts`，可按产品迭代继续打磨。
+
+| 角色 | 气质标签 | 你在产品上要感知到的「钩子」 |
+|:---|:---|:---|
+| **鹿芽** | 元气 · 室友型互怼 | 短句、黏人、先共情再逗你 |
+| **纪遥** | 慢热 · 倾听型笔友 | 留白多、适合深夜长聊 |
+| **凛夜** | 毒舌 · 外冷内热 | 嘴硬心软，每轮都藏一点在意 |
+
+---
+
+## 关系体验链路（从通知到模型）
+
+```mermaid
+sequenceDiagram
+  participant N as 本地通知
+  participant App as App
+  participant C as ChatScreen
+  participant API as OpenAI-compatible
+
+  N->>App: 点击（带 characterId）
+  App->>C: 打开聊天 + autoGreet
+  C->>API: 角色 system + 当前时间 + 时段开场
+  API-->>C: 流式回复
+  Note over C: 消息与记忆写入本地
+```
+
+**小巧思（实现层）**：`buildSystemMessage` 里注入 **口头禅、当前时间、统一回复规范**（如控制句长），减少「像客服」的漂移；Admin **模拟时钟** 与日记 key 对齐，方便验边界日。
+
+---
 
 ## 快速开始
 
-### 安装依赖
 ```bash
 npm install
-```
-
-### 启动开发服务器
-```bash
 npx expo start
-```
-
-### 构建 Android APK
-```bash
-# 安装 EAS CLI
-npm install -g eas-cli
-eas login
-
-# 构建 APK
-eas build --platform android --profile preview
-```
-
-### 本地 Android 调试
-```bash
+# 安卓真机/模拟器
 npx expo start --android
 ```
 
-## 配置说明
+| 构建 | 命令 |
+|:---|:---|
+| EAS APK | `npm i -g eas-cli` → `eas login` → `eas build --platform android --profile preview` |
 
-1. 打开应用 → 右上角 ⚙️ → **服务提供商**
-2. 选择服务商，填入 API 密钥
-3. 选择文字模型（如 `Qwen/Qwen2.5-72B-Instruct`）
-4. 选择视觉模型用于视频通话（如 `Qwen/Qwen2.5-VL-72B-Instruct`）
-5. 点击**测试连接**验证，然后**保存**
+---
 
-## 技术栈
+## 接入模型（3 步）
 
-| 技术 | 说明 |
-|------|------|
-| React Native + Expo | 跨平台框架（安卓优先） |
-| TypeScript | 类型安全 |
-| Zustand | 状态管理 |
-| React Navigation | 导航 |
-| expo-av | 录音 / 播放 |
-| expo-camera | 摄像头（视频通话） |
-| expo-speech | TTS 语音合成 |
-| AsyncStorage | 本地持久化 |
-| OpenAI-compatible API | AI 服务接入 |
+1. **设置 → 服务提供商**：选硅基流动 / DeepSeek / 自定义 Base URL  
+2. 填入 **API Key**，选 **文字模型**（如 `Qwen/Qwen2.5-72B-Instruct`）及可选 **视觉模型**  
+3. **测试连接** 后保存（Onboarding 里也会写入 Key）
 
-## 多模态视频通话原理
+---
 
-```
-用户开启视频通话
-      │
-      ▼
-expo-camera 捕获前置摄像头画面
-      │
-      ▼ (每 8 秒)
-将帧转为 base64 → 发送给视觉模型 API
-（如 Qwen2.5-VL / GLM-4V / GPT-4o）
-      │
-      ▼
-AI 分析画面 → 生成关心/互动文本
-      │
-      ▼
-expo-speech TTS 朗读回复
-```
+## 技术栈速览
 
-## 目录结构
+| 层 | 选型 |
+|:---|:---|
+| 框架 | React Native 0.81 · Expo ~54 · TypeScript |
+| 状态 | Zustand（`chatStore` / `settingsStore`） |
+| 导航 | React Navigation 6 |
+| 持久化 | AsyncStorage + SecureStore（Key） |
+| AI | `aiService.ts` 统一流式与多模态请求 |
+| 通知 | `expo-notifications`（每日定时 + 点击路由） |
+
+---
+
+## 仓库地图（读代码从哪下嘴）
 
 ```
 src/
-├── types/          # TypeScript 类型定义
-├── store/          # Zustand 状态管理
-│   ├── settingsStore.ts
-│   └── chatStore.ts
-├── services/       # 服务层
-│   ├── aiService.ts          (多提供商 + 流式 + 视觉)
-│   ├── memoryService.ts
-│   ├── emotionService.ts     (情感状态计算)
-│   ├── anniversaryService.ts (纪念日提醒)
-│   └── secureStorage.ts      (加密存储)
-├── screens/        # 页面组件
-│   ├── HomeScreen.tsx
-│   ├── ChatScreen.tsx
-│   ├── CallScreen.tsx        ← 音视频通话
-│   ├── SettingsScreen.tsx
-│   ├── ServiceSettingsScreen.tsx
-│   ├── LifeSettingsScreen.tsx
-│   ├── MemorySettingsScreen.tsx
-│   ├── AdvancedSettingsScreen.tsx
-│   └── CharacterEditorScreen.tsx
-├── components/     # 可复用组件
-│   ├── ChatBubble.tsx
-│   ├── MessageInput.tsx
-│   ├── SettingsRow.tsx
-│   └── EmotionalStateBar.tsx ← 情感状态显示
-├── navigation/     # 导航配置
-└── utils/          # 工具函数（主题、颜色）
+├── store/           chatStore（角色、消息、日记生成）
+│                    settingsStore（模式、服务、生命、Admin 时间）
+├── services/        aiService · notificationService · diaryService · …
+├── screens/         Onboarding · Home · Chat · Settings · …
+├── navigation/      AppNavigator
+└── types/           Character · Message · CharacterDiary · …
 ```
+
+**进阶阅读建议**：结合 `store / services / screens` 目录，从消息流、记忆存储、通知唤回三条主链路入手。
+
+---
+
+## 已知缺口（诚实版 Roadmap 提示）
+
+| 项 | 状态 |
+|:---|:---|
+| 设置里 **修改每日通知时刻**（Picker + 重新 `schedule`） | UI 占位，逻辑待接 |
+| Onboarding **保存前** 调通一次 API | 建议补强，减少「进了聊天才报错」 |
+
+---
+
+<p align="center">
+  <b>心动伴侣</b> — 把「关系」拆成可迭代模块：人设 · 记忆 · 触达 · 双模式验证。<br/>
+  <sub>欢迎 fork 换皮、换模、做自己的长期陪伴实验。</sub>
+</p>

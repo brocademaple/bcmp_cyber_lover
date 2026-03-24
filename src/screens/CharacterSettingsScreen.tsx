@@ -12,13 +12,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, Character } from '../types';
+import { RootStackParamList, Character, CharacterDiary } from '../types';
 import { useChatStore } from '../store/chatStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { useThemeColors } from '../utils/theme';
 import { format } from 'date-fns';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CharacterSettings'>;
-type TabType = 'profile' | 'memory' | 'anniversary';
+type TabType = 'profile' | 'memory' | 'anniversary' | 'diary';
 
 const MOOD_TO_VALUE: Record<string, number> = {
   happy: 85,
@@ -129,6 +130,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
   const isLandscape = width > height;
 
   const { getCharacter, addMemory, addAnniversary } = useChatStore();
+  const isAdmin = useSettingsStore((s) => s.settings.appMode === 'admin');
   const character = getCharacter(characterId);
 
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -201,13 +203,15 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
             <View style={landscapeStyles.basicInfoRow}>
               <Text style={[landscapeStyles.basicLabel, { color: C.text }]}>姓名: {character.name}</Text>
               <Text style={[landscapeStyles.basicLabel, { color: C.text }]}>性格: {character.personality}</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CharacterEditor', { characterId })}
-                style={[landscapeStyles.editIconBtn, { backgroundColor: C.primary }]}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Text style={landscapeStyles.editIconText}>✏️</Text>
-              </TouchableOpacity>
+              {isAdmin && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('CharacterEditor', { characterId })}
+                  style={[landscapeStyles.editIconBtn, { backgroundColor: C.primary }]}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Text style={landscapeStyles.editIconText}>✏️</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* 当前状态：三个圆环 */}
@@ -220,13 +224,12 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
 
             {/* Tab：角色档案 | 记忆匣 | 特别日期 */}
             <View style={[landscapeStyles.tabRow, { borderBottomColor: C.border }]}>
-              {(
-                [
-                  { key: 'profile' as const, label: '角色档案' },
-                  { key: 'memory' as const, label: '记忆匣' },
-                  { key: 'anniversary' as const, label: '特别日期' },
-                ] as const
-              ).map(({ key, label }) => (
+              {([
+                { key: 'profile' as const, label: '角色档案' },
+                { key: 'memory' as const, label: '记忆匣' },
+                { key: 'anniversary' as const, label: '特别日期' },
+                ...(isAdmin ? ([{ key: 'diary' as const, label: '角色日记' }] as const) : []),
+              ] as const).map(({ key, label }) => (
                 <TouchableOpacity
                   key={key}
                   onPress={() => setActiveTab(key)}
@@ -359,6 +362,27 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
                   )}
                 </View>
               )}
+
+              {isAdmin && activeTab === 'diary' && (
+                <View style={landscapeStyles.diaryContent}>
+                  {(character.diaries?.length ?? 0) > 0 ? (
+                    character.diaries!
+                      .slice()
+                      .sort((a, b) => b.timestamp - a.timestamp)
+                      .map((d: CharacterDiary) => (
+                        <View key={d.id} style={[landscapeStyles.diaryItem, { borderBottomColor: C.border }]}>
+                          <Text style={[landscapeStyles.diaryTitle, { color: C.text }]}>{d.title}</Text>
+                          <Text style={[landscapeStyles.diaryMeta, { color: C.textSecondary }]}>
+                            {d.period === 'daily' ? '日报' : d.period === 'weekly' ? '周记' : '月记'} · {format(d.timestamp, 'yyyy-MM-dd HH:mm')}
+                          </Text>
+                          <Text style={[landscapeStyles.diaryText, { color: C.textSecondary }]}>{d.content}</Text>
+                        </View>
+                      ))
+                  ) : (
+                    <Text style={[landscapeStyles.emptyHint, { color: C.textSecondary }]}>暂无日记，聊天后会自动生成</Text>
+                  )}
+                </View>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -375,13 +399,15 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
         <View style={portraitStyles.basicInfoRow}>
           <Text style={[portraitStyles.basicLabel, { color: C.text }]}>姓名: {character.name}</Text>
           <Text style={[portraitStyles.basicLabel, { color: C.text }]}>性格: {character.personality}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CharacterEditor', { characterId })}
-            style={[portraitStyles.editIconBtn, { backgroundColor: C.primary }]}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={portraitStyles.editIconText}>✏️</Text>
-          </TouchableOpacity>
+          {isAdmin && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('CharacterEditor', { characterId })}
+              style={[portraitStyles.editIconBtn, { backgroundColor: C.primary }]}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={portraitStyles.editIconText}>✏️</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={[portraitStyles.sectionTitle, { color: C.text }]}>当前状态</Text>
@@ -392,13 +418,12 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
         </View>
 
         <View style={[portraitStyles.tabRow, { borderBottomColor: C.border }]}>
-          {(
-            [
-              { key: 'profile' as const, label: '角色档案' },
-              { key: 'memory' as const, label: '记忆匣' },
-              { key: 'anniversary' as const, label: '特别日期' },
-            ] as const
-          ).map(({ key, label }) => (
+          {([
+            { key: 'profile' as const, label: '角色档案' },
+            { key: 'memory' as const, label: '记忆匣' },
+            { key: 'anniversary' as const, label: '特别日期' },
+            ...(isAdmin ? ([{ key: 'diary' as const, label: '角色日记' }] as const) : []),
+          ] as const).map(({ key, label }) => (
             <TouchableOpacity
               key={key}
               onPress={() => setActiveTab(key)}
@@ -510,6 +535,27 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
                 ))
               ) : (
                 <Text style={[portraitStyles.emptyHint, { color: C.textSecondary }]}>暂无特别日期</Text>
+              )}
+            </View>
+          )}
+
+          {isAdmin && activeTab === 'diary' && (
+            <View style={portraitStyles.diaryContent}>
+              {(character.diaries?.length ?? 0) > 0 ? (
+                character.diaries!
+                  .slice()
+                  .sort((a, b) => b.timestamp - a.timestamp)
+                  .map((d: CharacterDiary) => (
+                    <View key={d.id} style={[portraitStyles.diaryItem, { borderBottomColor: C.border }]}>
+                      <Text style={[portraitStyles.diaryTitle, { color: C.text }]}>{d.title}</Text>
+                      <Text style={[portraitStyles.diaryMeta, { color: C.textSecondary }]}>
+                        {d.period === 'daily' ? '日报' : d.period === 'weekly' ? '周记' : '月记'} · {format(d.timestamp, 'yyyy-MM-dd HH:mm')}
+                      </Text>
+                      <Text style={[portraitStyles.diaryText, { color: C.textSecondary }]}>{d.content}</Text>
+                    </View>
+                  ))
+              ) : (
+                <Text style={[portraitStyles.emptyHint, { color: C.textSecondary }]}>暂无日记，聊天后会自动生成</Text>
               )}
             </View>
           )}
@@ -674,6 +720,11 @@ const landscapeStyles = StyleSheet.create({
   },
   anniversaryDate: { fontSize: 15, fontWeight: '600' },
   anniversaryTitle: { fontSize: 14 },
+  diaryContent: {},
+  diaryItem: { paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  diaryTitle: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  diaryMeta: { fontSize: 12, marginBottom: 6 },
+  diaryText: { fontSize: 14, lineHeight: 20 },
   emptyHint: { fontSize: 14, paddingVertical: 24, textAlign: 'center' },
 });
 
@@ -748,5 +799,10 @@ const portraitStyles = StyleSheet.create({
   },
   anniversaryDate: { fontSize: 15, fontWeight: '600' },
   anniversaryTitle: { fontSize: 14 },
+  diaryContent: {},
+  diaryItem: { paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  diaryTitle: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  diaryMeta: { fontSize: 12, marginBottom: 6 },
+  diaryText: { fontSize: 14, lineHeight: 20 },
   emptyHint: { fontSize: 14, paddingVertical: 24, textAlign: 'center' },
 });

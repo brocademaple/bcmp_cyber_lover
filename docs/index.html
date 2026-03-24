@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>心动伴侣 HeartBeat Companion</title>
+    <meta
+      name="description"
+      content="心动伴侣：一款主打心动感与长期陪伴体验的 AI 社交产品。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="./index.html">💖 心动伴侣</a>
+        <nav class="menu">
+          <a href="#highlight">心动亮点</a>
+          <a href="#story">产品叙事</a>
+          <a href="#characters">角色阵容</a>
+          <a href="#gallery">产品预览</a>
+          <a href="./changelog.html">更新日志</a>
+          <button id="paletteToggle" class="theme-toggle palette-toggle" type="button" aria-label="切换风格">甜粉</button>
+          <button id="themeToggle" class="theme-toggle" type="button" aria-label="切换主题">🌙</button>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero hero-gradient reveal" id="heroSection">
+      <div class="hero-float hero-float-a parallax-layer" data-depth="0.08"></div>
+      <div class="hero-float hero-float-b parallax-layer" data-depth="-0.06"></div>
+      <div class="hero-float hero-float-c parallax-layer" data-depth="0.12"></div>
+      <div class="container hero-grid">
+        <div class="parallax-layer" data-depth="-0.03">
+          <p class="badge">SWEET SOCIAL EXPERIENCE</p>
+          <h1>不是“会回答”，而是<br />“会在意你”</h1>
+          <p class="subtitle">
+            心动伴侣把「人设稳定、关系记忆、主动触达」做成产品主链路，让每次打开都像在见一个熟悉、温柔、会惦记你的人。
+          </p>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub 仓库</a>
+            <a class="btn" href="#gallery">立即看效果</a>
+          </div>
+          <p class="small-note">GitHub Pages: <a href="https://brocademaple.github.io/bcmp_cyber_lover/">brocademaple.github.io/bcmp_cyber_lover</a></p>
+        </div>
+        <div class="hero-visual parallax-layer" data-depth="0.05">
+          <img
+            src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/qingning.png"
+            alt="角色展示"
+          />
+          <p class="hero-visual-tip">鹿芽 · 元气室友型陪伴</p>
+        </div>
+      </div>
+    </section>
+
+    <main class="container">
+      <section id="highlight" class="reveal">
+        <h2>产品心动点</h2>
+        <div class="grid">
+          <article class="card big">
+            <h3>✨ 情绪价值优先</h3>
+            <p>先听懂你，再回应你。重点不是“答题对错”，而是“当下有没有被接住”。</p>
+          </article>
+          <article class="card">
+            <h3>🧠 关系会沉淀</h3>
+            <p>记忆和日记会把你们的互动沉淀下来，聊天越久越像“老熟人”。</p>
+          </article>
+          <article class="card">
+            <h3>🫧 人设不漂移</h3>
+            <p>每个角色都有独立气质和说话风格，不会聊着聊着变成同一个人。</p>
+          </article>
+          <article class="card">
+            <h3>⏰ 她会主动来找你</h3>
+            <p>每日提醒 + 开场白机制，不必每次都由你先开口。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="story" class="reveal">
+        <h2>分段式产品叙事</h2>
+        <div class="story-grid">
+          <article class="story-step">
+            <span>01</span>
+            <h3>第一次打开：被氛围吸引</h3>
+            <p>不是“配置模型”起手，而是先进入角色氛围与关系想象。</p>
+          </article>
+          <article class="story-step">
+            <span>02</span>
+            <h3>持续聊天：被理解</h3>
+            <p>短句节奏和情绪回应让用户感觉“她听懂了我，不只是回了我”。</p>
+          </article>
+          <article class="story-step">
+            <span>03</span>
+            <h3>长期使用：被记住</h3>
+            <p>记忆与日记把关系变成时间资产，越用越有“只属于你”的内容。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="characters" class="reveal">
+        <h2>角色阵容</h2>
+        <div class="h-scroll" id="characterScroll">
+          <article class="character-card">
+            <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/qingning.png" alt="鹿芽角色图" />
+            <h3>鹿芽</h3>
+            <p>元气、黏人、会逗你开心的室友型陪伴。</p>
+          </article>
+          <article class="character-card">
+            <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/xiaoying.png" alt="纪遥角色图" />
+            <h3>纪遥</h3>
+            <p>慢热、知性、适合深夜长聊的倾听型关系。</p>
+          </article>
+          <article class="character-card">
+            <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/yuehua.png" alt="凛夜角色图" />
+            <h3>凛夜</h3>
+            <p>外冷内热、嘴硬心软，情绪张力更强。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="gallery" class="reveal">
+        <h2>产品预览</h2>
+        <p class="hint">支持自动轮播、手动切换、点击放大。你可替换为最新产品截图。</p>
+
+        <div class="carousel" id="shotCarousel">
+          <button class="carousel-btn prev" type="button" aria-label="上一张">‹</button>
+          <div class="carousel-track-wrap">
+            <div class="carousel-track">
+              <figure class="shot active loading" data-index="0">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/home.png" alt="主页截图" loading="lazy" />
+                <figcaption>首页：关系入口与角色氛围</figcaption>
+              </figure>
+              <figure class="shot loading" data-index="1">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/chat.png" alt="聊天页截图" loading="lazy" />
+                <figcaption>聊天：沉浸式对话与情绪响应</figcaption>
+              </figure>
+              <figure class="shot loading" data-index="2">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/character-settings.png" alt="角色设置截图" loading="lazy" />
+                <figcaption>角色页：记忆、档案、关系轨迹</figcaption>
+              </figure>
+              <figure class="shot loading" data-index="3">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/settings.png" alt="设置页截图" loading="lazy" />
+                <figcaption>设置：模式切换与体验调校</figcaption>
+              </figure>
+            </div>
+          </div>
+          <button class="carousel-btn next" type="button" aria-label="下一张">›</button>
+        </div>
+
+        <div class="carousel-dots" id="carouselDots">
+          <button class="dot active" data-index="0" aria-label="跳转到第1张"></button>
+          <button class="dot" data-index="1" aria-label="跳转到第2张"></button>
+          <button class="dot" data-index="2" aria-label="跳转到第3张"></button>
+          <button class="dot" data-index="3" aria-label="跳转到第4张"></button>
+        </div>
+      </section>
+
+      <section class="reveal cta">
+        <h2>想开始体验？</h2>
+        <p>如果你也在做 AI 社交产品，这个项目可以作为关系型体验设计的起点。</p>
+        <div class="actions">
+          <a class="btn primary" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">查看源码</a>
+          <a class="btn" href="./changelog.html">查看迭代日志</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>© HeartBeat Companion · 以“关系体验”为核心的 AI 社交实验</p>
+      </div>
+    </footer>
+
+    <dialog id="imageModal" class="img-modal">
+      <button class="img-modal-close" type="button" aria-label="关闭">✕</button>
+      <img src="" alt="预览图" id="modalImage" />
+      <p id="modalCaption"></p>
+    </dialog>
+
+    <script src="./site.js"></script>
+  </body>
+</html>
+

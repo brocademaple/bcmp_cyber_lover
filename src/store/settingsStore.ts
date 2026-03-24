@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppSettings, ServiceProvider } from '../types';
+import { AppSettings, ServiceProvider, AppMode } from '../types';
 import { saveSecure, getSecure } from '../services/secureStorage';
 
 const STORAGE_KEY = '@bcmp_settings';
 const API_KEY_SECURE = 'bcmp_api_key';
 
 const defaultSettings: AppSettings = {
+  appMode: 'explore',
   service: {
     provider: 'siliconflow',
     apiKey: '',
@@ -22,6 +23,7 @@ const defaultSettings: AppSettings = {
     backgroundToastEnabled: false,
     backgroundExitConfirm: false,
     enhancedMomentProactivity: true,
+    notificationHour: 20,
   },
   memory: {
     enabled: true,
@@ -53,6 +55,8 @@ interface SettingsStore {
   updateLife: (updates: Partial<AppSettings['life']>) => void;
   updateMemory: (updates: Partial<AppSettings['memory']>) => void;
   updateAdvanced: (updates: Partial<AppSettings['advanced']>) => void;
+  setAppMode: (mode: AppMode) => void;
+  setDebugNowTs: (ts?: number) => void;
   setSelectedCharacter: (id: string) => void;
   saveSettings: () => Promise<void>;
 }
@@ -69,6 +73,9 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         const parsed = JSON.parse(stored);
         if (apiKey) {
           parsed.service.apiKey = apiKey;
+        }
+        if (parsed.appMode !== 'admin' && parsed.appMode !== 'explore') {
+          parsed.appMode = defaultSettings.appMode;
         }
         set({ settings: { ...defaultSettings, ...parsed }, isLoaded: true });
       } else {
@@ -111,6 +118,21 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       settings: {
         ...state.settings,
         advanced: { ...state.settings.advanced, ...updates },
+      },
+    }));
+  },
+
+  setAppMode: (mode) => {
+    set((state) => ({
+      settings: { ...state.settings, appMode: mode },
+    }));
+  },
+
+  setDebugNowTs: (ts) => {
+    set((state) => ({
+      settings: {
+        ...state.settings,
+        advanced: { ...state.settings.advanced, debugNowTs: ts },
       },
     }));
   },

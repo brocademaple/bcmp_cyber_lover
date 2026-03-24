@@ -10,15 +10,14 @@ import {
   Platform,
   StatusBar,
   ImageBackground,
+  ScrollView,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList, Message } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { sendMessage } from '../services/aiService';
-import { checkAnniversaries, getAnniversaryMessage } from '../services/anniversaryService';
-import { calculateEmotionChange } from '../services/emotionService';
+import { sendMessage, generateDailyGreeting } from '../services/aiService';
 import ChatBubble from '../components/ChatBubble';
 import MessageInput from '../components/MessageInput';
 import { useThemeColors } from '../utils/theme';
@@ -30,15 +29,25 @@ function genId() {
   return `msg_${++msgIdCounter}`;
 }
 
+const QUICK_REPLIES = [
+  { label: '😊 嗯嗯～', text: '嗯嗯～' },
+  { label: '❤️ 我也是', text: '我也是' },
+  { label: '😴 今天好累', text: '今天好累' },
+  { label: '🥺 想你了', text: '想你了' },
+];
+
 export default function ChatScreen({ route, navigation }: Props) {
-  const { characterId } = route.params;
+  const { characterId, autoGreet } = route.params;
   const C = useThemeColors();
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<{ focus: () => void }>(null);
+  const autoGreetSentRef = useRef(false);
 
-  const { messages, addMessage, loadMessages, setTyping, isTyping, getCharacter, updateEmotionalState } = useChatStore();
+  const { messages, addMessage, loadMessages, setTyping, isTyping, getCharacter, generateDiariesForCharacter } = useChatStore();
   const { settings } = useSettingsStore();
 
   const character = getCharacter(characterId);
+  const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
   const chatMessages = messages[characterId] || [];
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingId, setStreamingId] = useState<string | null>(null);
@@ -52,51 +61,72 @@ export default function ChatScreen({ route, navigation }: Props) {
     navigation.setOptions({
       title: character.name,
       headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('CharacterSettings', { characterId })} style={{ marginRight: 8 }}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CharacterSettings', { characterId })}
+          style={{ marginRight: 8 }}
+        >
           <Text style={{ fontSize: 22 }}>⚙️</Text>
         </TouchableOpacity>
       ),
     });
   }, [character, characterId]);
 
-  // Send greeting if first time
+  // Send static greeting if first ever visit (no autoGreet)
   useEffect(() => {
     if (!character) return;
-    if (chatMessages.length === 0) {
+    if (!autoGreet && chatMessages.length === 0) {
       const greeting: Message = {
         id: genId(),
         role: 'assistant',
         content: character.greeting,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
       };
       addMessage(characterId, greeting);
     }
   }, [character, characterId]);
 
-  // Check anniversaries
+  // Auto-send AI daily greeting when opened from notification
   useEffect(() => {
-    if (!character || !character.anniversaries) return;
-    const todayAnniversaries = checkAnniversaries(character.anniversaries);
-    todayAnniversaries.forEach(ann => {
-      const msg: Message = {
-        id: genId(),
-        role: 'assistant',
-        content: getAnniversaryMessage(ann, character.name),
-        timestamp: Date.now(),
-      };
-      addMessage(characterId, msg);
-    });
-  }, [character, characterId]);
+    if (!autoGreet || !character || autoGreetSentRef.current) return;
+    if (!settings.service.apiKey) return;
+    autoGreetSentRef.current = true;
 
-  // Update emotional state on interaction
-  useEffect(() => {
-    if (!character || !character.emotionalState) return;
-    const timeSince = Date.now() - character.emotionalState.lastInteraction;
-    const updates = calculateEmotionChange(character.emotionalState, chatMessages, timeSince);
-    if (Object.keys(updates).length > 0) {
-      updateEmotionalState(characterId, updates);
-    }
-  }, [chatMessages.length]);
+    const sendAutoGreet = async () => {
+      setTyping(true);
+      const aiMsgId = genId();
+      setStreamingId(aiMsgId);
+      setStreamingContent('');
+
+      try {
+        const greeting = await generateDailyGreeting(
+          character,
+          settings.service,
+          settings.advanced
+        );
+        const aiMsg: Message = {
+          id: aiMsgId,
+          role: 'assistant',
+          content: greeting || character.greeting,
+          timestamp: getEffectiveNow(),
+        };
+        await addMessage(characterId, aiMsg);
+      } catch {
+        const aiMsg: Message = {
+          id: aiMsgId,
+          role: 'assistant',
+          content: character.greeting,
+          timestamp: getEffectiveNow(),
+        };
+        await addMessage(characterId, aiMsg);
+      } finally {
+        setTyping(false);
+        setStreamingId(null);
+        setStreamingContent('');
+      }
+    };
+
+    sendAutoGreet();
+  }, [autoGreet, character, characterId]);
 
   const handleSend = useCallback(
     async (text: string, imageUri?: string) => {
@@ -109,24 +139,21 @@ export default function ChatScreen({ route, navigation }: Props) {
         return;
       }
 
-      // Add user message
       const userMsg: Message = {
         id: genId(),
         role: 'user',
         content: text,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
         imageUri,
       };
       await addMessage(characterId, userMsg);
 
-      // Add delay if configured
       if (settings.advanced.sendDelayMs > 0) {
         await new Promise((r) => setTimeout(r, settings.advanced.sendDelayMs));
       }
 
       setTyping(true);
 
-      // Start streaming placeholder
       const aiMsgId = genId();
       setStreamingId(aiMsgId);
       setStreamingContent('');
@@ -152,9 +179,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           id: aiMsgId,
           role: 'assistant',
           content: fullContent || '...',
-          timestamp: Date.now(),
+          timestamp: getEffectiveNow(),
         };
         await addMessage(characterId, aiMsg);
+        // 每次有效聊天后刷新该角色的日报/周记/月记
+        await generateDiariesForCharacter(characterId);
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : '发送失败';
         Alert.alert('发送失败', errorMsg);
@@ -164,16 +193,19 @@ export default function ChatScreen({ route, navigation }: Props) {
         setStreamingContent('');
       }
     },
-    [character, characterId, chatMessages, settings, addMessage, navigation]
+    [character, characterId, chatMessages, settings, addMessage, navigation, generateDiariesForCharacter]
   );
 
-  const handleAudioCall = () => {
-    navigation.navigate('Call', { characterId, callType: 'audio' });
-  };
+  const handleQuickReply = useCallback(
+    (text: string) => {
+      handleSend(text);
+    },
+    [handleSend]
+  );
 
-  const handleVideoCall = () => {
-    navigation.navigate('Call', { characterId, callType: 'video' });
-  };
+  const handleFocusInput = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
 
   // Build display messages list
   const displayMessages: Message[] = [...chatMessages];
@@ -183,14 +215,14 @@ export default function ChatScreen({ route, navigation }: Props) {
         id: streamingId,
         role: 'assistant',
         content: streamingContent,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
       });
     } else {
       displayMessages.push({
         id: streamingId + '_thinking',
         role: 'assistant',
         content: '',
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
         isThinking: true,
       });
     }
@@ -204,7 +236,6 @@ export default function ChatScreen({ route, navigation }: Props) {
     );
   }
 
-  // 人设图作聊天背景：竖屏完整显示，横屏截取部分；无图时用纯色
   const backgroundSource =
     character.imageUri != null
       ? typeof character.imageUri === 'number'
@@ -235,10 +266,44 @@ export default function ChatScreen({ route, navigation }: Props) {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
         />
+
+        {/* Quick Reply Buttons */}
+        <View style={[styles.quickReplyContainer, { backgroundColor: C.surface, borderTopColor: C.border }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickReplyScroll}
+          >
+            {QUICK_REPLIES.map((qr) => (
+              <TouchableOpacity
+                key={qr.label}
+                style={[
+                  styles.quickReplyBtn,
+                  { backgroundColor: C.primaryLight + '33', borderColor: C.primary },
+                ]}
+                onPress={() => handleQuickReply(qr.text)}
+                disabled={isTyping}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.quickReplyText, { color: C.primary }]}>{qr.label}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[
+                styles.quickReplyBtn,
+                { backgroundColor: C.surface, borderColor: C.border },
+              ]}
+              onPress={handleFocusInput}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.quickReplyText, { color: C.textSecondary }]}>✏️ 自己输入</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
         <MessageInput
+          ref={inputRef}
           onSend={handleSend}
-          onAudioCall={handleAudioCall}
-          onVideoCall={handleVideoCall}
           disabled={isTyping}
         />
       </KeyboardAvoidingView>
@@ -271,5 +336,25 @@ const styles = StyleSheet.create({
   messageList: {
     paddingVertical: 12,
     paddingBottom: 8,
+  },
+  quickReplyContainer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 8,
+  },
+  quickReplyScroll: {
+    paddingHorizontal: 12,
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quickReplyBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  quickReplyText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
