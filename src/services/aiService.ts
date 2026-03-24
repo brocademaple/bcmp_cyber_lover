@@ -23,6 +23,13 @@ function getBaseUrl(config: ServiceConfig): string {
   return PROVIDER_CONFIGS[config.provider].baseUrl;
 }
 
+const CORE_REPLY_RULES = `
+【回复规范】
+1. 每次回复不超过3句话
+2. 必须包含对用户当下状态的关心或共情
+3. 语气温柔自然，像一个真正在意对方的朋友
+4. 禁止使用"作为AI"、"我无法"等机械表述`;
+
 function buildSystemMessage(
   character: Character,
   memory: MemoryConfig,
@@ -30,34 +37,9 @@ function buildSystemMessage(
 ): string {
   let systemContent = character.systemPrompt;
 
-  // 添加角色档案信息
+  // 添加角色档案信息（保留：名字、性格、口头禅）
   if (character.profile) {
-    systemContent += `\n\n【你的背景】${character.profile.backstory}`;
-    systemContent += `\n【兴趣爱好】${character.profile.hobbies.join('、')}`;
-    systemContent += `\n【口头禅】${character.profile.catchphrases.join('、')}`;
-  }
-
-  // 添加情感状态
-  if (character.emotionalState) {
-    const { mood, intimacy, energy } = character.emotionalState;
-    systemContent += `\n\n【当前状态】心情：${mood}，亲密度：${intimacy}/100，精力：${energy}/100`;
-    systemContent += `\n请根据当前情感状态调整你的回复风格和语气。`;
-  }
-
-  // 添加关键记忆
-  if (character.memories && character.memories.length > 0) {
-    const importantMemories = character.memories
-      .filter(m => m.importance >= 7)
-      .slice(-5)
-      .map(m => `- ${m.content} (${m.tags.join(', ')})`);
-    if (importantMemories.length > 0) {
-      systemContent += `\n\n【重要记忆】\n${importantMemories.join('\n')}`;
-    }
-  }
-
-  if (memory.enabled && chatHistory.length > 0) {
-    const memoryPrompt = memory.memorySystemPrompt;
-    systemContent = `${systemContent}\n\n${memoryPrompt}`;
+    systemContent += `\n\n【口头禅】${character.profile.catchphrases.join('、')}`;
   }
 
   const now = new Date();
@@ -70,6 +52,8 @@ function buildSystemMessage(
     weekday: 'long',
   });
   systemContent += `\n\n当前时间：${timeStr}`;
+
+  systemContent += CORE_REPLY_RULES;
 
   return systemContent;
 }
@@ -237,6 +221,63 @@ export async function testConnection(config: ServiceConfig): Promise<boolean> {
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+export async function generateDailyGreeting(
+  character: Character,
+  config: ServiceConfig,
+  advanced: AdvancedConfig
+): Promise<string> {
+  const baseUrl = getBaseUrl(config);
+  if (!baseUrl || !config.apiKey) {
+    return character.greeting;
+  }
+
+  const now = new Date();
+  const timeStr = now.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    weekday: 'long',
+  });
+
+  const catchphrases = character.profile?.catchphrases.join('、') || '';
+  const systemPrompt = `${character.systemPrompt}\n${catchphrases ? `【口头禅】${catchphrases}` : ''}\n\n当前时间：${timeStr}${CORE_REPLY_RULES}`;
+
+  const userPrompt = `现在是${timeStr}，你主动联系了用户，说一句今天的开场白。要自然、有温度，体现出你在意用户今天的状态，不超过3句话。`;
+
+  const messages: Array<{ role: string; content: string }> = [];
+  if (!advanced.compatibilityMode) {
+    messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'user', content: userPrompt });
+  } else {
+    messages.push({ role: 'user', content: `[系统提示: ${systemPrompt}]\n\n${userPrompt}` });
+  }
+
+  try {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages,
+        stream: false,
+        temperature: 0.95,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) return character.greeting;
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || character.greeting;
+  } catch {
+    return character.greeting;
   }
 }
 

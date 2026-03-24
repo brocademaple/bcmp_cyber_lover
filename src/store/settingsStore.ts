@@ -22,6 +22,7 @@ const defaultSettings: AppSettings = {
     backgroundToastEnabled: false,
     backgroundExitConfirm: false,
     enhancedMomentProactivity: true,
+    notificationHour: 20,
   },
   memory: {
     enabled: true,
