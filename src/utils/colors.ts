@@ -16,6 +16,7 @@ export const PinkTheme = {
   border: '#ffd4e5',
   inputBg: '#fff0f5',
   shadow: 'rgba(255, 107, 157, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -36,6 +37,7 @@ export const PinkThemeDark = {
   border: '#4a2d3f',
   inputBg: '#3d2433',
   shadow: 'rgba(255, 107, 157, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
 };
 
@@ -57,6 +59,7 @@ export const BlueTheme = {
   border: '#d4e6f1',
   inputBg: '#ebf5fb',
   shadow: 'rgba(93, 173, 226, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -77,6 +80,7 @@ export const BlueThemeDark = {
   border: '#2d4a5a',
   inputBg: '#243847',
   shadow: 'rgba(93, 173, 226, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
 };
 
@@ -98,6 +102,7 @@ export const YellowTheme = {
   border: '#ffe8b3',
   inputBg: '#fffaed',
   shadow: 'rgba(249, 202, 36, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -118,6 +123,7 @@ export const YellowThemeDark = {
   border: '#4a3a1a',
   inputBg: '#3d3020',
   shadow: 'rgba(249, 202, 36, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
 };
 
@@ -139,6 +145,7 @@ export const PurpleTheme = {
   border: '#e1d5f7',
   inputBg: '#f3e5f5',
   shadow: 'rgba(162, 155, 254, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -159,7 +166,41 @@ export const PurpleThemeDark = {
   border: '#3d2a5a',
   inputBg: '#332447',
   shadow: 'rgba(162, 155, 254, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
+};
+
+// 午夜深色主题（凛夜）
+export const MidnightTheme = {
+  primary: '#7d6df6',
+  primaryLight: '#9da4ff',
+  primaryDark: '#241a4f',
+  accent: '#4dd4e8',
+  accentLight: '#202846',
+  background: '#0b0d16',
+  surface: '#151827',
+  text: '#f3f0ff',
+  textSecondary: '#9fa7c7',
+  bubbleUser: '#7d6df6',
+  bubbleAssistant: '#181c2c',
+  bubbleUserText: '#ffffff',
+  bubbleAssistantText: '#eef0ff',
+  border: '#2a3150',
+  inputBg: '#111523',
+  shadow: 'rgba(125, 109, 246, 0.3)',
+  danger: '#ff6b81',
+  chatBackgroundOverlay: 'rgba(4,6,14,0.68)',
+};
+
+export const MidnightThemeDark = {
+  ...MidnightTheme,
+  primary: '#9588ff',
+  primaryLight: '#b4bdff',
+  primaryDark: '#18122f',
+  surface: '#111421',
+  inputBg: '#0e1220',
+  border: '#252b46',
+  chatBackgroundOverlay: 'rgba(2,3,9,0.72)',
 };
 
 export const Colors = PinkTheme;
@@ -169,6 +210,7 @@ export const ThemeMap = {
   blue: BlueTheme,
   yellow: YellowTheme,
   purple: PurpleTheme,
+  midnight: MidnightTheme,
 };
 
 export const ThemeMapDark = {
@@ -176,7 +218,7 @@ export const ThemeMapDark = {
   blue: BlueThemeDark,
   yellow: YellowThemeDark,
   purple: PurpleThemeDark,
+  midnight: MidnightThemeDark,
 };
 
 export type ThemeType = keyof typeof ThemeMap;
-

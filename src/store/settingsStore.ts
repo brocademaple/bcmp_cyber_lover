@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppSettings, ServiceProvider, AppMode } from '../types';
-import { saveSecure, getSecure } from '../services/secureStorage';
+import { saveSecure, getSecure, deleteSecure } from '../services/secureStorage';
 
 const STORAGE_KEY = '@bcmp_settings';
 const API_KEY_SECURE = 'bcmp_api_key';
@@ -43,9 +43,21 @@ const defaultSettings: AppSettings = {
     darkMode: 'light',
     sendDelayMs: 0,
     theme: 'pink',
+    themeMode: 'character',
   },
   selectedCharacterId: 'qingning',
 };
+
+function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
+  return {
+    ...defaultSettings,
+    ...parsed,
+    service: { ...defaultSettings.service, ...parsed.service },
+    life: { ...defaultSettings.life, ...parsed.life },
+    memory: { ...defaultSettings.memory, ...parsed.memory },
+    advanced: { ...defaultSettings.advanced, ...parsed.advanced },
+  };
+}
 
 interface SettingsStore {
   settings: AppSettings;
@@ -77,7 +89,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         if (parsed.appMode !== 'admin' && parsed.appMode !== 'explore') {
           parsed.appMode = defaultSettings.appMode;
         }
-        set({ settings: { ...defaultSettings, ...parsed }, isLoaded: true });
+        if (parsed.appMode === 'admin') {
+          parsed.appMode = defaultSettings.appMode;
+        }
+        set({ settings: mergeSettings(parsed), isLoaded: true });
       } else {
         set({ isLoaded: true });
       }
@@ -151,6 +166,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       // 保存 API Key 到安全存储
       if (apiKey) {
         await saveSecure(API_KEY_SECURE, apiKey);
+      } else {
+        await deleteSecure(API_KEY_SECURE);
       }
 
       // 保存其他设置到 AsyncStorage（不包含 API Key）

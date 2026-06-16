@@ -24,6 +24,7 @@ export default function CharacterEditorScreen({ route, navigation }: Props) {
   const { characterId } = route.params || {};
   const { getCharacter, saveCharacter, deleteCharacter } = useChatStore();
   const { settings, setSelectedCharacter } = useSettingsStore();
+  const isAdvancedMode = settings.appMode === 'admin';
 
   const existing = characterId ? getCharacter(characterId) : undefined;
   const isDefault = DEFAULT_CHARACTERS.some((c) => c.id === characterId);
@@ -125,17 +126,21 @@ export default function CharacterEditorScreen({ route, navigation }: Props) {
           numberOfLines={2}
         />
 
-        <Text style={[styles.label, { color: C.textSecondary }]}>系统提示词（人设）</Text>
-        <TextInput
-          style={[styles.textArea, { color: C.text, borderColor: C.border, backgroundColor: C.surface }]}
-          value={systemPrompt}
-          onChangeText={setSystemPrompt}
-          placeholder="描述角色的性格、背景、说话方式等..."
-          placeholderTextColor={C.textSecondary}
-          multiline
-          numberOfLines={6}
-          textAlignVertical="top"
-        />
+        {isAdvancedMode && (
+          <>
+            <Text style={[styles.label, { color: C.textSecondary }]}>人设规则</Text>
+            <TextInput
+              style={[styles.textArea, { color: C.text, borderColor: C.border, backgroundColor: C.surface }]}
+              value={systemPrompt}
+              onChangeText={setSystemPrompt}
+              placeholder="描述角色的性格、背景、说话方式等..."
+              placeholderTextColor={C.textSecondary}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+          </>
+        )}
 
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: C.primary }]} onPress={handleSave}>
           <Text style={styles.btnText}>保存</Text>
@@ -157,7 +162,7 @@ export default function CharacterEditorScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { padding: 16 },
+  scroll: { padding: 16, paddingBottom: 56 },
   pageTitle: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '500', marginBottom: 6, marginTop: 4, marginLeft: 2 },
   avatarGrid: {

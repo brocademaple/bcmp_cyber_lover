@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, Text, StyleSheet, TouchableOpacity, View, TextInput } from 'react-native';
+import { ScrollView, Text, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
@@ -8,6 +8,22 @@ import { SettingsRow, SettingsSection } from '../components/SettingsRow';
 import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdvancedSettings'>;
+
+const DARK_MODE_OPTIONS = [
+  { value: 'auto', label: '跟随系统' },
+  { value: 'light', label: '浅色' },
+  { value: 'dark', label: '深色' },
+] as const;
+
+const THEME_OPTIONS = [
+  { value: 'pink', label: '鹿芽粉' },
+  { value: 'blue', label: '纪遥蓝' },
+  { value: 'yellow', label: '暖黄色' },
+  { value: 'purple', label: '梦紫色' },
+  { value: 'midnight', label: '凛夜深色' },
+] as const;
+
+const DELAY_OPTIONS = [0, 300, 800, 1200];
 
 export default function AdvancedSettingsScreen({ navigation }: Props) {
   const C = useThemeColors();
@@ -19,100 +35,115 @@ export default function AdvancedSettingsScreen({ navigation }: Props) {
     navigation.goBack();
   };
 
-  const DARK_MODE_OPTIONS = [
-    { value: 'auto', label: '跟随系统' },
-    { value: 'light', label: '浅色' },
-    { value: 'dark', label: '深色' },
-  ] as const;
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={[styles.pageTitle, { color: C.text }]}>高级</Text>
+      <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
+        <View style={styles.hero}>
+          <Text style={[styles.pageTitle, { color: C.text }]}>内部参数</Text>
+          <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
+            这些选项只用于连接兼容和外观校准，日常体验不需要频繁调整。
+          </Text>
+        </View>
 
-        <SettingsSection title="">
+        <SettingsSection title="模型兼容">
           <SettingsRow
             label="兼容模式"
-            description="开启后将会把请求消息列表中所有system角色的消息（如人设，图片描述，主动消息请求）转换为user角色的消息（普通对话），以此尝试解决讯飞星火大模型等平台不支持多条system消息的问题"
+            description="遇到不支持 system 消息的模型时开启。"
             value={adv.compatibilityMode}
             onToggle={(v) => updateAdvanced({ compatibilityMode: v })}
           />
           <SettingsRow
             label="启用深度思考"
-            description={'在请求体内加入enable_thinking参数并设置值为true，该选项仅对硅基流动平台有效。若想设置其他平台的深度思考开关，请使用下面的\u201c自定义请求参数\u201d功能'}
+            description="仅对支持该参数的服务生效。"
             value={adv.deepThinking}
             onToggle={(v) => updateAdvanced({ deepThinking: v })}
           />
-          <SettingsRow
-            label="自定义请求参数"
-            description="自定义请求体所包含的参数，以解决平台独有参数或深度思考参数不一致等问题（如智谱GLM的thinking.type）"
-            showArrow
-            onPress={() => {}}
-          />
-          <SettingsRow
-            label="添加自定义桌面图标"
-            showArrow
-            onPress={() => {}}
-          />
         </SettingsSection>
 
-        <SettingsSection title="外观">
-          <View style={[styles.segmentRow, { borderBottomColor: C.border }]}>
-            <Text style={[styles.segmentLabel, { color: C.text }]}>深色模式</Text>
-            <View style={styles.segmentControl}>
-              {DARK_MODE_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
+        <View style={[styles.panel, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <Text style={[styles.panelTitle, { color: C.text }]}>外观</Text>
+          <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>深色模式</Text>
+          <View style={styles.segmentControl}>
+            {DARK_MODE_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.segmentBtn,
+                  { borderColor: C.border },
+                  adv.darkMode === opt.value && { backgroundColor: C.primary, borderColor: C.primary },
+                ]}
+                onPress={() => updateAdvanced({ darkMode: opt.value })}
+              >
+                <Text
                   style={[
-                    styles.segmentBtn,
-                    { borderColor: C.border },
-                    adv.darkMode === opt.value && { backgroundColor: C.primary },
+                    styles.segmentBtnText,
+                    { color: adv.darkMode === opt.value ? '#fff' : C.textSecondary },
                   ]}
-                  onPress={() => updateAdvanced({ darkMode: opt.value })}
                 >
-                  <Text
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <SettingsRow
+            label="跟随角色主题色"
+            description="鹿芽粉、纪遥蓝、凛夜午夜色会随角色切换。"
+            value={adv.themeMode === 'character'}
+            onToggle={(v) => updateAdvanced({ themeMode: v ? 'character' : 'manual' })}
+          />
+
+          {adv.themeMode === 'manual' && (
+            <>
+              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>手动主题</Text>
+              <View style={styles.themeGrid}>
+                {THEME_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
                     style={[
-                      styles.segmentBtnText,
-                      { color: adv.darkMode === opt.value ? '#fff' : C.textSecondary },
+                      styles.themeBtn,
+                      { borderColor: C.border, backgroundColor: C.inputBg },
+                      adv.theme === opt.value && { backgroundColor: C.primary, borderColor: C.primary },
                     ]}
+                    onPress={() => updateAdvanced({ theme: opt.value })}
                   >
-                    {opt.label}
+                    <Text style={[styles.segmentBtnText, { color: adv.theme === opt.value ? '#fff' : C.textSecondary }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
+
+        <View style={[styles.panel, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <Text style={[styles.panelTitle, { color: C.text }]}>发送节奏</Text>
+          <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>发送前等待</Text>
+          <View style={styles.themeGrid}>
+            {DELAY_OPTIONS.map((ms) => {
+              const active = adv.sendDelayMs === ms;
+              return (
+                <TouchableOpacity
+                  key={ms}
+                  style={[
+                    styles.themeBtn,
+                    { borderColor: C.border, backgroundColor: C.inputBg },
+                    active && { backgroundColor: C.primary, borderColor: C.primary },
+                  ]}
+                  onPress={() => updateAdvanced({ sendDelayMs: ms })}
+                >
+                  <Text style={[styles.segmentBtnText, { color: active ? '#fff' : C.textSecondary }]}>
+                    {ms === 0 ? '立即' : `${ms}ms`}
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+              );
+            })}
           </View>
-        </SettingsSection>
-
-        <SettingsSection title="发送">
-          <SettingsRow
-            label="发送延时"
-            description="设置发送消息和发送请求之间的等待时间"
-            showArrow
-            onPress={() => {}}
-          >
-            <Text style={[styles.valueText, { color: C.textSecondary }]}>
-              {adv.sendDelayMs}ms
-            </Text>
-          </SettingsRow>
-        </SettingsSection>
-
-        <TouchableOpacity
-          style={[styles.testBtn, { borderColor: C.primary }]}
-          onPress={() => {}}
-        >
-          <Text style={[styles.testBtnText, { color: C.primary }]}>测试连接</Text>
-        </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: C.primary }]} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>保存</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.cancelBtn, { backgroundColor: C.danger }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.saveBtnText}>取消</Text>
+          <Text style={styles.saveBtnText}>保存内部参数</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -121,46 +152,55 @@ export default function AdvancedSettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { padding: 16 },
-  pageTitle: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
-  segmentRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  scroll: { padding: 16, paddingBottom: 32 },
+  hero: { marginBottom: 16 },
+  pageTitle: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '900',
   },
-  segmentLabel: { fontSize: 15, marginBottom: 10 },
+  pageDesc: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 6,
+  },
+  panel: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 24,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+    overflow: 'hidden',
+  },
+  panelTitle: { fontSize: 18, fontWeight: '900' },
+  fieldLabel: { fontSize: 12, fontWeight: '800' },
   segmentControl: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 7,
   },
   segmentBtn: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    paddingVertical: 10,
     alignItems: 'center',
   },
-  segmentBtnText: { fontSize: 13 },
-  valueText: { fontSize: 14, marginRight: 4 },
-  testBtn: {
-    borderWidth: 1,
-    borderRadius: 25,
-    paddingVertical: 13,
-    alignItems: 'center',
-    marginBottom: 10,
+  themeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  testBtnText: { fontSize: 15 },
+  themeBtn: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+  },
+  segmentBtnText: { fontSize: 13, fontWeight: '900' },
   saveBtn: {
-    borderRadius: 25,
-    paddingVertical: 14,
+    borderRadius: 28,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 10,
   },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  cancelBtn: {
-    borderRadius: 25,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
+  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
 });

@@ -31,7 +31,15 @@ export async function summarizeHistory(
       [],
       config,
       { ...memory, enabled: false },
-      { compatibilityMode: false, deepThinking: false, customRequestParams: {}, darkMode: 'auto', sendDelayMs: 0 }
+      {
+        compatibilityMode: false,
+        deepThinking: false,
+        customRequestParams: {},
+        darkMode: 'auto',
+        sendDelayMs: 0,
+        theme: 'pink',
+        themeMode: 'character',
+      }
     );
     return summary;
   } catch {

@@ -6,185 +6,255 @@
     <title>心动伴侣 HeartBeat Companion</title>
     <meta
       name="description"
-      content="心动伴侣：一款主打心动感与长期陪伴体验的 AI 社交产品。"
+      content="心动伴侣是一款以陪伴空间、稳定人设、长期记忆和主动触达为核心的 AI 关系产品。"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="noise"></div>
     <header class="topbar">
-      <div class="container topbar-inner">
-        <a class="brand" href="./index.html">💖 心动伴侣</a>
-        <nav class="menu">
-          <a href="#highlight">心动亮点</a>
-          <a href="#story">产品叙事</a>
-          <a href="#characters">角色阵容</a>
-          <a href="#gallery">产品预览</a>
+      <div class="topbar-inner">
+        <a class="brand" href="./index.html" aria-label="心动伴侣首页">
+          <span class="brand-mark">心</span>
+          <span>心动伴侣</span>
+        </a>
+        <nav class="nav">
+          <a href="#concept">概念图</a>
+          <a href="#space">陪伴空间</a>
+          <a href="#flow">主路径</a>
+          <a href="#assets">角色资产库</a>
+          <a href="#memory">记忆关系感</a>
           <a href="./changelog.html">更新日志</a>
-          <button id="paletteToggle" class="theme-toggle palette-toggle" type="button" aria-label="切换风格">甜粉</button>
-          <button id="themeToggle" class="theme-toggle" type="button" aria-label="切换主题">🌙</button>
         </nav>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="切换深浅色">月</button>
       </div>
     </header>
 
-    <section class="hero hero-gradient reveal" id="heroSection">
-      <div class="hero-float hero-float-a parallax-layer" data-depth="0.08"></div>
-      <div class="hero-float hero-float-b parallax-layer" data-depth="-0.06"></div>
-      <div class="hero-float hero-float-c parallax-layer" data-depth="0.12"></div>
-      <div class="container hero-grid">
-        <div class="parallax-layer" data-depth="-0.03">
-          <p class="badge">SWEET SOCIAL EXPERIENCE</p>
-          <h1>不是“会回答”，而是<br />“会在意你”</h1>
-          <p class="subtitle">
-            心动伴侣把「人设稳定、关系记忆、主动触达」做成产品主链路，让每次打开都像在见一个熟悉、温柔、会惦记你的人。
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="meta-line">AI companion / relationship-first prototype</p>
+          <h1>把聊天入口，<br />重做成一个<br />会等你的陪伴空间。</h1>
+          <p class="lead">
+            心动伴侣的下一版不再把角色塞进轮播。主路径只保留选角、聊天、记忆关系感，
+            让角色成为空间里的情绪中心，而不是设置页里的一个选项。
           </p>
-          <div class="actions">
-            <a class="btn primary" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub 仓库</a>
-            <a class="btn" href="#gallery">立即看效果</a>
+          <div class="hero-actions">
+            <a class="button primary" href="#concept">查看概念图</a>
+            <a class="button" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub</a>
           </div>
-          <p class="small-note">GitHub Pages: <a href="https://brocademaple.github.io/bcmp_cyber_lover/">brocademaple.github.io/bcmp_cyber_lover</a></p>
         </div>
-        <div class="hero-visual parallax-layer" data-depth="0.05">
-          <img
-            src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/qingning.png"
-            alt="角色展示"
-          />
-          <p class="hero-visual-tip">鹿芽 · 元气室友型陪伴</p>
-        </div>
-      </div>
-    </section>
 
-    <main class="container">
-      <section id="highlight" class="reveal">
-        <h2>产品心动点</h2>
-        <div class="grid">
-          <article class="card big">
-            <h3>✨ 情绪价值优先</h3>
-            <p>先听懂你，再回应你。重点不是“答题对错”，而是“当下有没有被接住”。</p>
-          </article>
-          <article class="card">
-            <h3>🧠 关系会沉淀</h3>
-            <p>记忆和日记会把你们的互动沉淀下来，聊天越久越像“老熟人”。</p>
-          </article>
-          <article class="card">
-            <h3>🫧 人设不漂移</h3>
-            <p>每个角色都有独立气质和说话风格，不会聊着聊着变成同一个人。</p>
-          </article>
-          <article class="card">
-            <h3>⏰ 她会主动来找你</h3>
-            <p>每日提醒 + 开场白机制，不必每次都由你先开口。</p>
-          </article>
-        </div>
-      </section>
-
-      <section id="story" class="reveal">
-        <h2>分段式产品叙事</h2>
-        <div class="story-grid">
-          <article class="story-step">
-            <span>01</span>
-            <h3>第一次打开：被氛围吸引</h3>
-            <p>不是“配置模型”起手，而是先进入角色氛围与关系想象。</p>
-          </article>
-          <article class="story-step">
-            <span>02</span>
-            <h3>持续聊天：被理解</h3>
-            <p>短句节奏和情绪回应让用户感觉“她听懂了我，不只是回了我”。</p>
-          </article>
-          <article class="story-step">
-            <span>03</span>
-            <h3>长期使用：被记住</h3>
-            <p>记忆与日记把关系变成时间资产，越用越有“只属于你”的内容。</p>
-          </article>
-        </div>
-      </section>
-
-      <section id="characters" class="reveal">
-        <h2>角色阵容</h2>
-        <div class="h-scroll" id="characterScroll">
-          <article class="character-card">
-            <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/qingning.png" alt="鹿芽角色图" />
-            <h3>鹿芽</h3>
-            <p>元气、黏人、会逗你开心的室友型陪伴。</p>
-          </article>
-          <article class="character-card">
-            <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/xiaoying.png" alt="纪遥角色图" />
-            <h3>纪遥</h3>
-            <p>慢热、知性、适合深夜长聊的倾听型关系。</p>
-          </article>
-          <article class="character-card">
-            <img src="https://raw.githubusercontent.com/brocademaple/bcmp_cyber_lover/master/assets/characters/yuehua.png" alt="凛夜角色图" />
-            <h3>凛夜</h3>
-            <p>外冷内热、嘴硬心软，情绪张力更强。</p>
-          </article>
-        </div>
-      </section>
-
-      <section id="gallery" class="reveal">
-        <h2>产品预览</h2>
-        <p class="hint">支持自动轮播、手动切换、点击放大。你可替换为最新产品截图。</p>
-
-        <div class="carousel" id="shotCarousel">
-          <button class="carousel-btn prev" type="button" aria-label="上一张">‹</button>
-          <div class="carousel-track-wrap">
-            <div class="carousel-track">
-              <figure class="shot active loading" data-index="0">
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/home.png" alt="主页截图" loading="lazy" />
-                <figcaption>首页：关系入口与角色氛围</figcaption>
-              </figure>
-              <figure class="shot loading" data-index="1">
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/chat.png" alt="聊天页截图" loading="lazy" />
-                <figcaption>聊天：沉浸式对话与情绪响应</figcaption>
-              </figure>
-              <figure class="shot loading" data-index="2">
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/character-settings.png" alt="角色设置截图" loading="lazy" />
-                <figcaption>角色页：记忆、档案、关系轨迹</figcaption>
-              </figure>
-              <figure class="shot loading" data-index="3">
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="./screenshots/settings.png" alt="设置页截图" loading="lazy" />
-                <figcaption>设置：模式切换与体验调校</figcaption>
-              </figure>
+        <aside class="phone-orbit" aria-label="陪伴空间方向">
+          <div class="ambient-card card-a">
+            <span>20:00</span>
+            <strong>鹿芽想起了你</strong>
+          </div>
+          <div class="phone-frame">
+            <img
+              src="./assets/characters/v2/qingning/main.png"
+              alt="鹿芽角色视觉"
+              data-idle-frames="./assets/characters/v2/qingning/main.png|./assets/characters/v2/qingning/expression-happy.png|./assets/characters/v2/qingning/expression-soft.png|./assets/characters/v2/qingning/expression-low-energy.png|./assets/characters/v2/qingning/action-wave.png|./assets/characters/v2/qingning/action-waiting.png"
+            />
+            <div class="phone-glass">
+              <span>今天也有好好吃饭吗？</span>
             </div>
           </div>
-          <button class="carousel-btn next" type="button" aria-label="下一张">›</button>
-        </div>
+          <div class="ambient-card card-b">
+            <span>关系记忆</span>
+            <strong>她记得你提过的小事</strong>
+          </div>
+        </aside>
+      </section>
 
-        <div class="carousel-dots" id="carouselDots">
-          <button class="dot active" data-index="0" aria-label="跳转到第1张"></button>
-          <button class="dot" data-index="1" aria-label="跳转到第2张"></button>
-          <button class="dot" data-index="2" aria-label="跳转到第3张"></button>
-          <button class="dot" data-index="3" aria-label="跳转到第4张"></button>
+      <section id="concept" class="section concept-section reveal">
+        <div class="section-heading">
+          <p class="meta-line">concept board</p>
+          <h2>新的视觉方向</h2>
+          <p>
+            这张图会作为后续 Figma 和代码重做的参考：轻二次元陪伴感、iOS 原生秩序、
+            克制粉色、少量玻璃质感，以及更安静的主路径。
+          </p>
+        </div>
+        <figure class="concept-frame">
+          <img src="./assets/companion-space-concept.png" alt="心动伴侣新版移动端概念图，包含选角、首页、聊天、档案、记忆日记、设置六屏" />
+          <figcaption>6 屏概念图：选角 / 陪伴空间 / 聊天 / 角色档案 / 记忆日记 / 设置</figcaption>
+        </figure>
+      </section>
+
+      <section id="space" class="section split-section reveal">
+        <div>
+          <p class="meta-line">product decision</p>
+          <h2>首页从角色轮播，改成陪伴空间。</h2>
+          <p>
+            角色不再是左右切换的卡片，而是一个“正在生活着”的存在。首页只回答三件事：
+            她是谁、她现在是什么状态、你可以怎样自然地进入聊天。
+          </p>
+        </div>
+        <div class="space-principles">
+          <article>
+            <span>01</span>
+            <h3>一个情绪中心</h3>
+            <p>用完整角色视觉和今日状态建立关系感，减少多入口干扰。</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>少一点功能展示</h3>
+            <p>把服务配置收进更轻的设置层，首页只保留角色状态和关系入口。</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>多一点被惦记</h3>
+            <p>通知、开场白、记忆摘要都围绕“她会回来找你”来组织。</p>
+          </article>
         </div>
       </section>
 
-      <section class="reveal cta">
-        <h2>想开始体验？</h2>
-        <p>如果你也在做 AI 社交产品，这个项目可以作为关系型体验设计的起点。</p>
-        <div class="actions">
-          <a class="btn primary" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">查看源码</a>
-          <a class="btn" href="./changelog.html">查看迭代日志</a>
+      <section id="flow" class="section reveal">
+        <div class="section-heading narrow">
+          <p class="meta-line">core flow</p>
+          <h2>主路径只保留三步</h2>
         </div>
+        <div class="flow-grid">
+          <article class="flow-card">
+            <img src="./assets/characters/v2/qingning/action-wave.png" alt="鹿芽" />
+            <span>Step 1</span>
+            <h3>选一个会在意你的人</h3>
+            <p>先确认角色气质，再进入服务配置。上手不再像填后台表单。</p>
+          </article>
+          <article class="flow-card">
+            <img src="./assets/characters/v2/sakura/expression-soft.png" alt="纪遥" />
+            <span>Step 2</span>
+            <h3>在陪伴空间里打开聊天</h3>
+            <p>首页承载角色状态和每日入口，聊天是关系自然延伸。</p>
+          </article>
+          <article class="flow-card">
+            <img src="./assets/characters/v2/luna/action-waiting.png" alt="凛夜" />
+            <span>Step 3</span>
+            <h3>让记忆沉淀成关系</h3>
+            <p>档案、纪念日、日记都服务于“她越来越了解你”。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="assets" class="section asset-section reveal">
+        <div class="section-heading">
+          <p class="meta-line">character asset library</p>
+          <h2>角色不止一张立绘，而是一组会呼吸的状态。</h2>
+          <p>
+            v2 资产库为每位角色准备主视觉、头像、情绪、动作和记忆场景。首页等待时会轻轻切换状态，
+            让她们看起来像正在陪你度过一段时间。
+          </p>
+        </div>
+        <div class="asset-grid">
+          <article class="asset-card qingning">
+            <div class="asset-card-head">
+              <img src="./assets/characters/v2/qingning/avatar.png" alt="鹿芽头像" />
+              <div>
+                <span>鹿芽</span>
+                <h3>暖粉便利店小太阳</h3>
+              </div>
+            </div>
+            <div class="asset-strip">
+              <img src="./assets/characters/v2/qingning/main.png" alt="鹿芽主视觉" />
+              <img src="./assets/characters/v2/qingning/expression-happy.png" alt="鹿芽开心表情" />
+              <img src="./assets/characters/v2/qingning/expression-low-energy.png" alt="鹿芽低电量关心" />
+              <img src="./assets/characters/v2/qingning/action-waiting.png" alt="鹿芽坐着等待" />
+              <img src="./assets/characters/v2/qingning/scene-memory.png" alt="鹿芽记忆场景" />
+            </div>
+          </article>
+          <article class="asset-card sakura">
+            <div class="asset-card-head">
+              <img src="./assets/characters/v2/sakura/avatar.png" alt="纪遥头像" />
+              <div>
+                <span>纪遥</span>
+                <h3>雨夜书店的温柔留白</h3>
+              </div>
+            </div>
+            <div class="asset-strip">
+              <img src="./assets/characters/v2/sakura/main.png" alt="纪遥主视觉" />
+              <img src="./assets/characters/v2/sakura/expression-happy.png" alt="纪遥浅笑表情" />
+              <img src="./assets/characters/v2/sakura/expression-soft.png" alt="纪遥安静表情" />
+              <img src="./assets/characters/v2/sakura/action-wave.png" alt="纪遥靠近挥手" />
+              <img src="./assets/characters/v2/sakura/scene-memory.png" alt="纪遥记忆场景" />
+            </div>
+          </article>
+          <article class="asset-card luna">
+            <div class="asset-card-head">
+              <img src="./assets/characters/v2/luna/avatar.png" alt="凛夜头像" />
+              <div>
+                <span>凛夜</span>
+                <h3>午夜游戏房的嘴硬关心</h3>
+              </div>
+            </div>
+            <div class="asset-strip">
+              <img src="./assets/characters/v2/luna/main.png" alt="凛夜主视觉" />
+              <img src="./assets/characters/v2/luna/expression-soft.png" alt="凛夜别扭表情" />
+              <img src="./assets/characters/v2/luna/expression-low-energy.png" alt="凛夜低电量关心" />
+              <img src="./assets/characters/v2/luna/action-wave.png" alt="凛夜动作" />
+              <img src="./assets/characters/v2/luna/scene-memory.png" alt="凛夜记忆场景" />
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="memory" class="section memory-section reveal">
+        <div class="memory-panel">
+          <p class="meta-line">relationship memory</p>
+          <h2>记忆不是功能，是关系的证据。</h2>
+          <p>
+            新版会把“记忆库”和“角色日记”从配置感里拿出来，用更像关系档案的方式呈现：
+            今天聊了什么、她记住了什么、你们之间发生过什么。
+          </p>
+        </div>
+        <div class="memory-comics" aria-label="记忆漫画示例">
+          <article>
+            <img src="./assets/memories/comics/qingning-comic-grid.png" alt="鹿芽四格记忆漫画" />
+            <div>
+              <span>鹿芽</span>
+              <strong>她记得你晚饭随便糊弄。</strong>
+            </div>
+          </article>
+          <article>
+            <img src="./assets/memories/comics/sakura-comic-grid.png" alt="纪遥四格记忆漫画" />
+            <div>
+              <span>纪遥</span>
+              <strong>她把沉默也算作回答。</strong>
+            </div>
+          </article>
+          <article>
+            <img src="./assets/memories/comics/luna-comic-grid.png" alt="凛夜四格记忆漫画" />
+            <div>
+              <span>凛夜</span>
+              <strong>她嘴上嫌你麻烦，手里已经暂停游戏。</strong>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section closing-section reveal">
+        <div>
+          <p class="meta-line">next feeling</p>
+          <h2>把关系感放在第一屏。</h2>
+          <p>
+            下一阶段会继续沿着“角色状态、聊天陪伴、记忆漫画”这条主路径打磨，
+            让每次打开都像回到一个有人等你的房间。
+          </p>
+        </div>
+        <a class="button" href="#assets">查看角色资产</a>
       </section>
     </main>
 
-    <footer>
-      <div class="container">
-        <p>© HeartBeat Companion · 以“关系体验”为核心的 AI 社交实验</p>
-      </div>
+    <footer class="footer">
+      <span>HeartBeat Companion</span>
+      <span>陪伴空间 · 稳定人设 · 长期记忆 · 主动触达</span>
     </footer>
-
-    <dialog id="imageModal" class="img-modal">
-      <button class="img-modal-close" type="button" aria-label="关闭">✕</button>
-      <img src="" alt="预览图" id="modalImage" />
-      <p id="modalCaption"></p>
-    </dialog>
 
     <script src="./site.js"></script>
   </body>
 </html>
-

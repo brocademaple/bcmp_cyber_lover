@@ -61,7 +61,7 @@ const MessageInput = forwardRef<MessageInputHandle, Props>(
     const canSend = (text.trim().length > 0 || !!selectedImage) && !disabled;
 
     return (
-      <View style={[styles.container, { backgroundColor: C.surface, borderTopColor: C.border }]}>
+      <View style={[styles.container, { backgroundColor: C.surface + 'E8', borderTopColor: C.border }]}>
         {selectedImage && (
           <View style={styles.imagePreviewRow}>
             <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
@@ -71,13 +71,13 @@ const MessageInput = forwardRef<MessageInputHandle, Props>(
           </View>
         )}
         <View style={styles.inputRow}>
-          <TouchableOpacity onPress={pickImage} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-            <Text style={styles.iconText}>🖼</Text>
+          <TouchableOpacity onPress={pickImage} style={[styles.iconBtn, { backgroundColor: C.inputBg + 'DD' }]}>
+            <Text style={[styles.iconText, { color: C.primary }]}>＋</Text>
           </TouchableOpacity>
 
           <TextInput
             ref={inputRef}
-            style={[styles.input, { backgroundColor: C.inputBg, color: C.text }]}
+            style={[styles.input, { backgroundColor: C.inputBg + 'DD', color: C.text }]}
             value={text}
             onChangeText={setText}
             placeholder="输入消息..."
@@ -153,7 +153,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconText: {
-    fontSize: 18,
+    fontSize: 22,
+    fontWeight: '700',
   },
   input: {
     flex: 1,

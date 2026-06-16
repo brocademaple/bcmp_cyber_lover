@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Text, TouchableOpacity } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,12 +48,37 @@ export default function AppNavigator({ navigationRef }: Props) {
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName={initialRoute}
-        screenOptions={{
-          headerStyle: { backgroundColor: C.primaryDark },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: '600' },
+        screenOptions={({ navigation, route }) => {
+          const isImmersive = route.name === 'Chat';
+          const tintColor = isImmersive ? '#fff' : C.text;
+          return {
+          headerTransparent: isImmersive,
+          headerStyle: { backgroundColor: isImmersive ? 'transparent' : C.background },
+          headerShadowVisible: false,
+          headerTintColor: tintColor,
+          headerTitleStyle: { fontWeight: '700', color: tintColor },
+          contentStyle: { backgroundColor: C.background },
           headerBackTitleVisible: false,
+          headerLeft: navigation.canGoBack()
+            ? () => (
+                <TouchableOpacity
+                  onPress={() => navigation.goBack()}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isImmersive ? 'rgba(10,10,18,0.22)' : C.surface + 'CC',
+                  }}
+                >
+                  <Text style={{ color: tintColor, fontSize: 34, lineHeight: 36, fontWeight: '400' }}>‹</Text>
+                </TouchableOpacity>
+              )
+            : undefined,
           animation: 'slide_from_right',
+        };
         }}
       >
         <Stack.Screen
@@ -83,7 +109,7 @@ export default function AppNavigator({ navigationRef }: Props) {
         <Stack.Screen
           name="LifeSettings"
           component={LifeSettingsScreen}
-          options={{ title: '生命' }}
+          options={{ title: '陪伴提醒' }}
         />
         <Stack.Screen
           name="MemorySettings"
@@ -93,12 +119,12 @@ export default function AppNavigator({ navigationRef }: Props) {
         <Stack.Screen
           name="AdvancedSettings"
           component={AdvancedSettingsScreen}
-          options={{ title: '高级' }}
+          options={{ title: '内部参数' }}
         />
         <Stack.Screen
           name="ServiceSettings"
           component={ServiceSettingsScreen}
-          options={{ title: '服务提供商' }}
+          options={{ title: '连接服务' }}
         />
         <Stack.Screen
           name="CharacterEditor"

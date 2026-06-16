@@ -58,8 +58,13 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
           </Text>
         </View>
         <Text style={[styles.timestamp, { color: C.textSecondary }, isUser && styles.timestampRight]}>
-          {timeStr}
+          {message.status === 'failed' ? `${timeStr} · 未送达` : timeStr}
         </Text>
+        {message.status === 'failed' && (
+          <Text style={[styles.failedHint, { color: C.danger }, isUser && styles.timestampRight]}>
+            服务还没有连接好
+          </Text>
+        )}
       </View>
 
       {isUser && <View style={styles.userSpacer} />}
@@ -143,6 +148,12 @@ const styles = StyleSheet.create({
   timestampRight: {
     textAlign: 'right',
     marginRight: 4,
+  },
+  failedHint: {
+    fontSize: 11,
+    marginTop: 2,
+    marginLeft: 4,
+    fontWeight: '700',
   },
   userSpacer: {
     width: 8,

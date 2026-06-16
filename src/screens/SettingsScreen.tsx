@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,9 +15,10 @@ interface MenuItemProps {
   description?: string;
   onPress: () => void;
   color?: string;
+  value?: string;
 }
 
-function MenuItem({ icon, label, description, onPress, color }: MenuItemProps) {
+function MenuItem({ icon, label, description, onPress, color, value }: MenuItemProps) {
   const C = useThemeColors();
   return (
     <TouchableOpacity
@@ -32,6 +33,7 @@ function MenuItem({ icon, label, description, onPress, color }: MenuItemProps) {
           <Text style={[styles.menuDesc, { color: C.textSecondary }]}>{description}</Text>
         )}
       </View>
+      {value && <Text style={[styles.menuValue, { color: C.textSecondary }]}>{value}</Text>}
       <Text style={[styles.arrow, { color: C.textSecondary }]}>›</Text>
     </TouchableOpacity>
   );
@@ -41,8 +43,12 @@ export default function SettingsScreen({ navigation }: Props) {
   const C = useThemeColors();
   const { settings, setAppMode, setDebugNowTs, saveSettings } = useSettingsStore();
   const isAdmin = settings.appMode === 'admin';
+  const [advancedTapCount, setAdvancedTapCount] = useState(0);
+  const [showAdvancedControls, setShowAdvancedControls] = useState(false);
   const debugNow = settings.advanced.debugNowTs;
   const effectiveNow = debugNow ?? Date.now();
+  const connected = settings.service.apiKey.trim().length > 0;
+  const connectionLabel = connected ? '已准备好' : '待连接';
 
   const handleModeChange = async (mode: AppMode) => {
     setAppMode(mode);
@@ -60,48 +66,75 @@ export default function SettingsScreen({ navigation }: Props) {
     await saveSettings();
   };
 
+  const handleVersionTap = async () => {
+    const nextCount = advancedTapCount + 1;
+    setAdvancedTapCount(nextCount);
+    if (nextCount >= 5) {
+      setShowAdvancedControls(true);
+      if (!isAdmin) {
+        setAppMode('admin');
+        await saveSettings();
+      }
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={[styles.pageTitle, { color: C.primary }]}>设置</Text>
+      <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
+        <View style={styles.hero}>
+          <Text style={[styles.pageTitle, { color: C.text }]}>设置</Text>
+          <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
+            管理她如何回复、何时陪你，以及哪些关系片段会被留下。
+          </Text>
+        </View>
 
-        <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>系统模式</Text>
-          <View style={[styles.modeRow, { backgroundColor: C.surface, borderColor: C.border }]}>
-            <TouchableOpacity
-              style={[styles.modeOption, isAdmin && { backgroundColor: C.primary }]}
-              onPress={() => handleModeChange('admin')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.modeLabel, { color: isAdmin ? '#fff' : C.text }]}>Admin 模式</Text>
-              <Text style={[styles.modeDesc, { color: isAdmin ? 'rgba(255,255,255,0.9)' : C.textSecondary }]}>
-                可查看角色日记与编辑设定
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modeOption, !isAdmin && { backgroundColor: C.primary }]}
-              onPress={() => handleModeChange('explore')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.modeLabel, { color: !isAdmin ? '#fff' : C.text }]}>探索模式</Text>
-              <Text style={[styles.modeDesc, { color: !isAdmin ? 'rgba(255,255,255,0.9)' : C.textSecondary }]}>
-                仅聊天体验，隐藏日记等管理信息
-              </Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.statusCard, { backgroundColor: C.surface, borderColor: C.border }]}
+          onPress={() => navigation.navigate('ServiceSettings')}
+          activeOpacity={0.82}
+        >
+          <View style={[styles.statusIcon, { backgroundColor: connected ? C.primary : C.inputBg }]}>
+            <Text style={styles.statusIconText}>{connected ? '✓' : '…'}</Text>
           </View>
-        </View>
+          <View style={styles.statusCopy}>
+            <Text style={[styles.statusTitle, { color: C.text }]}>服务连接</Text>
+            <Text style={[styles.statusDesc, { color: C.textSecondary }]}>
+              {connected ? '她已经可以在聊天里实时回复。' : '连接 API 后，聊天、好感和记忆才会正式生效。'}
+            </Text>
+          </View>
+          <Text style={[styles.statusValue, { color: connected ? C.primary : C.textSecondary }]}>{connectionLabel}</Text>
+        </TouchableOpacity>
 
-        <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>服务配置</Text>
-          <MenuItem
-            icon="🔌"
-            label="服务提供商"
-            description="配置AI模型、API密钥"
-            onPress={() => navigation.navigate('ServiceSettings')}
-          />
-        </View>
+        {showAdvancedControls && (
+          <View style={styles.group}>
+            <Text style={[styles.groupLabel, { color: C.textSecondary }]}>内部工具</Text>
+            <View style={[styles.modeRow, { backgroundColor: C.surface, borderColor: C.border }]}>
+              <TouchableOpacity
+                style={[styles.modeOption, isAdmin && { backgroundColor: C.primary }]}
+                onPress={() => handleModeChange('admin')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modeLabel, { color: isAdmin ? '#fff' : C.text }]}>高级模式</Text>
+                <Text style={[styles.modeDesc, { color: isAdmin ? 'rgba(255,255,255,0.9)' : C.textSecondary }]}>
+                  显示角色编辑与关系沉淀工具
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeOption, !isAdmin && { backgroundColor: C.primary }]}
+                onPress={() => handleModeChange('explore')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modeLabel, { color: !isAdmin ? '#fff' : C.text }]}>陪伴模式</Text>
+                <Text style={[styles.modeDesc, { color: !isAdmin ? 'rgba(255,255,255,0.9)' : C.textSecondary }]}>
+                  保留聊天、记忆漫画和日常陪伴
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
-        <View style={styles.group}>
+        {showAdvancedControls && (
+          <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: C.textSecondary }]}>角色设置</Text>
           {isAdmin && (
             <MenuItem
@@ -111,11 +144,12 @@ export default function SettingsScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('CharacterEditor', {})}
             />
           )}
-        </View>
+          </View>
+        )}
 
-        {isAdmin && (
+        {showAdvancedControls && isAdmin && (
           <View style={styles.group}>
-            <Text style={[styles.groupLabel, { color: C.textSecondary }]}>时间调试（Admin）</Text>
+            <Text style={[styles.groupLabel, { color: C.textSecondary }]}>时间校准</Text>
             <View style={[styles.debugPanel, { backgroundColor: C.surface, borderColor: C.border }]}>
               <Text style={[styles.debugTitle, { color: C.text }]}>
                 当前模拟时间：{format(effectiveNow, 'yyyy-MM-dd HH:mm:ss')}
@@ -162,26 +196,40 @@ export default function SettingsScreen({ navigation }: Props) {
         )}
 
         <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>模式说明</Text>
-          {!isAdmin && (
-            <View style={[styles.hintCard, { backgroundColor: C.surface, borderColor: C.border }]}>
-              <Text style={[styles.hintText, { color: C.textSecondary }]}>
-                探索模式下隐藏角色编辑与日记管理，切换到 Admin 可见。
-              </Text>
-            </View>
+          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>陪伴体验</Text>
+          <MenuItem
+            icon="▣"
+            label="记忆漫画"
+            description="查看她记住的多格漫画与关系片段"
+            onPress={() => navigation.navigate('MemorySettings')}
+          />
+          <MenuItem
+            icon="♡"
+            label="陪伴提醒"
+            description="每日提醒、主动问候和安静陪伴"
+            onPress={() => navigation.navigate('LifeSettings')}
+            value={settings.life.enabled ? '开启' : '关闭'}
+          />
+          <MenuItem
+            icon="⌁"
+            label="连接服务"
+            description="API 密钥、模型和连接测试"
+            onPress={() => navigation.navigate('ServiceSettings')}
+            value={connectionLabel}
+          />
+          {showAdvancedControls && isAdmin && (
+            <MenuItem
+              icon="⚙"
+              label="内部参数"
+              description="兼容模式、主题、发送延迟"
+              onPress={() => navigation.navigate('AdvancedSettings')}
+            />
           )}
         </View>
 
-        <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>功能设置</Text>
-          <MenuItem
-            icon="💖"
-            label="生命"
-            description="主动消息、每日通知时间"
-            onPress={() => navigation.navigate('LifeSettings')}
-          />
-          {/* 记忆设置和高级设置入口已在MVP中隐藏 */}
-        </View>
+        <TouchableOpacity style={styles.versionTap} onPress={handleVersionTap} activeOpacity={0.7}>
+          <Text style={[styles.versionText, { color: C.textSecondary }]}>HeartBeat Companion · v1.0</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -189,12 +237,59 @@ export default function SettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { padding: 16, paddingTop: 8 },
+  scroll: { padding: 16, paddingTop: 8, paddingBottom: 28 },
+  hero: {
+    marginBottom: 16,
+  },
   pageTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 20,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '900',
     marginLeft: 4,
+  },
+  pageDesc: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 6,
+    marginHorizontal: 4,
+  },
+  statusCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 28,
+    padding: 16,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  statusIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusIconText: {
+    color: '#fff',
+    fontSize: 21,
+    fontWeight: '900',
+  },
+  statusCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  statusTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  statusDesc: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  statusValue: {
+    fontSize: 12,
+    fontWeight: '900',
   },
   group: {
     marginBottom: 20,
@@ -267,6 +362,14 @@ const styles = StyleSheet.create({
   hintText: {
     fontSize: 12,
   },
+  versionTap: {
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  versionText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   groupLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -279,14 +382,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 15,
+    borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 8,
   },
   menuIcon: {
-    fontSize: 24,
+    width: 30,
+    textAlign: 'center',
+    fontSize: 22,
     marginRight: 14,
+    fontWeight: '800',
   },
   menuText: {
     flex: 1,
@@ -298,6 +404,11 @@ const styles = StyleSheet.create({
   menuDesc: {
     fontSize: 12,
     marginTop: 2,
+  },
+  menuValue: {
+    fontSize: 12,
+    fontWeight: '800',
+    marginHorizontal: 8,
   },
   arrow: {
     fontSize: 22,

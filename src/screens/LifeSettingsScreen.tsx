@@ -9,6 +9,12 @@ import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LifeSettings'>;
 
+const REMINDER_HOURS = [8, 12, 20, 23];
+
+function formatHour(hour: number) {
+  return `${String(hour).padStart(2, '0')}:00`;
+}
+
 export default function LifeSettingsScreen({ navigation }: Props) {
   const C = useThemeColors();
   const { settings, updateLife, saveSettings } = useSettingsStore();
@@ -21,66 +27,70 @@ export default function LifeSettingsScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={[styles.pageTitle, { color: C.text }]}>生命</Text>
+      <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
+        <View style={styles.hero}>
+          <Text style={[styles.pageTitle, { color: C.text }]}>陪伴提醒</Text>
+          <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
+            让她在合适的时间轻轻出现，而不是变成打扰你的通知机器。
+          </Text>
+        </View>
 
-        <SettingsSection title="">
+        <View style={[styles.summaryCard, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <Text style={[styles.summaryEyebrow, { color: C.primary }]}>Today</Text>
+          <Text style={[styles.summaryTitle, { color: C.text }]}>
+            {life.enabled ? '她会保留一点主动性' : '她会安静等你回来'}
+          </Text>
+          <Text style={[styles.summaryText, { color: C.textSecondary }]}>
+            当前提醒时间：{formatHour(life.notificationHour)}。主动问候{life.allowProactiveMessages ? '已开启' : '已关闭'}。
+          </Text>
+        </View>
+
+        <SettingsSection title="陪伴节奏">
           <SettingsRow
-            label="启用生命"
+            label="启用陪伴提醒"
+            description="关闭后，她不会主动发起提醒。"
             value={life.enabled}
             onToggle={(v) => updateLife({ enabled: v })}
           />
           <SettingsRow
-            label="允许Ta主动发送消息"
+            label="允许主动问候"
+            description="她会在适合的时候给你一句轻提醒。"
             value={life.allowProactiveMessages}
             onToggle={(v) => updateLife({ allowProactiveMessages: v })}
           />
           <SettingsRow
-            label="允许Ta在后台时主动发送消息"
+            label="后台轻提醒"
+            description="离开聊天后，也可以保留温和提醒。"
             value={life.allowBackgroundMessages}
             onToggle={(v) => updateLife({ allowBackgroundMessages: v })}
           />
-          <SettingsRow
-            label="设置允许Ta主动发送消息的时间间隔"
-            showArrow
-            onPress={() => {}}
-          />
-          <SettingsRow
-            label="启用后台消息Toast提示"
-            description="关闭后，在后台消息功能已打开时，进入聊天页将不再弹出有关后台消息功能的Toast提示"
-            value={life.backgroundToastEnabled}
-            onToggle={(v) => updateLife({ backgroundToastEnabled: v })}
-          />
-          <SettingsRow
-            label="启用后台消息退出确认"
-            description="关闭后，在后台消息功能已打开时，退出聊天页将不再弹出二次确认窗口"
-            value={life.backgroundExitConfirm}
-            onToggle={(v) => updateLife({ backgroundExitConfirm: v })}
-          />
-          <SettingsRow
-            label="提升动态主动性"
-            description="开启后，将会在你对动态进行任意操作（如发动态，点赞动态，评论动态）时，通知最近一次聊天的人（如果你点赞或评论的动态不是最近一次聊天的人发布的，则会通知该条动态的发布者）并让Ta立即做出回应"
-            value={life.enhancedMomentProactivity}
-            onToggle={(v) => updateLife({ enhancedMomentProactivity: v })}
-          />
         </SettingsSection>
 
-        <TouchableOpacity
-          style={[styles.testBtn, { borderColor: C.primary }]}
-          onPress={() => {}}
-        >
-          <Text style={[styles.testBtnText, { color: C.primary }]}>测试连接</Text>
-        </TouchableOpacity>
+        <View style={styles.timeSection}>
+          <Text style={[styles.sectionTitle, { color: C.primary }]}>提醒时间</Text>
+          <View style={styles.timeGrid}>
+            {REMINDER_HOURS.map((hour) => {
+              const selected = life.notificationHour === hour;
+              return (
+                <TouchableOpacity
+                  key={hour}
+                  style={[
+                    styles.timeChip,
+                    { borderColor: C.border, backgroundColor: selected ? C.primary : C.surface },
+                  ]}
+                  onPress={() => updateLife({ notificationHour: hour })}
+                >
+                  <Text style={[styles.timeText, { color: selected ? '#fff' : C.text }]}>
+                    {formatHour(hour)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: C.primary }]} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>保存</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.cancelBtn, { backgroundColor: C.danger }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.saveBtnText}>取消</Text>
+          <Text style={styles.saveBtnText}>保存陪伴设置</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -89,27 +99,76 @@ export default function LifeSettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { padding: 16 },
-  pageTitle: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
-  testBtn: {
-    borderWidth: 1,
-    borderRadius: 25,
-    paddingVertical: 13,
-    alignItems: 'center',
-    marginBottom: 10,
+  scroll: { padding: 16, paddingBottom: 32 },
+  hero: {
+    marginBottom: 16,
   },
-  testBtnText: { fontSize: 15 },
+  pageTitle: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '900',
+  },
+  pageDesc: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 6,
+  },
+  summaryCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 28,
+    padding: 18,
+    marginBottom: 20,
+    gap: 8,
+  },
+  summaryEyebrow: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  summaryTitle: {
+    fontSize: 22,
+    lineHeight: 27,
+    fontWeight: '900',
+  },
+  summaryText: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  timeSection: {
+    marginHorizontal: 16,
+    marginBottom: 22,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 8,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  timeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  timeChip: {
+    minWidth: 78,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingVertical: 11,
+    paddingHorizontal: 15,
+    alignItems: 'center',
+  },
+  timeText: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
   saveBtn: {
-    borderRadius: 25,
-    paddingVertical: 14,
+    borderRadius: 28,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 10,
+    marginHorizontal: 16,
   },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  cancelBtn: {
-    borderRadius: 25,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
+  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
 });

@@ -5,6 +5,8 @@ export interface Message {
   role: MessageRole;
   content: string;
   timestamp: number;
+  status?: 'sending' | 'sent' | 'failed';
+  errorMessage?: string;
   imageUri?: string;
   audioUri?: string;
   isThinking?: boolean;
@@ -23,6 +25,19 @@ export interface MemoryFragment {
   tags: string[]; // ['用户喜好', '重要日期', '情感事件']
   importance: number; // 1-10
   timestamp: number;
+  visualUri?: string | number;
+  visualTitle?: string;
+  visualCaption?: string;
+}
+
+export type AppTheme = 'pink' | 'blue' | 'yellow' | 'purple' | 'midnight';
+export type CharacterImageSource = string | number;
+
+export interface CharacterAssetSet {
+  main: CharacterImageSource;
+  avatar: CharacterImageSource;
+  idleFrames: CharacterImageSource[];
+  memoryScene: CharacterImageSource;
 }
 
 export type DiaryPeriod = 'daily' | 'weekly' | 'monthly';
@@ -45,6 +60,12 @@ export interface CharacterProfile {
   goals: string[];
 }
 
+export interface RelationshipRules {
+  affinityTriggers: string[];
+  memoryTriggers: string[];
+  askMemoryStyle: string;
+}
+
 export interface Anniversary {
   id: string;
   title: string;
@@ -57,10 +78,13 @@ export interface Character {
   id: string;
   name: string;
   avatar: string;
-  imageUri?: string;
+  imageUri?: CharacterImageSource;
+  assetSet?: CharacterAssetSet;
+  theme?: AppTheme;
   systemPrompt: string;
   greeting: string;
   personality: string;
+  relationshipRules?: RelationshipRules;
   emotionalState?: EmotionalState;
   profile?: CharacterProfile;
   memories?: MemoryFragment[];
@@ -107,8 +131,9 @@ export interface AdvancedConfig {
   customRequestParams: Record<string, unknown>;
   darkMode: 'auto' | 'light' | 'dark';
   sendDelayMs: number;
-  theme: 'pink' | 'blue' | 'yellow' | 'purple';
-  debugNowTs?: number; // Admin 调试时间：覆盖当前时间戳
+  theme: AppTheme;
+  themeMode: 'character' | 'manual';
+  debugNowTs?: number;
 }
 
 export type AppMode = 'admin' | 'explore';

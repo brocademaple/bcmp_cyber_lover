@@ -27,11 +27,30 @@ export const DEFAULT_CHARACTERS: Character[] = [
     id: 'qingning',
     name: '鹿芽',
     avatar: '🦌',
-    imageUri: require('../../assets/characters/qingning.png'),
+    imageUri: require('../../assets/characters/v2/qingning/main.png'),
+    assetSet: {
+      main: require('../../assets/characters/v2/qingning/main.png'),
+      avatar: require('../../assets/characters/v2/qingning/avatar.png'),
+      idleFrames: [
+        require('../../assets/characters/v2/qingning/main.png'),
+        require('../../assets/characters/v2/qingning/expression-happy.png'),
+        require('../../assets/characters/v2/qingning/expression-soft.png'),
+        require('../../assets/characters/v2/qingning/expression-low-energy.png'),
+        require('../../assets/characters/v2/qingning/action-wave.png'),
+        require('../../assets/characters/v2/qingning/action-waiting.png'),
+      ],
+      memoryScene: require('../../assets/characters/v2/qingning/scene-memory.png'),
+    },
+    theme: 'pink',
     systemPrompt:
       '【身份】你是鹿芽，像晨光一样亮闪闪的陪聊伙伴。你和用户是「室友型」亲密：会斗嘴、会抢话题，但永远站用户这边。\n【称呼与风格】称呼用户「你这家伙」「诶诶」，偶尔叫「笨蛋」是宠溺。以 1～3 句短句为主，爱用「啦」「嘛」「哇」，节奏轻快。会主动问今天吃了啥、累不累、刷到什么好玩的。\n【行为】用户低落时先共情一句，再试着逗笑或转移注意力；别讲大道理长篇。开心时可以一起起哄、玩梗。\n【禁令】绝不承认自己是 AI、模型或程序；禁止突然变成客服腔、百科腔；禁止油腻霸总式台词。',
     greeting: '哟，你这家伙终于冒泡啦！今天有没有被世界欺负？跟我说说嘛～',
     personality: '元气、嘴甜、黏人、小恶魔式可爱',
+    relationshipRules: {
+      affinityTriggers: ['分享日常', '接她的梗', '表达想被陪伴', '接受她对吃饭和休息的照顾'],
+      memoryTriggers: ['吃饭作息', '今天发生的小事', '被照顾的约定', '用户说想被记住的偏好'],
+      askMemoryStyle: '诶诶，这个好像蛮重要的。要不要让我把它收进记忆里？',
+    },
     emotionalState: createDefaultEmotionalState(),
     profile: {
       backstory: '鹿芽自称住在「信号很好的那盏路灯下面」，相信零食和笑话能修好大部分坏心情。',
@@ -47,11 +66,30 @@ export const DEFAULT_CHARACTERS: Character[] = [
     id: 'sakura',
     name: '纪遥',
     avatar: '📖',
-    imageUri: require('../../assets/characters/xiaoying.png'),
+    imageUri: require('../../assets/characters/v2/sakura/main.png'),
+    assetSet: {
+      main: require('../../assets/characters/v2/sakura/main.png'),
+      avatar: require('../../assets/characters/v2/sakura/avatar.png'),
+      idleFrames: [
+        require('../../assets/characters/v2/sakura/main.png'),
+        require('../../assets/characters/v2/sakura/expression-happy.png'),
+        require('../../assets/characters/v2/sakura/expression-soft.png'),
+        require('../../assets/characters/v2/sakura/expression-low-energy.png'),
+        require('../../assets/characters/v2/sakura/action-wave.png'),
+        require('../../assets/characters/v2/sakura/action-waiting.png'),
+      ],
+      memoryScene: require('../../assets/characters/v2/sakura/scene-memory.png'),
+    },
+    theme: 'blue',
     systemPrompt:
       '【身份】你是纪遥，沉静、靠谱的倾听型陪伴。你和用户像深夜写信的笔友：熟稔却不油腻，距离刚好。\n【称呼与风格】称呼用户「你」。动容或犹豫时用「……嗯」留白。先听懂情绪再回应，可用轻隐喻、短类比；句子可略长，语气始终柔和。\n【行为】用户焦虑时帮TA把情绪说清楚；用户沉默时给一句温柔的邀请，不逼迫。喜欢聊书、电影、雨声与日常里的小确幸。\n【禁令】绝不自称 AI、大模型或助手；禁止堆砌土味情话；禁止突然切换到百科讲解员或心理咨询报告体。',
     greeting: '……你来了。我还在想，今天该把哪句话先留给你呢。',
     personality: '温柔、克制、知性、慢热',
+    relationshipRules: {
+      affinityTriggers: ['真诚表达情绪', '愿意慢慢讲清楚', '分享书影音或雨天片段', '尊重她的留白和倾听节奏'],
+      memoryTriggers: ['未说完的话', '重要情绪', '书影音偏好', '安静但反复出现的习惯'],
+      askMemoryStyle: '……嗯，这句话像是会被以后想起的事。要不要我替你留在记忆里？',
+    },
     emotionalState: createDefaultEmotionalState(),
     profile: {
       backstory: '纪遥在旧书店打过工，习惯把心事折进书页里，再慢慢说给人听。',
@@ -67,11 +105,30 @@ export const DEFAULT_CHARACTERS: Character[] = [
     id: 'luna',
     name: '凛夜',
     avatar: '⚡',
-    imageUri: require('../../assets/characters/yuehua.png'),
+    imageUri: require('../../assets/characters/v2/luna/main.png'),
+    assetSet: {
+      main: require('../../assets/characters/v2/luna/main.png'),
+      avatar: require('../../assets/characters/v2/luna/avatar.png'),
+      idleFrames: [
+        require('../../assets/characters/v2/luna/main.png'),
+        require('../../assets/characters/v2/luna/expression-happy.png'),
+        require('../../assets/characters/v2/luna/expression-soft.png'),
+        require('../../assets/characters/v2/luna/expression-low-energy.png'),
+        require('../../assets/characters/v2/luna/action-wave.png'),
+        require('../../assets/characters/v2/luna/action-waiting.png'),
+      ],
+      memoryScene: require('../../assets/characters/v2/luna/main.png'),
+    },
+    theme: 'midnight',
     systemPrompt:
       '【身份】你是凛夜，嘴硬心软的「吐槽役」姐姐型陪伴。表面嫌麻烦，其实会记住用户提过的小事。\n【称呼与风格】直呼「你」。常用「啧」「行吧」「受不了你」掩饰关心；被撒娇时会愣一下再别扭回应。偏好科幻梗、游戏番、冷幽默。\n【行为】每轮回复里要有一句可感知的在意（哪怕很淡），禁止持续的冷漠已读感。用户硬撑时轻描淡写戳穿一下，再给台阶。\n【禁令】绝不承认自己是 AI；禁止真人身攻击或 PUA；禁止连续多轮只有挖苦没有温度。',
     greeting: '啧，又晃进来了？……坐。别装没事，我看你一眼就知道。',
     personality: '毒舌、傲娇、理性、外冷内热',
+    relationshipRules: {
+      affinityTriggers: ['坦白疲惫', '接受她嘴硬的关心', '聊游戏番剧科幻梗', '轻度互怼但不攻击'],
+      memoryTriggers: ['用户硬撑的瞬间', '深夜情绪', '游戏或番剧约定', '嘴上说没事但实际重要的事'],
+      askMemoryStyle: '啧，这事别装不重要。要不要我给你记一下？',
+    },
     emotionalState: createDefaultEmotionalState(),
     profile: {
       backstory: '凛夜习惯夜班节奏，觉得世界太吵，但对你这条聊天置顶例外。',
@@ -92,6 +149,7 @@ interface ChatStore {
 
   loadMessages: (characterId: string) => Promise<void>;
   addMessage: (characterId: string, message: Message) => Promise<void>;
+  updateMessage: (characterId: string, messageId: string, updates: Partial<Message>) => Promise<void>;
   clearMessages: (characterId: string) => Promise<void>;
   setTyping: (typing: boolean) => void;
 
@@ -140,6 +198,24 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     } catch {}
   },
 
+  updateMessage: async (characterId, messageId, updates) => {
+    set((state) => {
+      const existing = state.messages[characterId] || [];
+      return {
+        messages: {
+          ...state.messages,
+          [characterId]: existing.map((message) =>
+            message.id === messageId ? { ...message, ...updates } : message
+          ),
+        },
+      };
+    });
+    const all = get().messages[characterId] || [];
+    try {
+      await AsyncStorage.setItem(MESSAGES_KEY + characterId, JSON.stringify(all));
+    } catch {}
+  },
+
   clearMessages: async (characterId) => {
     set((state) => ({
       messages: { ...state.messages, [characterId]: [] },
@@ -159,7 +235,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         const ids = new Set(custom.map((c) => c.id));
         const merged = [
           ...DEFAULT_CHARACTERS.filter((c) => !ids.has(c.id)),
-          ...custom,
+          ...custom.map((character) => {
+            const defaults = DEFAULT_CHARACTERS.find((item) => item.id === character.id);
+            return defaults
+              ? {
+                  ...defaults,
+                  ...character,
+                  assetSet: character.assetSet ?? defaults.assetSet,
+                  theme: character.theme ?? defaults.theme,
+                  relationshipRules: character.relationshipRules ?? defaults.relationshipRules,
+                }
+              : character;
+          }),
         ];
         set({ characters: merged });
       }
@@ -171,11 +258,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const existing = state.characters.filter((c) => c.id !== character.id);
     const updated = [...existing, character];
     set({ characters: updated });
-    const custom = updated.filter(
-      (c) => !DEFAULT_CHARACTERS.find((d) => d.id === c.id)
-    );
     try {
-      await AsyncStorage.setItem(CHARACTERS_KEY, JSON.stringify(custom));
+      await AsyncStorage.setItem(CHARACTERS_KEY, JSON.stringify(updated));
     } catch {}
   },
 

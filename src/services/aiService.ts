@@ -1,5 +1,6 @@
 import { Message, ServiceConfig, Character, MemoryConfig, AdvancedConfig } from '../types';
 import { PROVIDER_CONFIGS } from '../store/settingsStore';
+import { getRelationshipPrompt } from './relationshipService';
 
 interface ChatCompletionRequest {
   messages: Array<{ role: string; content: string | ContentPart[] }>;
@@ -28,7 +29,8 @@ const CORE_REPLY_RULES = `
 1. 每次回复不超过3句话
 2. 必须包含对用户当下状态的关心或共情
 3. 语气温柔自然，像一个真正在意对方的朋友
-4. 禁止使用"作为AI"、"我无法"等机械表述`;
+4. 禁止使用"作为AI"、"我无法"等机械表述
+5. 不要说“我已经记住了”，除非用户明确要求记住某事；你可以询问“要不要写进记忆”`;
 
 function buildSystemMessage(
   character: Character,
@@ -41,6 +43,16 @@ function buildSystemMessage(
   if (character.profile) {
     systemContent += `\n\n【口头禅】${character.profile.catchphrases.join('、')}`;
   }
+
+  if (memory.enabled && character.memories && character.memories.length > 0) {
+    const memoryLines = character.memories
+      .slice(-8)
+      .map((item) => `- ${item.content}`)
+      .join('\n');
+    systemContent += `\n\n【你们已经确认写入的记忆】\n${memoryLines}`;
+  }
+
+  systemContent += getRelationshipPrompt(character);
 
   const now = new Date();
   const timeStr = now.toLocaleString('zh-CN', {

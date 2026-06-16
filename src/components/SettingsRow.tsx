@@ -78,10 +78,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
+    paddingVertical: 15,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 54,
+    minHeight: 58,
   },
   labelSection: {
     flex: 1,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '800',
   },
   description: {
     fontSize: 12,
@@ -110,14 +110,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '900',
     marginBottom: 8,
     marginLeft: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   sectionCard: {
-    borderRadius: 12,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
