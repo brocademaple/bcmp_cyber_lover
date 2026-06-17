@@ -8,6 +8,9 @@
       name="description"
       content="心动伴侣是一款以陪伴空间、稳定人设、长期记忆和主动触达为核心的 AI 关系产品。"
     />
+    <meta property="og:image" content="./assets/cyberlover-home-hero-preview.webp" />
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="preload" as="image" href="./assets/cyberlover-home-hero.webp" type="image/webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -31,18 +34,27 @@
           <a href="#memory">记忆关系感</a>
           <a href="./changelog.html">更新日志</a>
         </nav>
-        <button id="themeToggle" class="icon-button" type="button" aria-label="切换深浅色">月</button>
+        <button
+          id="themeToggle"
+          class="theme-switch"
+          type="button"
+          aria-label="切换站点视觉"
+          aria-live="polite"
+        >
+          <span class="theme-switch-dot" aria-hidden="true"></span>
+          <span class="theme-switch-label">都市清透</span>
+        </button>
       </div>
     </header>
 
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <p class="meta-line">AI companion / relationship-first prototype</p>
+          <p class="meta-line">AI companion / redesigned companion space</p>
           <h1>把聊天入口，<br />重做成一个<br />会等你的陪伴空间。</h1>
           <p class="lead">
-            心动伴侣的下一版不再把角色塞进轮播。主路径只保留选角、聊天、记忆关系感，
-            让角色成为空间里的情绪中心，而不是设置页里的一个选项。
+            这次重做把默认体验切到「都市清透」，并补上「甜美柔软」视觉切换。主路径收束到选角、
+            陪伴空间、聊天和记忆关系感，让角色成为第一屏的情绪中心。
           </p>
           <div class="hero-actions">
             <a class="button primary" href="#concept">查看概念图</a>
@@ -50,35 +62,24 @@
           </div>
         </div>
 
-        <aside class="phone-orbit" aria-label="陪伴空间方向">
-          <div class="ambient-card card-a">
-            <span>20:00</span>
-            <strong>鹿芽想起了你</strong>
-          </div>
-          <div class="phone-frame">
-            <img
-              src="./assets/characters/v2/qingning/main.png"
-              alt="鹿芽角色视觉"
-              data-idle-frames="./assets/characters/v2/qingning/main.png|./assets/characters/v2/qingning/expression-happy.png|./assets/characters/v2/qingning/expression-soft.png|./assets/characters/v2/qingning/expression-low-energy.png|./assets/characters/v2/qingning/action-wave.png|./assets/characters/v2/qingning/action-waiting.png"
-            />
-            <div class="phone-glass">
-              <span>今天也有好好吃饭吗？</span>
-            </div>
-          </div>
-          <div class="ambient-card card-b">
-            <span>关系记忆</span>
-            <strong>她记得你提过的小事</strong>
-          </div>
-        </aside>
+        <figure class="hero-poster-panel" aria-label="Cyberlover 情绪记忆墙首图">
+          <img
+            src="./assets/cyberlover-home-hero.webp"
+            width="3200"
+            height="1600"
+            alt="Cyberlover 首页 panorama，中央是青柠主视觉，左右是记忆、漫画、聊天和陪伴碎片"
+          />
+          <figcaption>青柠主视觉 / 情绪记忆墙 / 长期陪伴碎片</figcaption>
+        </figure>
       </section>
 
       <section id="concept" class="section concept-section reveal">
         <div class="section-heading">
           <p class="meta-line">concept board</p>
-          <h2>新的视觉方向</h2>
+          <h2>新的视觉系统已经落地</h2>
           <p>
-            这张图会作为后续 Figma 和代码重做的参考：轻二次元陪伴感、iOS 原生秩序、
-            克制粉色、少量玻璃质感，以及更安静的主路径。
+            站点与 app 同步采用两套新视觉：都市清透偏低饱和、高明度和香槟金细线；
+            甜美柔软偏雾粉、奶油纸感和更亲密的贴纸式细节。
           </p>
         </div>
         <figure class="concept-frame">
@@ -89,10 +90,10 @@
 
       <section id="space" class="section split-section reveal">
         <div>
-          <p class="meta-line">product decision</p>
-          <h2>首页从角色轮播，改成陪伴空间。</h2>
+          <p class="meta-line">product decision shipped</p>
+          <h2>首页已经从角色轮播，改成陪伴空间。</h2>
           <p>
-            角色不再是左右切换的卡片，而是一个“正在生活着”的存在。首页只回答三件事：
+            角色不再只是左右切换的卡片，而是一个“正在生活着”的存在。首页只回答三件事：
             她是谁、她现在是什么状态、你可以怎样自然地进入聊天。
           </p>
         </div>
@@ -208,27 +209,27 @@
           <p class="meta-line">relationship memory</p>
           <h2>记忆不是功能，是关系的证据。</h2>
           <p>
-            新版会把“记忆库”和“角色日记”从配置感里拿出来，用更像关系档案的方式呈现：
+            新版把“记忆库”和“角色日记”从配置感里拿出来，用更像关系档案的方式呈现：
             今天聊了什么、她记住了什么、你们之间发生过什么。
           </p>
         </div>
         <div class="memory-comics" aria-label="记忆漫画示例">
           <article>
-            <img src="./assets/memories/comics/qingning-comic-grid.png" alt="鹿芽四格记忆漫画" />
+            <img src="./assets/memories/comics/qingning-comic-magazine.png" alt="鹿芽纸质漫画记忆页" />
             <div>
               <span>鹿芽</span>
               <strong>她记得你晚饭随便糊弄。</strong>
             </div>
           </article>
           <article>
-            <img src="./assets/memories/comics/sakura-comic-grid.png" alt="纪遥四格记忆漫画" />
+            <img src="./assets/memories/comics/sakura-comic-magazine.png" alt="纪遥纸质漫画记忆页" />
             <div>
               <span>纪遥</span>
               <strong>她把沉默也算作回答。</strong>
             </div>
           </article>
           <article>
-            <img src="./assets/memories/comics/luna-comic-grid.png" alt="凛夜四格记忆漫画" />
+            <img src="./assets/memories/comics/luna-comic-magazine.png" alt="凛夜纸质漫画记忆页" />
             <div>
               <span>凛夜</span>
               <strong>她嘴上嫌你麻烦，手里已经暂停游戏。</strong>
@@ -239,10 +240,10 @@
 
       <section class="section closing-section reveal">
         <div>
-          <p class="meta-line">next feeling</p>
+          <p class="meta-line">current feeling</p>
           <h2>把关系感放在第一屏。</h2>
           <p>
-            下一阶段会继续沿着“角色状态、聊天陪伴、记忆漫画”这条主路径打磨，
+            当前展示站已经跟随 app 重设计，围绕角色状态、聊天陪伴、记忆漫画和双视觉主题更新，
             让每次打开都像回到一个有人等你的房间。
           </p>
         </div>
