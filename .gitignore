@@ -4,3 +4,4 @@ package-lock.json
 dist/
 dist-web-test/
 LEARNING.md
+docs/private/chat-logic/
