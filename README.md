@@ -15,9 +15,9 @@
   <img alt="React Native" src="https://img.shields.io/badge/React%20Native-0.81-f19ab8?style=for-the-badge&logo=react">
 </p>
 
-## 现在的版本
+## 现在的版本：V1.5
 
-心动伴侣正在从“聊天工具”收束成“陪伴空间”。第一屏不再强调配置和功能堆叠，而是让角色、记忆、日常提醒和关系感先出现。
+V1.5 将产品收束为“可信伴侣 + 角色创作”。角色拥有可修正的长期记忆、可回看的关系时间线和不会覆盖共同经历的人设版本；用户也可以从空白角色开始，用简单模式生成结构化规则，或进入专家模式逐层调整 Prompt。
 
 当前展示站主视觉是用脚本合成的粉色记忆墙：中央是鹿芽，四周是聊天、漫画、便利店灯光和睡前提醒的碎片。它已经接入 GitHub Pages 首页，也同步放进 README 顶部。
 
@@ -42,9 +42,10 @@ flowchart LR
 |:---|:---|
 | 角色 | 鹿芽、纪遥、凛夜三位内置角色，强调不同陪伴语气 |
 | 聊天 | OpenAI-compatible API，支持流式回复和视觉模型 |
-| 记忆 | 聊天记录、角色关系数据、日记和纪念日都走本地持久化 |
+| 记忆 | 聊天记录、角色关系数据、日记和纪念日都走本地持久化；长期记忆可修正、锁定和删除 |
 | 触达 | 每日通知进入聊天，并可生成当日开场白 |
-| 验证 | Admin 模式支持虚拟时间，方便检查深夜语境、日记 rollup 和记忆边界 |
+| 创作 | 自定义角色、简单/专家模式、本地质量体检和角色定义版本回退 |
+| 验证 | Admin 模式支持虚拟时间；V1.5 另有伴侣与角色创作链路验收脚本 |
 
 ## 当前可玩路径
 
@@ -54,8 +55,9 @@ flowchart LR
 | 首页 | 陪伴空间，展示角色状态和进入聊天的主入口 |
 | 聊天 | 流式回复、图片输入、快捷回应 |
 | 角色档案 | 档案、记忆、纪念日，Admin 下可看角色日记 |
+| 角色创作 | 新建自定义角色，简单生成或专家编辑，保存前体检，支持版本回退 |
 | 设置 | 服务提供商、模型、主题、通知、Admin 虚拟时间 |
-| 本地数据 | API Key 加密保存，聊天和角色数据保存在本机 |
+| 本地数据 | API Key 加密保存；聊天和角色保存在本机；支持本地备份、恢复前快照和错误诊断 |
 
 ## 角色阵容
 
@@ -80,6 +82,16 @@ npx expo start --android
 3. 填入 API Key、文字模型和可选视觉模型
 4. 测试连接后保存
 
+本地开发也可以通过 `.env.local` 注入 DeepSeek：
+
+```bash
+EXPO_PUBLIC_DEEPSEEK_API_KEY=sk-...
+npm run verify:deepseek-config
+npx expo start
+```
+
+未保存过本机密钥时，应用会默认选择 DeepSeek、`deepseek-chat` 和 `https://api.deepseek.com/v1`；保存过服务配置后，以本机安全存储里的设置为准。
+
 ## GitHub Pages 首图
 
 首图不是一次性生成的大图，而是由脚本拼接合成：
@@ -101,11 +113,17 @@ npm run build:pages-hero
 
 ```bash
 npx tsc --noEmit
+npm run verify:deepseek-config
 node scripts/verify-chat-history-ordering.js
 npm run verify:debug-now
+npm run verify:visual-assets
+npm run verify:v1.5
+npm run build:web
 ```
 
-这些检查覆盖类型、聊天历史排序和虚拟时间进入 AI prompt 的链路。涉及聊天、存储、AI 回复或设置行为时，提交前应跑一遍。
+这些检查覆盖类型、聊天历史排序、旧数据恢复、虚拟时间进入 AI prompt、角色视觉素材注册表、文档素材镜像、V1.5 记忆/关系/角色创作链路和 Expo Web 导出。涉及聊天、存储、AI 回复、设置行为、角色图、图标、文档展示或页面布局时，提交前应跑一遍。
+
+完整版本目标、交付进度和 API 支持清单见 [V1.5 项目管理文档](./docs/project-management/heartbeat-companion-v1.5.md)。
 
 ## 仓库地图
 
@@ -129,7 +147,10 @@ docs/
 | 项 | 状态 |
 |:---|:---|
 | 设置里修改每日通知时刻 | 已接入：改时间会重新排程，关闭会取消，重新开启会按当前时刻排程 |
-| Onboarding 保存前调通一次 API | 建议补强，减少进入聊天后才发现配置错误 |
+| Onboarding 保存前调通一次 API | 已接入：连接成功后才保存配置 |
+| 语音输入 | 待接 Speech-to-Text API；未配置时明确提示，不生成伪转写 |
+| Live2D / 3D | V1.6 先做单角色 Live2D 技术验证，3D 后置 |
+| V1.5 新页面真机像素验收 | 本轮按约定不启动 Simulator；发布后在白天补验 |
 | README 与 GitHub Pages 的叙事同步 | 已更新为鹿芽记忆墙版本 |
 
 ---

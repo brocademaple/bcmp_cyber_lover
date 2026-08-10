@@ -1,21 +1,29 @@
 (function () {
   const root = document.documentElement;
   const themeToggle = document.getElementById('themeToggle');
-  const savedTheme = localStorage.getItem('hb-theme');
-  const prefersDark =
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const themeLabel = themeToggle ? themeToggle.querySelector('.theme-switch-label') : null;
+  const savedTheme = localStorage.getItem('hb-site-visual');
+  const visualThemes = ['urbanClear', 'softSweet'];
+  const themeNames = {
+    urbanClear: '都市清透',
+    softSweet: '甜美柔软',
+  };
 
   function setTheme(theme) {
-    root.setAttribute('data-theme', theme);
-    localStorage.setItem('hb-theme', theme);
-    if (themeToggle) themeToggle.textContent = theme === 'dark' ? '日' : '月';
+    const safeTheme = visualThemes.includes(theme) ? theme : 'urbanClear';
+    root.setAttribute('data-theme', safeTheme);
+    localStorage.setItem('hb-site-visual', safeTheme);
+    if (themeLabel) themeLabel.textContent = themeNames[safeTheme];
+    if (themeToggle) {
+      themeToggle.setAttribute('aria-label', `切换站点视觉，当前为${themeNames[safeTheme]}`);
+    }
   }
 
-  setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+  setTheme(savedTheme || 'urbanClear');
 
   if (themeToggle) {
     themeToggle.addEventListener('click', function () {
-      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      const next = root.getAttribute('data-theme') === 'softSweet' ? 'urbanClear' : 'softSweet';
       setTheme(next);
     });
   }

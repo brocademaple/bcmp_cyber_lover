@@ -2,32 +2,30 @@
   "expo": {
     "name": "心动伴侣",
     "slug": "heartbeat-companion",
-    "version": "1.0.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#7b3f5e"
+      "backgroundColor": "#241126"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bcmp.cyberlover",
       "infoPlist": {
-        "NSCameraUsageDescription": "用于视频通话功能",
-        "NSMicrophoneUsageDescription": "用于语音和视频通话功能"
+        "NSCameraUsageDescription": "用于视频通话功能"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#7b3f5e"
+        "backgroundColor": "#241126"
       },
       "package": "com.bcmp.cyberlover",
       "permissions": [
         "CAMERA",
-        "RECORD_AUDIO",
         "INTERNET",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
@@ -44,13 +42,8 @@
           "cameraPermission": "用于视频通话功能"
         }
       ],
-      [
-        "expo-av",
-        {
-          "microphonePermission": "用于语音通话功能"
-        }
-      ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-sqlite"
     ]
   }
 }

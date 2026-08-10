@@ -190,12 +190,48 @@ main {
 }
 
 .hero {
-  min-height: 720px;
+  position: relative;
+  width: 100vw;
+  min-height: calc(100dvh - 70px);
+  margin-left: calc(50% - 50vw);
+  padding: 44px max(40px, calc((100vw - 1180px) / 2)) 52px;
   display: grid;
-  grid-template-columns: minmax(0, 0.66fr) minmax(560px, 1fr);
+  grid-template-columns: minmax(420px, 0.58fr) minmax(560px, 0.94fr);
   align-items: center;
   gap: 38px;
-  padding: 44px 0 52px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--bg) 97%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 96%, transparent) 40%,
+      color-mix(in srgb, var(--bg) 48%, transparent) 62%,
+      color-mix(in srgb, var(--bg) 16%, transparent) 100%
+    ),
+    url("./assets/cyberlover-home-hero.webp") center / cover no-repeat;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 34%;
+  background: linear-gradient(180deg, transparent, var(--bg) 94%);
+  pointer-events: none;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-copy {
@@ -222,7 +258,7 @@ h3 {
 
 h1 {
   max-width: 760px;
-  font-size: clamp(40px, 5.4vw, 74px);
+  font-size: clamp(38px, 4.2vw, 64px);
   line-height: 1.03;
   overflow-wrap: anywhere;
 }
@@ -258,6 +294,7 @@ p {
 .hero-poster-panel {
   position: relative;
   margin: 0;
+  align-self: center;
   padding: 10px;
   border: 1px solid color-mix(in srgb, var(--primary) 42%, transparent);
   border-radius: var(--radius-xl);
@@ -282,11 +319,12 @@ p {
 .hero-poster-panel img {
   display: block;
   width: 100%;
-  height: auto;
+  height: clamp(460px, 62dvh, 720px);
   aspect-ratio: 2 / 1;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   border-radius: 24px;
-  background: #08121b;
+  background: #171512;
 }
 
 .hero-poster-panel figcaption {
@@ -607,7 +645,7 @@ html[data-theme="softSweet"] .concept-frame {
 
 .asset-strip {
   display: grid;
-  grid-template-columns: repeat(5, minmax(84px, 1fr));
+  grid-template-columns: repeat(6, minmax(84px, 1fr));
   gap: 8px;
 }
 
@@ -819,8 +857,30 @@ html[data-theme="softSweet"] .concept-frame {
 
   .asset-strip {
     overflow-x: auto;
-    grid-template-columns: repeat(5, minmax(132px, 1fr));
+    grid-template-columns: repeat(6, minmax(132px, 1fr));
     padding-bottom: 4px;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1180px) {
+  .hero {
+    grid-template-columns: minmax(390px, 0.74fr) minmax(500px, 1fr);
+    gap: 28px;
+    padding-inline: 32px;
+  }
+
+  h1 {
+    font-size: clamp(42px, 4.7vw, 54px);
+    line-height: 1.06;
+  }
+
+  .lead {
+    max-width: 35ch;
+    font-size: 17px;
+  }
+
+  .hero-poster-panel img {
+    height: clamp(430px, 60dvh, 650px);
   }
 }
 

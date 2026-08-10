@@ -1,4 +1,5 @@
 import { CharacterDiary, Message } from '../types';
+import { oldestFirst, recentChronological } from '../utils/chatHistory';
 
 function pad2(n: number): string {
   return n < 10 ? `0${n}` : String(n);
@@ -32,14 +33,14 @@ export function getWeeklyKey(ts: number): string {
 
 export function buildDailyDiaryFromMessages(characterName: string, messages: Message[], now = Date.now()): CharacterDiary {
   const todayKey = getDailyKey(now);
-  const todayMsgs = messages.filter((m) => getDailyKey(m.timestamp) === todayKey);
-  const userMsgs = todayMsgs.filter((m) => m.role === 'user').slice(-8);
-  const aiMsgs = todayMsgs.filter((m) => m.role === 'assistant').slice(-4);
+  const todayMsgs = oldestFirst(messages.filter((m) => getDailyKey(m.timestamp) === todayKey));
+  const userMsgs = recentChronological(todayMsgs.filter((m) => m.role === 'user'), 8);
+  const aiMsgs = recentChronological(todayMsgs.filter((m) => m.role === 'assistant'), 4);
 
   const userSummary = userMsgs
     .map((m) => m.content.trim())
     .filter(Boolean)
-    .map((c) => `- 用户提到：${c.slice(0, 60)}${c.length > 60 ? '…' : ''}`)
+    .map((c) => `- TA 提到：${c.slice(0, 60)}${c.length > 60 ? '…' : ''}`)
     .slice(-4);
   const aiSummary = aiMsgs
     .map((m) => m.content.trim())
@@ -47,11 +48,13 @@ export function buildDailyDiaryFromMessages(characterName: string, messages: Mes
     .map((c) => `- 我回应了：${c.slice(0, 60)}${c.length > 60 ? '…' : ''}`)
     .slice(-2);
 
-  const lines = [
-    `今天和TA聊了 ${todayMsgs.length} 句，我的心情有点起伏，但很充实。`,
-    ...userSummary,
-    ...aiSummary,
-  ];
+  const lines = todayMsgs.length > 0
+    ? [
+        `今天我们留下了 ${todayMsgs.length} 条消息，其中有 ${userMsgs.length} 条来自 TA。`,
+        ...(userSummary.length > 0 ? ['我想记住的片段：', ...userSummary] : []),
+        ...(aiSummary.length > 0 ? ['我当时的回应：', ...aiSummary] : []),
+      ]
+    : ['今天还没有留下新的对话。我会把空白也如实保存，不替我们编造经历。'];
 
   return {
     id: `diary_daily_${todayKey}`,
@@ -71,10 +74,11 @@ export function buildRollupDiary(
   now = Date.now()
 ): CharacterDiary {
   const recent = sourceDaily
+    .slice()
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, period === 'weekly' ? 7 : 31);
   const snippets = recent
-    .map((d) => `- ${d.periodKey}: ${d.content.split('\n')[0]}`)
+    .map((d) => `- ${d.periodKey}：${d.content.split('\n')[0]}`)
     .slice(0, period === 'weekly' ? 5 : 8);
 
   return {
@@ -83,10 +87,9 @@ export function buildRollupDiary(
     periodKey,
     title: `${characterName}${period === 'weekly' ? '周记' : '月记'} · ${periodKey}`,
     content: [
-      `这${period === 'weekly' ? '一周' : '一个月'}里，我和TA持续在靠近。`,
+      `这${period === 'weekly' ? '一周' : '一个月'}共有 ${recent.length} 天留下了可回看的记录。`,
       ...snippets,
     ].join('\n'),
     timestamp: now,
   };
 }
-

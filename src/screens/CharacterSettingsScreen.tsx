@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -14,13 +15,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
-import { Character, CharacterDiary, RootStackParamList } from '../types';
+import { Character, CharacterDiary, ChatArchive, Message, RootStackParamList } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { useThemeColors } from '../utils/theme';
+import { filterByDate, getDateKey, MessageSearchRole, searchMessages } from '../utils/chatHistory';
+import {
+  deriveRelationshipStage,
+  RELATIONSHIP_STAGE_LABELS,
+} from '../services/relationshipTimelineService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CharacterSettings'>;
-type PageKey = 'profile' | 'memory' | 'anniversary' | 'diary';
+type PageKey = 'profile' | 'memory' | 'timeline' | 'archive' | 'anniversary' | 'diary';
+const PAGE_ORDER: PageKey[] = ['profile', 'memory', 'timeline', 'archive', 'anniversary', 'diary'];
 
 const MOOD_TO_LABEL: Record<string, string> = {
   happy: '开心',
@@ -77,15 +85,27 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
   const { width } = useWindowDimensions();
   const pagerRef = useRef<ScrollView>(null);
 
-  const { getCharacter } = useChatStore();
+  const { archives, messages, getCharacter, loadMessages } = useChatStore();
   const isAdmin = useSettingsStore((s) => s.settings.appMode === 'admin');
   const setSelectedCharacter = useSettingsStore((s) => s.setSelectedCharacter);
   const character = getCharacter(characterId);
-  const [pageIndex, setPageIndex] = useState(0);
+  const [pageIndex, setPageIndex] = useState(() => {
+    const initialPage = route.params.initialPage;
+    const index = initialPage ? PAGE_ORDER.indexOf(initialPage) : 0;
+    return index >= 0 ? index : 0;
+  });
 
   useEffect(() => {
     setSelectedCharacter(characterId);
-  }, [characterId, setSelectedCharacter]);
+    loadMessages(characterId);
+  }, [characterId, loadMessages, setSelectedCharacter]);
+
+  useEffect(() => {
+    if (pageIndex <= 0) return;
+    requestAnimationFrame(() => {
+      pagerRef.current?.scrollTo({ x: pageIndex * width, animated: false });
+    });
+  }, [pageIndex, width]);
 
   if (!character) {
     return (
@@ -98,6 +118,8 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
   const pages: { key: PageKey; label: string }[] = [
     { key: 'profile', label: '档案' },
     { key: 'memory', label: '记忆' },
+    { key: 'timeline', label: '关系' },
+    { key: 'archive', label: '留档' },
     { key: 'anniversary', label: '纪念日' },
     ...(isAdmin ? [{ key: 'diary' as const, label: '日记' }] : []),
   ];
@@ -109,6 +131,8 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
   const energyValue = emotion?.energy ?? 50;
   const mainImage = getMainImage(character);
   const avatarImage = getAvatarImage(character);
+  const characterArchives = archives[characterId] ?? [];
+  const characterMessages = messages[characterId] ?? [];
   const pageWidth = width;
   const cardWidth = Math.max(0, width - 32);
 
@@ -194,7 +218,9 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
             <View key={page.key} style={[styles.page, { width: pageWidth }]}>
               <View style={[styles.pageCard, { width: cardWidth, backgroundColor: C.surface + 'F2', borderColor: C.border }]}>
                 {page.key === 'profile' && <ProfilePage character={character} />}
-                {page.key === 'memory' && <MemoryPage character={character} onOpenMemory={() => navigation.navigate('MemorySettings')} />}
+                {page.key === 'memory' && <MemoryPage character={character} onOpenMemory={() => navigation.navigate('MemorySettings', { characterId })} />}
+                {page.key === 'timeline' && <TimelinePage character={character} />}
+                {page.key === 'archive' && <ArchivePage archives={characterArchives} messages={characterMessages} />}
                 {page.key === 'anniversary' && <AnniversaryPage character={character} />}
                 {page.key === 'diary' && <DiaryPage diaries={character.diaries ?? []} />}
               </View>
@@ -225,7 +251,6 @@ function ProfilePage({ character }: { character: Character }) {
   const profile = character.profile;
   return (
     <>
-      <Text style={[styles.pageEyebrow, { color: C.primary }]}>Profile</Text>
       <Text style={[styles.pageTitle, { color: C.text }]}>关于她</Text>
       <Text style={[styles.pageLead, { color: C.textSecondary }]}>
         {profile?.backstory ?? character.greeting}
@@ -246,7 +271,6 @@ function MemoryPage({ character, onOpenMemory }: { character: Character; onOpenM
   const memories = (character.memories ?? []).slice().reverse().slice(0, 3);
   return (
     <>
-      <Text style={[styles.pageEyebrow, { color: C.primary }]}>Memory</Text>
       <Text style={[styles.pageTitle, { color: C.text }]}>她记得的事</Text>
       <Text style={[styles.pageLead, { color: C.textSecondary }]}>
         这里不再像配置表，而是你们关系里留下来的片段。
@@ -275,12 +299,217 @@ function MemoryPage({ character, onOpenMemory }: { character: Character; onOpenM
   );
 }
 
+function ArchivePage({ archives, messages }: { archives: ChatArchive[]; messages: Message[] }) {
+  const C = useThemeColors();
+  const [selectedArchiveId, setSelectedArchiveId] = useState<string | null>(archives[0]?.id ?? null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<MessageSearchRole>('all');
+  const hasSearch = searchQuery.trim().length > 0 || roleFilter !== 'all';
+  const validMessages = messages.filter((message) => message.status !== 'failed');
+  const searchResults = searchMessages(validMessages, searchQuery, roleFilter);
+  const hitDateKeys = new Set(searchResults.map((message) => getDateKey(message.timestamp)));
+  const visibleArchives = hasSearch
+    ? archives.filter((archive) => hitDateKeys.has(archive.dateKey))
+    : archives;
+  const selectedArchive = selectedArchiveId
+    ? archives.find((archive) => archive.id === selectedArchiveId)
+    : hasSearch
+      ? undefined
+      : archives[0];
+  const selectedMessages = hasSearch
+    ? selectedArchive
+      ? filterByDate(searchResults, selectedArchive.dateKey)
+      : searchResults
+    : selectedArchive
+      ? filterByDate(validMessages, selectedArchive.dateKey)
+      : [];
+  const roleOptions: { key: MessageSearchRole; label: string }[] = [
+    { key: 'all', label: '全部' },
+    { key: 'user', label: '只看你' },
+    { key: 'assistant', label: '只看她' },
+  ];
+
+  useEffect(() => {
+    if (!archives.length) {
+      setSelectedArchiveId(null);
+      return;
+    }
+    if (hasSearch) {
+      if (selectedArchiveId && !visibleArchives.some((archive) => archive.id === selectedArchiveId)) {
+        setSelectedArchiveId(null);
+      }
+      return;
+    }
+    if (!selectedArchiveId || !archives.some((archive) => archive.id === selectedArchiveId)) {
+      setSelectedArchiveId(archives[0].id);
+    }
+  }, [archives, hasSearch, selectedArchiveId, visibleArchives]);
+
+  return (
+    <>
+      <Text style={[styles.pageTitle, { color: C.text }]}>聊天留档</Text>
+      <Text style={[styles.pageLead, { color: C.textSecondary }]}>
+        按日期自动归档，也可以按关键词和发送方查找聊天记录。
+      </Text>
+
+      {archives.length > 0 ? (
+        <>
+          <View style={[styles.searchBox, { backgroundColor: C.background, borderColor: C.border }]}>
+            <Text style={[styles.searchIcon, { color: C.textSecondary }]}>⌕</Text>
+            <TextInput
+              value={searchQuery}
+              onChangeText={(value) => {
+                setSearchQuery(value);
+                setSelectedArchiveId(null);
+              }}
+              placeholder="搜索聊天记录"
+              placeholderTextColor={C.textSecondary}
+              style={[styles.searchInput, { color: C.text }]}
+              returnKeyType="search"
+            />
+            {searchQuery.trim().length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchButton}>
+                <Text style={[styles.clearSearchText, { color: C.textSecondary }]}>×</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.roleFilterRow}>
+            {roleOptions.map((option) => {
+              const active = roleFilter === option.key;
+              return (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[
+                    styles.roleFilterChip,
+                    {
+                      backgroundColor: active ? C.primary : C.background,
+                      borderColor: active ? C.primary : C.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    setRoleFilter(option.key);
+                    setSelectedArchiveId(null);
+                  }}
+                  activeOpacity={0.82}
+                >
+                  <Text style={[styles.roleFilterText, { color: active ? '#fff' : C.textSecondary }]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.archiveResultHeader}>
+            <Text style={[styles.archiveResultCount, { color: C.textSecondary }]}>
+              {hasSearch
+                ? `找到 ${selectedMessages.length} 条 · ${visibleArchives.length} 天`
+                : `共 ${archives.length} 天记录`}
+            </Text>
+            {hasSearch && (
+              <View style={styles.archiveHeaderActions}>
+                {selectedArchive && (
+                  <TouchableOpacity onPress={() => setSelectedArchiveId(null)} activeOpacity={0.78}>
+                    <Text style={[styles.archiveHeaderAction, { color: C.primary }]}>全部命中</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchQuery('');
+                    setRoleFilter('all');
+                    setSelectedArchiveId(archives[0]?.id ?? null);
+                  }}
+                  activeOpacity={0.78}
+                >
+                  <Text style={[styles.archiveHeaderAction, { color: C.primary }]}>清除筛选</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.archiveList}>
+            {visibleArchives.map((archive) => {
+              const active = selectedArchive?.id === archive.id;
+              return (
+                <TouchableOpacity
+                  key={archive.id}
+                  style={[
+                    styles.archiveCard,
+                    {
+                      backgroundColor: active ? C.primary : C.background,
+                      borderColor: active ? C.primary : C.border,
+                    },
+                  ]}
+                  onPress={() => setSelectedArchiveId(archive.id)}
+                  activeOpacity={0.82}
+                >
+                  <Text style={[styles.archiveDate, { color: active ? '#fff' : C.primary }]}>
+                    {archive.dateKey.replace(/-/g, '.')}
+                  </Text>
+                  <Text style={[styles.archiveTitle, { color: active ? '#fff' : C.text }]} numberOfLines={1}>
+                    {archive.title}
+                  </Text>
+                  <Text style={[styles.archiveMeta, { color: active ? 'rgba(255,255,255,0.84)' : C.textSecondary }]}>
+                    {hasSearch
+                      ? `${searchResults.filter((message) => getDateKey(message.timestamp) === archive.dateKey).length} 条命中`
+                      : `${archive.messageCount} 条 · 你 ${archive.userMessageCount} / 她 ${archive.assistantMessageCount}`}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {selectedMessages.length > 0 ? (
+            <View style={[styles.archiveDetail, { borderColor: C.border }]}>
+              <Text style={[styles.archiveDetailTitle, { color: C.text }]}>
+                {hasSearch
+                  ? selectedArchive
+                    ? `${selectedArchive.dateKey.replace(/-/g, '.')} 的命中记录`
+                    : '全部命中记录'
+                  : selectedArchive
+                    ? `${format(selectedArchive.startedAt, 'yyyy-MM-dd HH:mm')} - ${format(selectedArchive.updatedAt, 'HH:mm')}`
+                    : '聊天记录'}
+              </Text>
+              <View style={styles.archiveMessages}>
+                {selectedMessages.map((message) => (
+                  <View
+                    key={message.id}
+                    style={[
+                      styles.archiveMessage,
+                      { backgroundColor: message.role === 'user' ? C.primaryLight + '33' : C.background },
+                    ]}
+                  >
+                    <Text style={[styles.archiveMessageMeta, { color: C.textSecondary }]}>
+                      {message.role === 'user' ? '你' : '她'} · {format(message.timestamp, 'HH:mm')}
+                    </Text>
+                    <Text style={[styles.archiveMessageText, { color: C.text }]}>{message.content}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <View style={[styles.emptyPanel, { backgroundColor: C.background, borderColor: C.border }]}>
+              <Text style={[styles.emptyTitle, { color: C.text }]}>没有找到匹配记录</Text>
+              <Text style={[styles.emptyText, { color: C.textSecondary }]}>换个关键词，或切回全部发送方再试试。</Text>
+            </View>
+          )}
+        </>
+      ) : (
+        <View style={[styles.emptyPanel, { backgroundColor: C.background, borderColor: C.border }]}>
+          <Text style={[styles.emptyTitle, { color: C.text }]}>还没有聊天留档</Text>
+          <Text style={[styles.emptyText, { color: C.textSecondary }]}>发出第一段有效消息后，这里会自动按日期生成归档。</Text>
+        </View>
+      )}
+    </>
+  );
+}
+
 function AnniversaryPage({ character }: { character: Character }) {
   const C = useThemeColors();
   const anniversaries = character.anniversaries ?? [];
   return (
     <>
-      <Text style={[styles.pageEyebrow, { color: C.primary }]}>Anniversary</Text>
       <Text style={[styles.pageTitle, { color: C.text }]}>值得记住的日子</Text>
       <Text style={[styles.pageLead, { color: C.textSecondary }]}>
         关系不是靠大事件组成的，有些日期只是因为你们一起经历过。
@@ -305,12 +534,46 @@ function AnniversaryPage({ character }: { character: Character }) {
   );
 }
 
+function TimelinePage({ character }: { character: Character }) {
+  const C = useThemeColors();
+  const stage = character.relationshipStage ?? deriveRelationshipStage(character.emotionalState?.intimacy ?? 50);
+  const events = (character.relationshipEvents ?? [])
+    .slice()
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 20);
+
+  return (
+    <>
+      <Text style={[styles.pageEyebrow, { color: C.primary }]}>当前章节 · {RELATIONSHIP_STAGE_LABELS[stage]}</Text>
+      <Text style={[styles.pageTitle, { color: C.text }]}>你们的关系时间线</Text>
+      <Text style={[styles.pageLead, { color: C.textSecondary }]}>这里只记录被确认的记忆、纪念日和关系章节。每个变化都能回到真实互动。</Text>
+
+      <View style={styles.memoryList}>
+        {events.length > 0 ? (
+          events.map((event) => (
+            <View key={event.id} style={[styles.memoryChip, { backgroundColor: C.background, borderColor: C.border }]}>
+              <Text style={[styles.memoryDate, { color: C.textSecondary }]}>{format(event.timestamp, 'yyyy-MM-dd HH:mm')}</Text>
+              <Text style={[styles.memoryText, { color: C.text }]}>{event.title}</Text>
+              <Text style={[styles.emptyText, { color: C.textSecondary }]}>{event.detail}</Text>
+              {event.verified && <Text style={[styles.archiveHeaderAction, { color: C.primary }]}>用户确认</Text>}
+            </View>
+          ))
+        ) : (
+          <View style={[styles.emptyPanel, { backgroundColor: C.background, borderColor: C.border }]}>
+            <Text style={[styles.emptyTitle, { color: C.text }]}>关系正在开始</Text>
+            <Text style={[styles.emptyText, { color: C.textSecondary }]}>确认第一条长期记忆、添加纪念日或进入新的亲密阶段后，会在这里形成时间线。</Text>
+          </View>
+        )}
+      </View>
+    </>
+  );
+}
+
 function DiaryPage({ diaries }: { diaries: CharacterDiary[] }) {
   const C = useThemeColors();
   const recent = diaries.slice().sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
   return (
     <>
-      <Text style={[styles.pageEyebrow, { color: C.primary }]}>Diary</Text>
       <Text style={[styles.pageTitle, { color: C.text }]}>她的日记</Text>
       <Text style={[styles.pageLead, { color: C.textSecondary }]}>内部可见，用来检查长期记忆有没有稳定沉淀。</Text>
 
@@ -339,6 +602,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   missingText: {
+    fontFamily: NOTO_SERIF_SC.regular,
     textAlign: 'center',
     marginTop: 40,
   },
@@ -377,6 +641,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarFallback: {
+    fontFamily: NOTO_SERIF_SC.black,
     fontSize: 40,
     lineHeight: 82,
     textAlign: 'center',
@@ -386,14 +651,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   name: {
+    fontFamily: NOTO_SERIF_SC.black,
     fontSize: 28,
     lineHeight: 32,
-    fontWeight: '900',
   },
   meta: {
+    fontFamily: NOTO_SERIF_SC.bold,
     marginTop: 4,
     fontSize: 13,
-    fontWeight: '800',
   },
   editButton: {
     borderRadius: 999,
@@ -401,9 +666,9 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   editButtonText: {
+    fontFamily: NOTO_SANS_SC.bold,
     color: '#fff',
     fontSize: 13,
-    fontWeight: '900',
   },
   metrics: {
     flexDirection: 'row',
@@ -421,12 +686,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   metricLabel: {
+    fontFamily: NOTO_SANS_SC.medium,
     fontSize: 11,
-    fontWeight: '800',
   },
   metricValue: {
+    fontFamily: NOTO_SERIF_SC.black,
     fontSize: 17,
-    fontWeight: '900',
   },
   metricTrack: {
     height: 5,
@@ -453,8 +718,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentText: {
+    fontFamily: NOTO_SERIF_SC.bold,
     fontSize: 13,
-    fontWeight: '900',
   },
   pager: {
     flexGrow: 0,
@@ -469,19 +734,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   pageEyebrow: {
+    fontFamily: NOTO_SANS_SC.bold,
     fontSize: 11,
-    fontWeight: '900',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   pageTitle: {
+    fontFamily: NOTO_SERIF_SC.black,
     fontSize: 27,
     lineHeight: 32,
-    fontWeight: '900',
     marginBottom: 9,
   },
   pageLead: {
+    fontFamily: NOTO_SERIF_SC.regular,
     fontSize: 15,
     lineHeight: 23,
     marginBottom: 16,
@@ -495,16 +761,140 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   infoLabel: {
+    fontFamily: NOTO_SANS_SC.medium,
     fontSize: 12,
-    fontWeight: '800',
   },
   infoValue: {
+    fontFamily: NOTO_SERIF_SC.regular,
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: '600',
   },
   memoryList: {
     gap: 10,
+  },
+  searchBox: {
+    minHeight: 46,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  searchIcon: {
+    fontFamily: NOTO_SERIF_SC.black,
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  searchInput: {
+    fontFamily: NOTO_SANS_SC.regular,
+    flex: 1,
+    minHeight: 42,
+    paddingVertical: 8,
+    fontSize: 15,
+  },
+  clearSearchButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearSearchText: {
+    fontFamily: NOTO_SANS_SC.bold,
+    fontSize: 22,
+    lineHeight: 24,
+  },
+  roleFilterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  roleFilterChip: {
+    minHeight: 34,
+    borderRadius: 17,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleFilterText: {
+    fontFamily: NOTO_SANS_SC.bold,
+    fontSize: 12,
+  },
+  archiveResultHeader: {
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 8,
+  },
+  archiveResultCount: {
+    fontFamily: NOTO_SANS_SC.medium,
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+  },
+  archiveHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  archiveHeaderAction: {
+    fontFamily: NOTO_SANS_SC.bold,
+    fontSize: 12,
+  },
+  archiveList: {
+    gap: 10,
+    marginBottom: 14,
+  },
+  archiveCard: {
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
+    gap: 5,
+  },
+  archiveDate: {
+    fontFamily: NOTO_SERIF_SC.black,
+    fontSize: 12,
+  },
+  archiveTitle: {
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontSize: 16,
+    lineHeight: 21,
+  },
+  archiveMeta: {
+    fontFamily: NOTO_SANS_SC.medium,
+    fontSize: 12,
+  },
+  archiveDetail: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 14,
+    gap: 10,
+  },
+  archiveDetailTitle: {
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  archiveMessages: {
+    gap: 8,
+  },
+  archiveMessage: {
+    borderRadius: 16,
+    padding: 12,
+    gap: 5,
+  },
+  archiveMessageMeta: {
+    fontFamily: NOTO_SANS_SC.bold,
+    fontSize: 11,
+  },
+  archiveMessageText: {
+    fontFamily: NOTO_SERIF_SC.regular,
+    fontSize: 14,
+    lineHeight: 21,
   },
   memoryChip: {
     borderRadius: 18,
@@ -513,13 +903,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   memoryDate: {
+    fontFamily: NOTO_SANS_SC.medium,
     fontSize: 12,
-    fontWeight: '800',
   },
   memoryText: {
+    fontFamily: NOTO_SERIF_SC.bold,
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: '700',
   },
   emptyPanel: {
     borderRadius: 22,
@@ -528,10 +918,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
+    fontFamily: NOTO_SERIF_SC.bold,
     fontSize: 17,
-    fontWeight: '900',
   },
   emptyText: {
+    fontFamily: NOTO_SERIF_SC.regular,
     fontSize: 14,
     lineHeight: 21,
   },
@@ -543,9 +934,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButtonText: {
+    fontFamily: NOTO_SERIF_SC.black,
     color: '#fff',
     fontSize: 16,
-    fontWeight: '900',
   },
   anniversaryCard: {
     borderRadius: 18,
@@ -554,12 +945,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   anniversaryDate: {
+    fontFamily: NOTO_SERIF_SC.bold,
     fontSize: 13,
-    fontWeight: '900',
   },
   anniversaryTitle: {
+    fontFamily: NOTO_SERIF_SC.bold,
     fontSize: 16,
-    fontWeight: '800',
   },
   pageDots: {
     flexDirection: 'row',

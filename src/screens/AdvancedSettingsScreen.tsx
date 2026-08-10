@@ -16,6 +16,8 @@ const DARK_MODE_OPTIONS = [
 ] as const;
 
 const THEME_OPTIONS = [
+  { value: 'urbanClear', label: '都市清透' },
+  { value: 'softSweet', label: '甜美柔软' },
   { value: 'pink', label: '鹿芽粉' },
   { value: 'blue', label: '纪遥蓝' },
   { value: 'yellow', label: '暖黄色' },
@@ -88,7 +90,7 @@ export default function AdvancedSettingsScreen({ navigation }: Props) {
 
           <SettingsRow
             label="跟随角色主题色"
-            description="鹿芽粉、纪遥蓝、凛夜午夜色会随角色切换。"
+            description="关闭后可固定为都市清透或甜美柔软等视觉皮肤。"
             value={adv.themeMode === 'character'}
             onToggle={(v) => updateAdvanced({ themeMode: v ? 'character' : 'manual' })}
           />

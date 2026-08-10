@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../types';
 import { useThemeColors } from '../utils/theme';
 import { useSettingsStore } from '../store/settingsStore';
+import { NOTO_SERIF_SC } from '../utils/appFonts';
 
 import OnboardingScreen, { ONBOARDING_KEY } from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -16,10 +17,16 @@ import LifeSettingsScreen from '../screens/LifeSettingsScreen';
 import MemorySettingsScreen from '../screens/MemorySettingsScreen';
 import AdvancedSettingsScreen from '../screens/AdvancedSettingsScreen';
 import ServiceSettingsScreen from '../screens/ServiceSettingsScreen';
+import DeveloperDebugScreen from '../screens/DeveloperDebugScreen';
 import CharacterEditorScreen from '../screens/CharacterEditorScreen';
 import CharacterSettingsScreen from '../screens/CharacterSettingsScreen';
+import DataManagementScreen from '../screens/DataManagementScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+type InitialRoute =
+  | { name: 'Onboarding' }
+  | { name: 'Main' };
 
 interface Props {
   navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList> | null>;
@@ -28,16 +35,27 @@ interface Props {
 export default function AppNavigator({ navigationRef }: Props) {
   const C = useThemeColors();
   const { loadSettings } = useSettingsStore();
-  const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Main' | null>(null);
+  const [initialRoute, setInitialRoute] = useState<InitialRoute | null>(null);
 
   useEffect(() => {
     const init = async () => {
       await loadSettings();
       const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
-      setInitialRoute(completed === 'true' ? 'Main' : 'Onboarding');
+      const loadedSettings = useSettingsStore.getState().settings;
+      const hasConfiguredApiKey = loadedSettings.service.apiKey.trim().length > 0;
+
+      if (hasConfiguredApiKey) {
+        if (completed !== 'true') {
+          await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+        }
+        setInitialRoute({ name: 'Main' });
+        return;
+      }
+
+      setInitialRoute(completed === 'true' ? { name: 'Main' } : { name: 'Onboarding' });
     };
     init();
-  }, []);
+  }, [loadSettings]);
 
   if (!initialRoute) {
     // Still loading — render nothing (splash screen would be shown)
@@ -47,7 +65,7 @@ export default function AppNavigator({ navigationRef }: Props) {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName={initialRoute}
+        initialRouteName={initialRoute.name}
         screenOptions={({ navigation, route }) => {
           const isImmersive = route.name === 'Chat';
           const tintColor = isImmersive ? '#fff' : C.text;
@@ -56,7 +74,7 @@ export default function AppNavigator({ navigationRef }: Props) {
           headerStyle: { backgroundColor: isImmersive ? 'transparent' : C.background },
           headerShadowVisible: false,
           headerTintColor: tintColor,
-          headerTitleStyle: { fontWeight: '700', color: tintColor },
+          headerTitleStyle: { fontFamily: NOTO_SERIF_SC.bold, fontWeight: undefined, color: tintColor },
           contentStyle: { backgroundColor: C.background },
           headerBackTitleVisible: false,
           headerLeft: navigation.canGoBack()
@@ -73,7 +91,7 @@ export default function AppNavigator({ navigationRef }: Props) {
                     backgroundColor: isImmersive ? 'rgba(10,10,18,0.22)' : C.surface + 'CC',
                   }}
                 >
-                  <Text style={{ color: tintColor, fontSize: 34, lineHeight: 36, fontWeight: '400' }}>‹</Text>
+                  <Text style={{ color: tintColor, fontFamily: NOTO_SERIF_SC.regular, fontSize: 34, lineHeight: 36 }}>‹</Text>
                 </TouchableOpacity>
               )
             : undefined,
@@ -94,7 +112,7 @@ export default function AppNavigator({ navigationRef }: Props) {
         <Stack.Screen
           name="Chat"
           component={ChatScreen}
-          options={{ title: '' }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Call"
@@ -104,7 +122,7 @@ export default function AppNavigator({ navigationRef }: Props) {
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ title: '设置' }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="LifeSettings"
@@ -117,6 +135,11 @@ export default function AppNavigator({ navigationRef }: Props) {
           options={{ title: '记忆' }}
         />
         <Stack.Screen
+          name="DataManagement"
+          component={DataManagementScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="AdvancedSettings"
           component={AdvancedSettingsScreen}
           options={{ title: '内部参数' }}
@@ -125,6 +148,11 @@ export default function AppNavigator({ navigationRef }: Props) {
           name="ServiceSettings"
           component={ServiceSettingsScreen}
           options={{ title: '连接服务' }}
+        />
+        <Stack.Screen
+          name="DeveloperDebug"
+          component={DeveloperDebugScreen}
+          options={{ title: 'AI 调试台' }}
         />
         <Stack.Screen
           name="CharacterEditor"

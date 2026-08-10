@@ -1,7 +1,13 @@
 node_modules/
 package-lock.json
 .expo/
+.env
+.env.*
+!.env.example
 dist/
 dist-web-test/
 LEARNING.md
-docs/private/chat-logic/
+docs/private/
+ios/
+output/
+.playwright-cli/

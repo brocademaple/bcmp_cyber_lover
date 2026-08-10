@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, ServiceProvider } from '../types';
 import { useSettingsStore, PROVIDER_CONFIGS } from '../store/settingsStore';
-import { fetchModelList } from '../services/aiService';
+import { fetchModelList, testChatCompletion } from '../services/aiService';
 import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceSettings'>;
@@ -32,6 +32,13 @@ const PROVIDERS: {
   description: string;
   useCase: string;
 }[] = [
+  {
+    value: 'mimo',
+    label: 'MiMo',
+    badge: '当前推荐',
+    description: '小米 MiMo 开放平台，使用兼容 OpenAI 的接口，适合作为 Cyber Lover 的默认聊天服务。',
+    useCase: '聊天 / OpenAI-compatible',
+  },
   {
     value: 'siliconflow',
     label: '硅基流动',
@@ -82,22 +89,31 @@ export default function ServiceSettingsScreen() {
   const providerLabel = PROVIDER_CONFIGS[svc.provider].label;
 
   const [showSecret, setShowSecret] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isFetchingModels, setIsFetchingModels] = useState(false);
   const [fetchingTarget, setFetchingTarget] = useState<'chat' | 'vision' | null>(null);
   const [modelList, setModelList] = useState<string[]>([]);
   const [showModelPicker, setShowModelPicker] = useState<'chat' | 'vision' | null>(null);
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [saveNotice, setSaveNotice] = useState('尚未保存本次调整');
   const [testState, setTestState] = useState<TestState>({
     tone: 'idle',
     title: '等待验证',
     detail: '保存密钥后，可以在这里验证服务、聊天模型和视觉模型是否可用。',
   });
+  const normalizedModelQuery = modelSearchQuery.trim().toLowerCase();
+  const visibleModelList = (
+    normalizedModelQuery
+      ? modelList.filter((model) => model.toLowerCase().includes(normalizedModelQuery))
+      : modelList
+  ).slice(0, 30);
 
   const handleProviderSelect = (p: ServiceProvider) => {
     updateService({
       provider: p,
       model: PROVIDER_CONFIGS[p].defaultModel,
+      visionModel: PROVIDER_CONFIGS[p].defaultModel,
       baseUrl: PROVIDER_CONFIGS[p].baseUrl,
     });
     setSaveNotice('服务已切换，记得保存');
@@ -165,6 +181,28 @@ export default function ServiceSettingsScreen() {
         });
         return;
       }
+
+      if (target === 'chat' || target === 'all') {
+        setTestState({ tone: 'idle', title: '正在验证', detail: '模型列表已通过，正在请求聊天模型生成一句测试回复。' });
+        const chatResult = await testChatCompletion(svc, svc.model);
+        if (!chatResult.ok) {
+          setTestState({
+            tone: 'error',
+            title: '聊天生成失败',
+            detail: chatResult.message,
+          });
+          return;
+        }
+        setTestState({
+          tone: 'success',
+          title: '聊天能力已通过',
+          detail: chatResult.sample
+            ? `模型列表正常，聊天模型已返回：${chatResult.sample}`
+            : '模型列表正常，聊天模型已完成真实生成。',
+        });
+        return;
+      }
+
       setTestState({
         tone: 'success',
         title: target === 'vision' ? '视觉能力已通过' : '连接验证通过',
@@ -196,17 +234,30 @@ export default function ServiceSettingsScreen() {
       return;
     }
     setModelList(list);
+    setModelSearchQuery('');
     setShowModelPicker(type);
     setTestState({ tone: 'success', title: '模型列表已同步', detail: `已读取 ${list.length} 个模型。` });
   };
 
   const handleSave = async () => {
-    await saveSettings();
-    setSaveNotice(connected ? '已保存到安全存储' : '密钥已清空并保存');
+    setIsSaving(true);
+    const saved = await saveSettings();
+    setIsSaving(false);
+    const hasKey = svc.apiKey.trim().length > 0;
+    if (!saved) {
+      setSaveNotice('保存失败，请稍后重试');
+      setTestState({
+        tone: 'error',
+        title: '保存失败',
+        detail: '没有写入本机存储，聊天页还不能稳定使用这次配置。',
+      });
+      return;
+    }
+    setSaveNotice(hasKey ? '已保存，本次密钥已生效' : '密钥已清空并保存');
     setTestState({
       tone: 'success',
       title: '连接配置已保存',
-      detail: connected ? '聊天页会使用这套服务配置。' : '当前没有可用密钥，聊天时会提示先连接服务。',
+      detail: hasKey ? '聊天页现在会使用这次保存的服务配置。' : '当前没有可用密钥，聊天时会提示先连接服务。',
     });
   };
 
@@ -305,7 +356,18 @@ export default function ServiceSettingsScreen() {
             >
               <Text style={[styles.secondaryMiniText, { color: C.textSecondary }]}>清空密钥</Text>
             </TouchableOpacity>
-            <Text style={[styles.vaultHint, { color: C.textSecondary }]}>密钥只保存在本机安全存储。</Text>
+            <TouchableOpacity
+              style={[styles.saveMiniBtn, { backgroundColor: C.primary }]}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.saveMiniText}>保存密钥</Text>
+              )}
+            </TouchableOpacity>
+            <Text style={[styles.vaultHint, { color: C.textSecondary }]}>密钥只保存在本机。</Text>
           </View>
 
           {svc.provider === 'custom' && (
@@ -358,21 +420,38 @@ export default function ServiceSettingsScreen() {
         {showModelPicker && modelList.length > 0 && (
           <View style={[styles.modelPickerCard, { backgroundColor: C.surface, borderColor: C.border }]}>
             <Text style={[styles.pickerTitle, { color: C.text }]}>选择{showModelPicker === 'chat' ? '聊天' : '视觉'}模型</Text>
-            {modelList.slice(0, 30).map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={[styles.modelOption, { borderBottomColor: C.border }]}
-                onPress={() => {
-                  if (showModelPicker === 'chat') updateService({ model: m });
-                  else updateService({ visionModel: m });
-                  setShowModelPicker(null);
-                  setSaveNotice('模型已修改，记得保存');
-                }}
-              >
-                <Text style={[styles.modelOptionText, { color: C.text }]} selectable>{m}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity onPress={() => setShowModelPicker(null)}>
+            <TextInput
+              value={modelSearchQuery}
+              onChangeText={setModelSearchQuery}
+              style={[styles.modelSearchInput, { color: C.text, backgroundColor: C.inputBg, borderColor: C.border }]}
+              placeholder="搜索模型"
+              placeholderTextColor={C.textSecondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {visibleModelList.length > 0 ? (
+              visibleModelList.map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.modelOption, { borderBottomColor: C.border }]}
+                  onPress={() => {
+                    if (showModelPicker === 'chat') updateService({ model: m });
+                    else updateService({ visionModel: m });
+                    setModelSearchQuery('');
+                    setShowModelPicker(null);
+                    setSaveNotice('模型已修改，记得保存');
+                  }}
+                >
+                  <Text style={[styles.modelOptionText, { color: C.text }]} selectable numberOfLines={2}>{m}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={[styles.emptyModelSearch, { color: C.textSecondary }]}>没有匹配的模型</Text>
+            )}
+            <TouchableOpacity onPress={() => {
+              setModelSearchQuery('');
+              setShowModelPicker(null);
+            }}>
               <Text style={[styles.cancelPicker, { color: C.primary }]}>收起列表</Text>
             </TouchableOpacity>
           </View>
@@ -390,8 +469,8 @@ export default function ServiceSettingsScreen() {
               <Text style={[styles.secondaryBtnText, { color: C.primary }]}>验证全部</Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: C.primary }]} onPress={handleSave}>
-            <Text style={styles.primaryBtnText}>保存配置</Text>
+          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: C.primary }]} onPress={handleSave} disabled={isSaving}>
+            {isSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>保存配置</Text>}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -588,6 +667,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   secondaryMiniText: { fontSize: 12, fontWeight: '900' },
+  saveMiniBtn: {
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    minWidth: 84,
+    alignItems: 'center',
+  },
+  saveMiniText: { color: '#fff', fontSize: 12, fontWeight: '900' },
   vaultHint: { flex: 1, fontSize: 12, lineHeight: 17 },
   customEndpoint: {
     gap: 8,
@@ -633,12 +720,27 @@ const styles = StyleSheet.create({
     padding: 14,
     paddingBottom: 9,
   },
+  modelSearchInput: {
+    minHeight: 42,
+    marginHorizontal: 12,
+    marginBottom: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    fontSize: 14,
+  },
   modelOption: {
     paddingVertical: 11,
     paddingHorizontal: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   modelOptionText: { fontSize: 14 },
+  emptyModelSearch: {
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+    textAlign: 'center',
+    fontSize: 13,
+  },
   cancelPicker: { textAlign: 'center', padding: 13, fontSize: 14, fontWeight: '900' },
   actionRow: {
     flexDirection: 'row',

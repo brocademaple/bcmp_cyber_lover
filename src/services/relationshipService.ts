@@ -1,4 +1,4 @@
-import { Character, EmotionalState } from '../types';
+import { Character, DebugEmotionExplanation, EmotionalState } from '../types';
 
 export type MemoryDecision =
   | { action: 'none' }
@@ -28,6 +28,9 @@ const MEMORY_CANDIDATE_PATTERNS = [
   /约定/,
   /习惯/,
   /目标/,
+  /团建|聚会|旅行|放假|假期|考试|面试|搬家|出差|唱歌|KTV/,
+  /我是.*(选手|类型|人)/,
+  /我平时|我最近|我准备|我打算/,
   /很难过/,
   /很开心/,
   /今天.*累/,
@@ -67,16 +70,24 @@ const AFFINITY_PATTERNS: Record<string, { patterns: RegExp[]; bonus: number }> =
   },
 };
 
+const MOOD_DEBUG_GUIDES: Record<EmotionalState['mood'], string> = {
+  neutral: '自然待机：保持平常陪伴感，轻松自然，不刻意提高情绪强度。',
+  happy: '开心营业：回复更明亮、更主动，可以轻轻接梗和带一点上扬感。',
+  sad: '安静陪着：回复更轻、更短、更会倾听；优先安放情绪，少说教，少转移话题。',
+  tired: '低电量关心：降低能量感，少玩梗，轻轻提醒休息、吃饭、喝水或放松。',
+  excited: '靠近一下：更主动、更亲近，可以自然表达想靠近和陪伴，但保持舒适边界。',
+  angry: '坐着等你：表现为等待后的轻微别扭和在意；可以有一点委屈，但不能责备、阴阳怪气或催促用户。',
+};
+
 export function getRelationshipPrompt(character: Character): string {
   const rules = character.relationshipRules;
   if (!rules) return '';
 
   return `
 【关系成长规则】
-1. 你可以在合适时机提出“要不要把这件事写进记忆”，但不能声称已经记住，除非用户明确要求记住。
+1. 聊天正文里不要主动提出把某件事写进记忆；长期记忆判断由系统在你回复后通过独立控件处理。
 2. 你更容易被这些行为打动：${rules.affinityTriggers.join('、')}。
-3. 你更容易觉得这些内容值得记住：${rules.memoryTriggers.join('、')}。
-4. 询问记忆时使用这种语气：${rules.askMemoryStyle}`;
+3. 你更容易觉得这些内容值得记住：${rules.memoryTriggers.join('、')}。`;
 }
 
 export function calculateAffinityDelta(character: Character, userText: string): number {
@@ -109,6 +120,61 @@ export function nextEmotionalState(
     energy: Math.max(0, Math.min(100, tired ? base.energy - 4 : base.energy)),
     mood: sad ? 'sad' : tired ? 'tired' : happy ? 'happy' : base.mood,
     lastInteraction: now,
+  };
+}
+
+export function explainEmotionTransition(
+  character: Character,
+  userText: string,
+  now = Date.now()
+): DebugEmotionExplanation {
+  const before = character.emotionalState ?? {
+    mood: 'happy',
+    intimacy: 50,
+    energy: 80,
+    lastInteraction: now,
+  };
+  const config = AFFINITY_PATTERNS[character.id];
+  const matchedAffinityRules = config
+    ? config.patterns.filter((pattern) => pattern.test(userText)).map((pattern) => pattern.source)
+    : [];
+  const affinityDelta = calculateAffinityDelta(character, userText);
+  const after = nextEmotionalState(before, affinityDelta, now, userText);
+  const tired = /累|困|疲惫|睡不着|撑不住/.test(userText);
+  const sad = /难过|崩溃|委屈|焦虑|害怕/.test(userText);
+  const happy = /开心|哈哈|笑死|喜欢|谢谢|太好了/.test(userText);
+  const moodReason = sad
+    ? '命中低落/焦虑词，mood -> sad。'
+    : tired
+      ? '命中疲惫词，mood -> tired。'
+      : happy
+        ? '命中开心/感谢词，mood -> happy。'
+        : '没有命中强情绪词，沿用原 mood。';
+  const energyReason = tired
+    ? '命中疲惫词，energy -4，并限制在 0-100。'
+    : '未命中疲惫词，energy 保持不变。';
+
+  return {
+    inputText: userText,
+    before,
+    after,
+    affinityDelta,
+    matchedAffinityRules,
+    moodReason,
+    energyReason,
+    stateInfluence: [
+      MOOD_DEBUG_GUIDES[after.mood],
+      after.intimacy >= 75
+        ? '亲密度较高：回复可以更自然地亲近一点。'
+        : after.intimacy >= 45
+          ? '亲密度中段：语气亲切，但仍保持边界。'
+          : '亲密度较低：先建立可信任感。',
+      after.energy <= 35
+        ? '精力偏低：回复更短、更软。'
+        : after.energy >= 75
+          ? '精力充足：可以更主动回应。'
+          : '精力平稳：保持自然节奏。',
+    ],
   };
 }
 
@@ -156,6 +222,8 @@ function inferMemoryTags(text: string): string[] {
 }
 
 function buildMemoryQuestion(character: Character): string {
-  if (character.relationshipRules?.askMemoryStyle) return character.relationshipRules.askMemoryStyle;
-  return '要不要把这件事写进记忆里？';
+  if (character.relationshipRules?.memoryTriggers?.length) {
+    return '发现一条可能值得长期记忆的内容';
+  }
+  return '这次对话里有一条可能值得长期记忆的内容';
 }

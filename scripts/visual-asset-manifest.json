@@ -1,0 +1,88 @@
+{
+  "characterAssetRoot": "assets/characters/v2",
+  "docsCharacterAssetRoot": "docs/assets/characters/v2",
+  "characters": {
+    "qingning": {
+      "aliases": ["qingning", "\u9e7f\u82bd", "luya", "luyao", "deer"],
+      "files": [
+        "main.png",
+        "avatar.png",
+        "headshot.png",
+        "expression-happy.png",
+        "expression-soft.png",
+        "expression-low-energy.png",
+        "action-wave.png",
+        "action-waiting.png",
+        "scene-memory.png"
+      ]
+    },
+    "sakura": {
+      "aliases": ["sakura", "xiaoying", "\u5c0f\u6a31", "\u7eaa\u9065", "jiyao", "jiyou", "jiyu", "book"],
+      "files": [
+        "main.png",
+        "avatar.png",
+        "headshot.png",
+        "expression-happy.png",
+        "expression-soft.png",
+        "expression-low-energy.png",
+        "action-wave.png",
+        "action-waiting.png",
+        "scene-memory.png"
+      ]
+    },
+    "luna": {
+      "aliases": ["luna", "yuehua", "\u6708\u534e", "\u51db\u591c", "linye", "rinye", "midnight"],
+      "files": [
+        "main.png",
+        "avatar.png",
+        "headshot.png",
+        "expression-happy.png",
+        "expression-soft.png",
+        "expression-low-energy.png",
+        "action-wave.png",
+        "action-waiting.png",
+        "scene-memory.png"
+      ]
+    }
+  },
+  "appShellAssets": [
+    "assets/icon.png",
+    "assets/adaptive-icon.png",
+    "assets/splash.png",
+    "assets/favicon.png",
+    "docs/assets/favicon.png"
+  ],
+  "mirroredAssets": [
+    {
+      "source": "assets/favicon.png",
+      "target": "docs/assets/favicon.png"
+    }
+  ],
+  "visualAssetRoots": [
+    "assets/characters",
+    "assets/memories",
+    "assets/style",
+    "docs/assets/characters",
+    "docs/assets/memories"
+  ],
+  "forbiddenRootCharacterIds": ["qingning", "xiaoying", "yuehua"],
+  "forbiddenRootCharacterExtensions": ["png"],
+  "forbiddenTextFragments": [
+    ["legacy", "Main"],
+    ["getDefaultCharacter", "Legacy", "Main"]
+  ],
+  "scanTextRoots": [
+    "README.md",
+    "CHANGELOG.md",
+    "app.json",
+    "docs",
+    "scripts",
+    "src"
+  ],
+  "scanTextExcludes": [
+    "docs/app/_expo/static/js",
+    "docs/app/assets",
+    "node_modules",
+    "scripts/visual-asset-manifest.json"
+  ]
+}

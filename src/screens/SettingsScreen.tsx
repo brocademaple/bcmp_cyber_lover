@@ -2,12 +2,34 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppMode, RootStackParamList } from '../types';
+import { AppMode, AppTheme, RootStackParamList } from '../types';
 import { useThemeColors } from '../utils/theme';
 import { useSettingsStore } from '../store/settingsStore';
 import { format } from 'date-fns';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
+
+const VISUAL_THEME_OPTIONS: Array<{
+  value: AppTheme;
+  label: string;
+  accent: string;
+}> = [
+  {
+    value: 'urbanClear',
+    label: '都市清透',
+    accent: '#d8bd86',
+  },
+  {
+    value: 'softSweet',
+    label: '甜美柔软',
+    accent: '#f4a8c4',
+  },
+  { value: 'pink', label: '粉色甜心', accent: '#ff6b9d' },
+  { value: 'blue', label: '蓝色清新', accent: '#5dade2' },
+  { value: 'yellow', label: '黄色阳光', accent: '#f9ca24' },
+  { value: 'purple', label: '紫色梦幻', accent: '#a29bfe' },
+  { value: 'midnight', label: '午夜深色', accent: '#7d6df6' },
+];
 
 interface MenuItemProps {
   icon: string;
@@ -25,6 +47,8 @@ function MenuItem({ icon, label, description, onPress, color, value }: MenuItemP
       style={[styles.menuItem, { backgroundColor: C.surface, borderColor: C.border }]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}${description ? `，${description}` : ''}${value ? `，${value}` : ''}`}
     >
       <Text style={styles.menuIcon}>{icon}</Text>
       <View style={styles.menuText}>
@@ -41,167 +65,134 @@ function MenuItem({ icon, label, description, onPress, color, value }: MenuItemP
 
 export default function SettingsScreen({ navigation }: Props) {
   const C = useThemeColors();
-  const { settings, setAppMode, setDebugNowTs, saveSettings } = useSettingsStore();
+  const { settings, setAppMode, setDebugNowTs, updateAdvanced, saveSettings } = useSettingsStore();
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
   const isAdmin = settings.appMode === 'admin';
-  const [advancedTapCount, setAdvancedTapCount] = useState(0);
-  const [showAdvancedControls, setShowAdvancedControls] = useState(false);
   const debugNow = settings.advanced.debugNowTs;
   const effectiveNow = debugNow ?? Date.now();
   const connected = settings.service.apiKey.trim().length > 0;
   const connectionLabel = connected ? '已准备好' : '待连接';
 
   const handleModeChange = async (mode: AppMode) => {
+    const nextSettings = { ...useSettingsStore.getState().settings, appMode: mode };
     setAppMode(mode);
-    await saveSettings();
+    await saveSettings(nextSettings);
   };
 
   const shiftDebugTime = async (deltaMs: number) => {
     const base = settings.advanced.debugNowTs ?? Date.now();
-    setDebugNowTs(base + deltaMs);
-    await saveSettings();
+    const debugNowTs = base + deltaMs;
+    const nextSettings = {
+      ...useSettingsStore.getState().settings,
+      advanced: { ...useSettingsStore.getState().settings.advanced, debugNowTs },
+    };
+    setDebugNowTs(debugNowTs);
+    await saveSettings(nextSettings);
   };
 
   const resetDebugTime = async () => {
+    const nextSettings = {
+      ...useSettingsStore.getState().settings,
+      advanced: { ...useSettingsStore.getState().settings.advanced, debugNowTs: undefined },
+    };
     setDebugNowTs(undefined);
-    await saveSettings();
+    await saveSettings(nextSettings);
   };
 
-  const handleVersionTap = async () => {
-    const nextCount = advancedTapCount + 1;
-    setAdvancedTapCount(nextCount);
-    if (nextCount >= 5) {
-      setShowAdvancedControls(true);
-      if (!isAdmin) {
-        setAppMode('admin');
-        await saveSettings();
-      }
-    }
+  const activeThemeOption =
+    VISUAL_THEME_OPTIONS.find((option) => option.value === settings.advanced.theme) ?? VISUAL_THEME_OPTIONS[0];
+
+  const handleVisualThemeChange = async (theme: AppTheme) => {
+    const nextSettings = {
+      ...useSettingsStore.getState().settings,
+      advanced: { ...useSettingsStore.getState().settings.advanced, theme, themeMode: 'manual' as const },
+    };
+    updateAdvanced({ theme, themeMode: 'manual' });
+    await saveSettings(nextSettings);
+    setThemePickerOpen(false);
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
-        <View style={styles.hero}>
-          <Text style={[styles.pageTitle, { color: C.text }]}>设置</Text>
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={[styles.topIconButton, { backgroundColor: C.surface, borderColor: C.border }]}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.78}
+            accessibilityRole="button"
+            accessibilityLabel="返回"
+          >
+            <Text style={[styles.backIcon, { color: C.text }]}>‹</Text>
+          </TouchableOpacity>
+          <Text style={[styles.topTitle, { color: C.text }]}>设置</Text>
+          <TouchableOpacity
+            style={[styles.themeTrigger, { backgroundColor: C.surface, borderColor: C.border }]}
+            onPress={() => setThemePickerOpen((open) => !open)}
+            activeOpacity={0.78}
+            accessibilityRole="button"
+            accessibilityLabel={`切换主题色，当前为${activeThemeOption.label}`}
+          >
+            <View style={[styles.themeTriggerDot, { backgroundColor: activeThemeOption.accent }]} />
+          </TouchableOpacity>
+        </View>
+
+        {themePickerOpen && (
+          <View style={[styles.themePicker, { backgroundColor: C.surface, borderColor: C.border, shadowColor: C.shadow }]}>
+            {VISUAL_THEME_OPTIONS.map((option) => {
+              const active = settings.advanced.themeMode === 'manual' && settings.advanced.theme === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.themeDotButton,
+                    { borderColor: active ? C.text : 'transparent' },
+                  ]}
+                  onPress={() => handleVisualThemeChange(option.value)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`切换到${option.label}`}
+                >
+                  <View style={[styles.themeDot, { backgroundColor: option.accent }]} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        <View style={styles.intro}>
           <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
-            管理她如何回复、何时陪你，以及哪些关系片段会被留下。
+            回复、记忆、提醒和连接服务都在这里。
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.statusCard, { backgroundColor: C.surface, borderColor: C.border }]}
-          onPress={() => navigation.navigate('ServiceSettings')}
-          activeOpacity={0.82}
-        >
-          <View style={[styles.statusIcon, { backgroundColor: connected ? C.primary : C.inputBg }]}>
-            <Text style={styles.statusIconText}>{connected ? '✓' : '…'}</Text>
-          </View>
-          <View style={styles.statusCopy}>
-            <Text style={[styles.statusTitle, { color: C.text }]}>服务连接</Text>
-            <Text style={[styles.statusDesc, { color: C.textSecondary }]}>
-              {connected ? '她已经可以在聊天里实时回复。' : '连接 API 后，聊天、好感和记忆才会正式生效。'}
-            </Text>
-          </View>
-          <Text style={[styles.statusValue, { color: connected ? C.primary : C.textSecondary }]}>{connectionLabel}</Text>
-        </TouchableOpacity>
-
-        {showAdvancedControls && (
-          <View style={styles.group}>
-            <Text style={[styles.groupLabel, { color: C.textSecondary }]}>内部工具</Text>
-            <View style={[styles.modeRow, { backgroundColor: C.surface, borderColor: C.border }]}>
-              <TouchableOpacity
-                style={[styles.modeOption, isAdmin && { backgroundColor: C.primary }]}
-                onPress={() => handleModeChange('admin')}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modeLabel, { color: isAdmin ? '#fff' : C.text }]}>高级模式</Text>
-                <Text style={[styles.modeDesc, { color: isAdmin ? 'rgba(255,255,255,0.9)' : C.textSecondary }]}>
-                  显示角色编辑与关系沉淀工具
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modeOption, !isAdmin && { backgroundColor: C.primary }]}
-                onPress={() => handleModeChange('explore')}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modeLabel, { color: !isAdmin ? '#fff' : C.text }]}>陪伴模式</Text>
-                <Text style={[styles.modeDesc, { color: !isAdmin ? 'rgba(255,255,255,0.9)' : C.textSecondary }]}>
-                  保留聊天、记忆漫画和日常陪伴
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {showAdvancedControls && (
-          <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>角色设置</Text>
-          {isAdmin && (
-            <MenuItem
-              icon="👤"
-              label="编辑角色"
-              description="自定义AI伴侣的性格和设定"
-              onPress={() => navigation.navigate('CharacterEditor', {})}
-            />
-          )}
-          </View>
-        )}
-
-        {showAdvancedControls && isAdmin && (
-          <View style={styles.group}>
-            <Text style={[styles.groupLabel, { color: C.textSecondary }]}>时间校准</Text>
-            <View style={[styles.debugPanel, { backgroundColor: C.surface, borderColor: C.border }]}>
-              <Text style={[styles.debugTitle, { color: C.text }]}>
-                当前模拟时间：{format(effectiveNow, 'yyyy-MM-dd HH:mm:ss')}
-              </Text>
-              <Text style={[styles.debugDesc, { color: C.textSecondary }]}>
-                用于快速验证长期聊天后，记忆与日报/周记/月记的更新与存储。
-              </Text>
-
-              <View style={styles.debugBtnRow}>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>+1小时</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(24 * 60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>+1天</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(7 * 24 * 60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>+1周</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(30 * 24 * 60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>+1月</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.debugBtnRow}>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>-1小时</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-24 * 60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>-1天</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-7 * 24 * 60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>-1周</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-30 * 24 * 60 * 60 * 1000)}>
-                  <Text style={[styles.debugBtnText, { color: C.text }]}>-1月</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={[styles.resetBtn, { backgroundColor: C.primary }]} onPress={resetDebugTime}>
-                <Text style={styles.resetBtnText}>恢复真实时间</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: C.textSecondary }]}>陪伴体验</Text>
+          <MenuItem
+            icon="⌁"
+            label="连接服务"
+            description="API 密钥、模型和连接测试"
+            onPress={() => navigation.navigate('ServiceSettings')}
+            value={connectionLabel}
+            color={connected ? undefined : C.primary}
+          />
           <MenuItem
             icon="▣"
             label="记忆漫画"
             description="查看她记住的多格漫画与关系片段"
             onPress={() => navigation.navigate('MemorySettings')}
+          />
+          <MenuItem
+            icon="✦"
+            label="角色创作工作台"
+            description="创建、预览、体检与回退角色设定"
+            onPress={() => navigation.navigate('CharacterEditor', {})}
+          />
+          <MenuItem
+            icon="↺"
+            label="数据与恢复"
+            description="本地备份、恢复和异常诊断"
+            onPress={() => navigation.navigate('DataManagement')}
           />
           <MenuItem
             icon="♡"
@@ -210,14 +201,7 @@ export default function SettingsScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('LifeSettings')}
             value={settings.life.enabled ? '开启' : '关闭'}
           />
-          <MenuItem
-            icon="⌁"
-            label="连接服务"
-            description="API 密钥、模型和连接测试"
-            onPress={() => navigation.navigate('ServiceSettings')}
-            value={connectionLabel}
-          />
-          {showAdvancedControls && isAdmin && (
+          {isAdmin && (
             <MenuItem
               icon="⚙"
               label="内部参数"
@@ -227,9 +211,89 @@ export default function SettingsScreen({ navigation }: Props) {
           )}
         </View>
 
-        <TouchableOpacity style={styles.versionTap} onPress={handleVersionTap} activeOpacity={0.7}>
-          <Text style={[styles.versionText, { color: C.textSecondary }]}>HeartBeat Companion · v1.0</Text>
-        </TouchableOpacity>
+        {isAdmin && (
+          <>
+            <View style={styles.group}>
+              <Text style={[styles.groupLabel, { color: C.textSecondary }]}>开发者工具</Text>
+              <MenuItem
+                icon="AI"
+                label="AI 调试台"
+                description="Persona、Prompt、Agent 与最近 turn trace"
+                onPress={() => navigation.navigate('DeveloperDebug')}
+              />
+            </View>
+
+            <View style={styles.group}>
+              <Text style={[styles.groupLabel, { color: C.textSecondary }]}>时间校准</Text>
+              <View style={[styles.debugPanel, { backgroundColor: C.surface, borderColor: C.border }]}>
+                <Text style={[styles.debugTitle, { color: C.text }]}>
+                  当前模拟时间：{format(effectiveNow, 'yyyy-MM-dd HH:mm:ss')}
+                </Text>
+                <Text style={[styles.debugDesc, { color: C.textSecondary }]}>
+                  用于快速验证长期聊天后，记忆与日报/周记/月记的更新与存储。
+                </Text>
+
+                <View style={styles.debugBtnRow}>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>+1小时</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(24 * 60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>+1天</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(7 * 24 * 60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>+1周</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(30 * 24 * 60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>+1月</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.debugBtnRow}>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>-1小时</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-24 * 60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>-1天</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-7 * 24 * 60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>-1周</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.debugBtn, { borderColor: C.border }]} onPress={() => shiftDebugTime(-30 * 24 * 60 * 60 * 1000)}>
+                    <Text style={[styles.debugBtnText, { color: C.text }]}>-1月</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={[styles.resetBtn, { backgroundColor: C.primary }]} onPress={resetDebugTime}>
+                  <Text style={styles.resetBtnText}>恢复真实时间</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
+
+        <View style={[styles.modeFooter, { borderColor: C.border }]}>
+          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>模式</Text>
+          <View style={[styles.modeRow, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <TouchableOpacity
+              style={[styles.modeOption, !isAdmin && { backgroundColor: C.primary }]}
+              onPress={() => handleModeChange('explore')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.modeLabel, { color: !isAdmin ? '#fff' : C.text }]}>用户模式</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeOption, isAdmin && { backgroundColor: C.primary }]}
+              onPress={() => handleModeChange('admin')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.modeLabel, { color: isAdmin ? '#fff' : C.text }]}>开发者模式</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.versionTap}>
+          <Text style={[styles.versionText, { color: C.textSecondary }]}>HeartBeat Companion · v1.5</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -238,8 +302,78 @@ export default function SettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 16, paddingTop: 8, paddingBottom: 28 },
-  hero: {
-    marginBottom: 16,
+  topBar: {
+    minHeight: 48,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  topIconButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backIcon: {
+    fontSize: 34,
+    lineHeight: 36,
+    fontWeight: '500',
+  },
+  topTitle: {
+    position: 'absolute',
+    left: 72,
+    right: 72,
+    textAlign: 'center',
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '900',
+  },
+  themeTrigger: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeTriggerDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  themePicker: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+    marginBottom: 14,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    flexDirection: 'row',
+    gap: 6,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 3,
+  },
+  themeDotButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  intro: {
+    marginBottom: 12,
   },
   pageTitle: {
     fontSize: 32,
@@ -296,22 +430,75 @@ const styles = StyleSheet.create({
   },
   modeRow: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
+    borderRadius: 18,
     padding: 4,
-    gap: 6,
+    gap: 4,
+    flexDirection: 'row',
   },
   modeOption: {
-    borderRadius: 10,
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 14,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modeLabel: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '900',
   },
   modeDesc: {
     fontSize: 12,
     marginTop: 2,
+  },
+  visualThemeGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  visualThemeCard: {
+    flex: 1,
+    minHeight: 132,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 24,
+    padding: 14,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  visualThemeTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  visualThemeSwatch: {
+    width: 34,
+    height: 18,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 14,
+    borderBottomLeftRadius: 8,
+  },
+  visualThemeCheck: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  visualThemeTitle: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '900',
+    marginBottom: 6,
+  },
+  visualThemeDesc: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  modeFooter: {
+    marginTop: 8,
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   debugPanel: {
     borderWidth: StyleSheet.hairlineWidth,

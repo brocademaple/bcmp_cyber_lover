@@ -5,16 +5,31 @@ import { saveSecure, getSecure, deleteSecure } from '../services/secureStorage';
 
 const STORAGE_KEY = '@bcmp_settings';
 const API_KEY_SECURE = 'bcmp_api_key';
+const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
+const DEEPSEEK_DEFAULT_MODEL = 'deepseek-chat';
+
+declare const process: {
+  env?: {
+    EXPO_PUBLIC_DEEPSEEK_API_KEY?: string;
+  };
+} | undefined;
+
+const envDeepSeekApiKey =
+  (typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_DEEPSEEK_API_KEY : undefined)?.trim() ?? '';
+
+function getDeepSeekServiceDefaults() {
+  return {
+    provider: 'deepseek' as const,
+    apiKey: envDeepSeekApiKey,
+    model: DEEPSEEK_DEFAULT_MODEL,
+    visionModel: DEEPSEEK_DEFAULT_MODEL,
+    baseUrl: DEEPSEEK_BASE_URL,
+  };
+}
 
 const defaultSettings: AppSettings = {
   appMode: 'explore',
-  service: {
-    provider: 'siliconflow',
-    apiKey: '',
-    model: 'Qwen/Qwen2.5-72B-Instruct',
-    visionModel: 'Qwen/Qwen2.5-VL-72B-Instruct',
-    baseUrl: '',
-  },
+  service: getDeepSeekServiceDefaults(),
   life: {
     enabled: true,
     allowProactiveMessages: true,
@@ -42,20 +57,53 @@ const defaultSettings: AppSettings = {
     customRequestParams: {},
     darkMode: 'light',
     sendDelayMs: 0,
-    theme: 'pink',
-    themeMode: 'character',
+    theme: 'urbanClear',
+    themeMode: 'manual',
   },
   selectedCharacterId: 'qingning',
 };
 
 function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
-  return {
+  const merged = {
     ...defaultSettings,
     ...parsed,
     service: { ...defaultSettings.service, ...parsed.service },
     life: { ...defaultSettings.life, ...parsed.life },
     memory: { ...defaultSettings.memory, ...parsed.memory },
     advanced: { ...defaultSettings.advanced, ...parsed.advanced },
+  };
+
+  if (merged.service.provider === 'mimo') {
+    merged.service.baseUrl = PROVIDER_CONFIGS.mimo.baseUrl;
+    if (!merged.service.model || merged.service.model === 'mimo-v2.5') {
+      merged.service.model = PROVIDER_CONFIGS.mimo.defaultModel;
+    }
+    if (!merged.service.visionModel || merged.service.visionModel === 'mimo-v2.5') {
+      merged.service.visionModel = PROVIDER_CONFIGS.mimo.defaultModel;
+    }
+  }
+
+  if (merged.service.provider === 'deepseek') {
+    merged.service.baseUrl = PROVIDER_CONFIGS.deepseek.baseUrl;
+    if (!merged.service.model) {
+      merged.service.model = PROVIDER_CONFIGS.deepseek.defaultModel;
+    }
+    if (!merged.service.visionModel) {
+      merged.service.visionModel = PROVIDER_CONFIGS.deepseek.defaultModel;
+    }
+  }
+
+  return merged;
+}
+
+function applyEnvDeepSeekFallback(settings: AppSettings, savedApiKey?: string | null): AppSettings {
+  if (!envDeepSeekApiKey || savedApiKey) return settings;
+  return {
+    ...settings,
+    service: {
+      ...settings.service,
+      ...getDeepSeekServiceDefaults(),
+    },
   };
 }
 
@@ -70,7 +118,7 @@ interface SettingsStore {
   setAppMode: (mode: AppMode) => void;
   setDebugNowTs: (ts?: number) => void;
   setSelectedCharacter: (id: string) => void;
-  saveSettings: () => Promise<void>;
+  saveSettings: (settingsOverride?: AppSettings) => Promise<boolean>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -89,12 +137,9 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         if (parsed.appMode !== 'admin' && parsed.appMode !== 'explore') {
           parsed.appMode = defaultSettings.appMode;
         }
-        if (parsed.appMode === 'admin') {
-          parsed.appMode = defaultSettings.appMode;
-        }
-        set({ settings: mergeSettings(parsed), isLoaded: true });
+        set({ settings: applyEnvDeepSeekFallback(mergeSettings(parsed), apiKey), isLoaded: true });
       } else {
-        set({ isLoaded: true });
+        set({ settings: applyEnvDeepSeekFallback(defaultSettings, apiKey), isLoaded: true });
       }
     } catch {
       set({ isLoaded: true });
@@ -158,10 +203,20 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     }));
   },
 
-  saveSettings: async () => {
+  saveSettings: async (settingsOverride) => {
     try {
-      const currentSettings = get().settings;
-      const apiKey = currentSettings.service.apiKey;
+      const currentSettings = settingsOverride ?? get().settings;
+      const normalizedSettings: AppSettings = {
+        ...currentSettings,
+        service: {
+          ...currentSettings.service,
+          apiKey: currentSettings.service.apiKey.trim(),
+          model: currentSettings.service.model.trim(),
+          visionModel: currentSettings.service.visionModel.trim(),
+          baseUrl: currentSettings.service.baseUrl?.trim(),
+        },
+      };
+      const apiKey = normalizedSettings.service.apiKey;
 
       // 保存 API Key 到安全存储
       if (apiKey) {
@@ -172,21 +227,29 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
       // 保存其他设置到 AsyncStorage（不包含 API Key）
       const settingsToSave = {
-        ...currentSettings,
-        service: { ...currentSettings.service, apiKey: '' }
+        ...normalizedSettings,
+        service: { ...normalizedSettings.service, apiKey: '' }
       };
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToSave));
+      set({ settings: normalizedSettings });
+      return true;
     } catch (e) {
       console.error('Failed to save settings', e);
+      return false;
     }
   },
 }));
 
 export const PROVIDER_CONFIGS: Record<ServiceProvider, { baseUrl: string; label: string; defaultModel: string }> = {
+  mimo: {
+    baseUrl: 'https://token-plan-cn.xiaomimimo.com/v1',
+    label: 'MiMo',
+    defaultModel: 'mimo-v2.5-pro',
+  },
   deepseek: {
-    baseUrl: 'https://api.deepseek.com/v1',
+    baseUrl: DEEPSEEK_BASE_URL,
     label: 'DeepSeek',
-    defaultModel: 'deepseek-chat',
+    defaultModel: DEEPSEEK_DEFAULT_MODEL,
   },
   siliconflow: {
     baseUrl: 'https://api.siliconflow.cn/v1',

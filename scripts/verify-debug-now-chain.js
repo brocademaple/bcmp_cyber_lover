@@ -8,22 +8,35 @@ const ts = require('typescript');
 
 const projectRoot = path.resolve(__dirname, '..');
 const aiServicePath = path.join(projectRoot, 'src/services/aiService.ts');
+const characterPromptArchitecturePath = path.join(projectRoot, 'src/services/characterPromptArchitectureService.ts');
 
-function loadAiServiceForNode() {
-  const source = fs.readFileSync(aiServicePath, 'utf8');
+function loadTsModule(filePath, requireStub) {
+  const source = fs.readFileSync(filePath, 'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2020,
       esModuleInterop: true,
     },
-    fileName: aiServicePath,
+    fileName: filePath,
   }).outputText;
 
   const exports = {};
   const module = { exports };
   const wrapped = Module.wrap(compiled);
-  const script = new vm.Script(wrapped, { filename: aiServicePath });
+  const script = new vm.Script(wrapped, { filename: filePath });
+  script.runInThisContext()(exports, requireStub, module, filePath, path.dirname(filePath));
+  return module.exports;
+}
+
+function loadCharacterPromptArchitectureService() {
+  return loadTsModule(characterPromptArchitecturePath, (request) => {
+    if (request === '../types') return {};
+    return require(request);
+  });
+}
+
+function loadAiServiceForNode() {
   const requireStub = (request) => {
     if (request === '../store/settingsStore') {
       return {
@@ -51,11 +64,13 @@ function loadAiServiceForNode() {
     if (request === '../types') {
       return {};
     }
+    if (request === './characterPromptArchitectureService') {
+      return loadCharacterPromptArchitectureService();
+    }
     return require(request);
   };
 
-  script.runInThisContext()(exports, requireStub, module, aiServicePath, path.dirname(aiServicePath));
-  return module.exports;
+  return loadTsModule(aiServicePath, requireStub);
 }
 
 function flattenContent(content) {
