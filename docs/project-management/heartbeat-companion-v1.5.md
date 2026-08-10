@@ -33,14 +33,14 @@
 
 ### 发布门槛
 
-- [ ] TypeScript 类型检查通过
-- [ ] 聊天历史排序、旧键迁移、SQLite / 文件快照链路通过
-- [ ] Debug Now、Prompt 调试、DeepSeek、记忆、情绪、角色人设验证通过
-- [ ] 视觉资产注册表与文档镜像检查通过
-- [ ] Expo Web 导出成功
-- [ ] 公开 Web 产物无本地 API Key
-- [ ] Git diff 无空白或误提交问题
-- [ ] 提交并推送 GitHub
+- [x] TypeScript 类型检查通过
+- [x] 聊天历史排序、旧键迁移、SQLite / 文件快照链路通过
+- [x] Debug Now、Prompt 调试、DeepSeek、记忆、情绪、角色人设验证通过
+- [x] 视觉资产注册表与文档镜像检查通过
+- [x] Expo Web 导出成功
+- [x] 公开 Web 产物无本地 API Key
+- [x] Git diff 无空白或误提交问题
+- [x] 提交并推送 GitHub：`0475466`
 - [ ] 白天使用 Simulator 补一轮新包真实像素验收
 - [ ] 个人飞书用户授权恢复后同步本文并回读确认
 
