@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle, useRef } from 'react';
 import {
   View,
   TextInput,
@@ -10,102 +10,147 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useThemeColors } from '../utils/theme';
+import { useThemeColors, useThemeId } from '../utils/theme';
+import { NOTO_SANS_SC } from '../utils/appFonts';
 
 interface Props {
   onSend: (text: string, imageUri?: string) => void;
-  onAudioCall: () => void;
-  onVideoCall: () => void;
+  // onAudioCall and onVideoCall are hidden for MVP — kept as optional props
+  onAudioCall?: () => void;
+  onVideoCall?: () => void;
   disabled?: boolean;
+  bottomInset?: number;
 }
 
-export default function MessageInput({ onSend, onAudioCall, onVideoCall, disabled }: Props) {
-  const [text, setText] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | undefined>();
-  const C = useThemeColors();
+export interface MessageInputHandle {
+  focus: () => void;
+}
 
-  const handleSend = () => {
-    const trimmed = text.trim();
-    if (!trimmed && !selectedImage) return;
-    onSend(trimmed, selectedImage);
-    setText('');
-    setSelectedImage(undefined);
-  };
+const MessageInput = forwardRef<MessageInputHandle, Props>(
+  ({ onSend, disabled, bottomInset = 0 }, ref) => {
+    const [text, setText] = useState('');
+    const [selectedImage, setSelectedImage] = useState<string | undefined>();
+    const inputRef = useRef<TextInput>(null);
+    const C = useThemeColors();
+    const themeId = useThemeId();
+    const isUrbanClear = themeId === 'urbanClear';
+    const isSoftSweet = themeId === 'softSweet';
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return;
+    useImperativeHandle(ref, () => ({
+      focus: () => inputRef.current?.focus(),
+    }));
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-      base64: false,
-    });
+    const handleSend = () => {
+      const trimmed = text.trim();
+      if (!trimmed && !selectedImage) return;
+      onSend(trimmed, selectedImage);
+      setText('');
+      setSelectedImage(undefined);
+    };
 
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
+    const pickImage = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') return;
 
-  const canSend = (text.trim().length > 0 || !!selectedImage) && !disabled;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        base64: false,
+      });
 
-  return (
-    <View style={[styles.container, { backgroundColor: C.surface, borderTopColor: C.border }]}>
-      {selectedImage && (
-        <View style={styles.imagePreviewRow}>
-          <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-          <TouchableOpacity onPress={() => setSelectedImage(undefined)} style={styles.removeImageBtn}>
-            <Text style={styles.removeImageText}>✕</Text>
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    };
+
+    const canSend = (text.trim().length > 0 || !!selectedImage) && !disabled;
+    const bottomPadding = Platform.OS === 'ios' ? Math.max(bottomInset, 12) : 12;
+
+    return (
+      <View
+        style={[
+          styles.container,
+          isUrbanClear && styles.urbanContainer,
+          isSoftSweet && styles.softContainer,
+          { backgroundColor: C.surface + 'E8', borderTopColor: C.border, paddingBottom: bottomPadding },
+        ]}
+      >
+        {selectedImage && (
+          <View style={styles.imagePreviewRow}>
+            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <TouchableOpacity onPress={() => setSelectedImage(undefined)} style={styles.removeImageBtn}>
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.inputRow}>
+          <TouchableOpacity
+            onPress={pickImage}
+            style={[
+              styles.iconBtn,
+              isUrbanClear && styles.urbanIconBtn,
+              isSoftSweet && styles.softIconBtn,
+              { backgroundColor: C.inputBg + 'DD', borderColor: C.border },
+            ]}
+          >
+            <Text style={[styles.iconText, { color: C.primary }]}>＋</Text>
+          </TouchableOpacity>
+
+          <TextInput
+            ref={inputRef}
+            style={[
+              styles.input,
+              isUrbanClear && styles.urbanInput,
+              isSoftSweet && styles.softInput,
+              { backgroundColor: C.inputBg + 'DD', color: C.text, borderColor: C.border },
+            ]}
+            value={text}
+            onChangeText={setText}
+            placeholder="输入消息..."
+            placeholderTextColor={C.textSecondary}
+            multiline
+            maxLength={2000}
+            returnKeyType="default"
+            editable={!disabled}
+          />
+
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={!canSend}
+            style={[
+              styles.sendBtn,
+              isUrbanClear && styles.urbanSendBtn,
+              isSoftSweet && styles.softSendBtn,
+              { backgroundColor: canSend ? C.primary : C.border },
+            ]}
+          >
+            {disabled ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.sendIcon}>↑</Text>
+            )}
           </TouchableOpacity>
         </View>
-      )}
-      <View style={styles.inputRow}>
-        <TouchableOpacity onPress={pickImage} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-          <Text style={styles.iconText}>🖼</Text>
-        </TouchableOpacity>
-
-        <TextInput
-          style={[styles.input, { backgroundColor: C.inputBg, color: C.text }]}
-          value={text}
-          onChangeText={setText}
-          placeholder="输入消息..."
-          placeholderTextColor={C.textSecondary}
-          multiline
-          maxLength={2000}
-          returnKeyType="default"
-          editable={!disabled}
-        />
-
-        <TouchableOpacity onPress={onAudioCall} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-          <Text style={styles.iconText}>📞</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onVideoCall} style={[styles.iconBtn, { backgroundColor: C.inputBg }]}>
-          <Text style={styles.iconText}>📹</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleSend}
-          disabled={!canSend}
-          style={[styles.sendBtn, { backgroundColor: canSend ? C.primary : C.border }]}
-        >
-          {disabled ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.sendIcon}>↑</Text>
-          )}
-        </TouchableOpacity>
       </View>
-    </View>
-  );
-}
+    );
+  }
+);
+
+export default MessageInput;
 
 const styles = StyleSheet.create({
   container: {
     borderTopWidth: 1,
     paddingHorizontal: 8,
     paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    paddingBottom: 12,
+  },
+  urbanContainer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+  },
+  softContainer: {
+    paddingHorizontal: 10,
   },
   imagePreviewRow: {
     flexDirection: 'row',
@@ -145,10 +190,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  urbanIconBtn: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 18,
+    borderBottomLeftRadius: 8,
+  },
+  softIconBtn: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 22,
+    borderBottomRightRadius: 14,
+    borderBottomLeftRadius: 22,
+  },
   iconText: {
-    fontSize: 18,
+    fontSize: 22,
+    fontWeight: '700',
   },
   input: {
+    fontFamily: NOTO_SANS_SC.regular,
     flex: 1,
     borderRadius: 20,
     paddingHorizontal: 16,
@@ -157,12 +217,35 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     minHeight: 40,
   },
+  urbanInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+  },
+  softInput: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 18,
+    borderBottomRightRadius: 24,
+    borderBottomLeftRadius: 16,
+  },
   sendBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  urbanSendBtn: {
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 10,
+    borderBottomLeftRadius: 20,
+  },
+  softSendBtn: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 22,
+    borderBottomLeftRadius: 16,
+    transform: [{ rotate: '-2deg' }],
   },
   sendIcon: {
     color: '#fff',

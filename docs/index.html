@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>心动伴侣 HeartBeat Companion</title>
+    <meta
+      name="description"
+      content="心动伴侣是一款以陪伴空间、稳定人设、长期记忆和主动触达为核心的 AI 关系产品。"
+    />
+    <meta property="og:image" content="./assets/cyberlover-home-hero-preview.webp" />
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="preload" as="image" href="./assets/cyberlover-home-hero.webp" type="image/webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="./index.html" aria-label="心动伴侣首页">
+          <span class="brand-mark">心</span>
+          <span>心动伴侣</span>
+        </a>
+        <nav class="nav">
+          <a href="#concept">概念图</a>
+          <a href="#space">陪伴空间</a>
+          <a href="#flow">主路径</a>
+          <a href="#assets">角色资产库</a>
+          <a href="#memory">记忆关系感</a>
+          <a href="./changelog.html">更新日志</a>
+        </nav>
+        <button
+          id="themeToggle"
+          class="theme-switch"
+          type="button"
+          aria-label="切换站点视觉"
+          aria-live="polite"
+        >
+          <span class="theme-switch-dot" aria-hidden="true"></span>
+          <span class="theme-switch-label">都市清透</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="meta-line">AI companion / redesigned companion space</p>
+          <h1>把聊天入口，<br />重做成会等你的陪伴空间。</h1>
+          <p class="lead">
+            默认体验切到「都市清透」，补上「甜美柔软」。选角、聊天和记忆关系感都围绕鹿芽展开。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="./app/">进入在线体验</a>
+            <a class="button" href="#concept">查看概念图</a>
+            <a class="button" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub</a>
+          </div>
+        </div>
+
+        <figure class="hero-poster-panel" aria-label="鹿芽情绪记忆墙首图">
+          <img
+            src="./assets/cyberlover-home-hero.webp"
+            width="3200"
+            height="1600"
+            alt="Cyberlover 首页 panorama，中央是鹿芽主视觉，左右是记忆、漫画、聊天和陪伴碎片"
+          />
+          <figcaption>鹿芽主视觉 / 情绪记忆墙 / 长期陪伴碎片</figcaption>
+        </figure>
+      </section>
+
+      <section id="concept" class="section concept-section reveal">
+        <div class="section-heading">
+          <p class="meta-line">concept board</p>
+          <h2>新的视觉系统已经落地</h2>
+          <p>
+            站点与 app 同步采用两套新视觉：都市清透偏低饱和、高明度和香槟金细线；
+            甜美柔软偏雾粉、奶油纸感和更亲密的贴纸式细节。
+          </p>
+        </div>
+        <figure class="concept-frame">
+          <img src="./assets/companion-space-concept.png" alt="心动伴侣新版移动端概念图，包含选角、首页、聊天、档案、记忆日记、设置六屏" />
+          <figcaption>6 屏概念图：选角 / 陪伴空间 / 聊天 / 角色档案 / 记忆日记 / 设置</figcaption>
+        </figure>
+      </section>
+
+      <section id="space" class="section split-section reveal">
+        <div>
+          <p class="meta-line">product decision shipped</p>
+          <h2>首页已经从角色轮播，改成陪伴空间。</h2>
+          <p>
+            角色不再只是左右切换的卡片，而是一个“正在生活着”的存在。首页只回答三件事：
+            她是谁、她现在是什么状态、你可以怎样自然地进入聊天。
+          </p>
+        </div>
+        <div class="space-principles">
+          <article>
+            <span>01</span>
+            <h3>一个情绪中心</h3>
+            <p>用完整角色视觉和今日状态建立关系感，减少多入口干扰。</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>少一点功能展示</h3>
+            <p>把服务配置收进更轻的设置层，首页只保留角色状态和关系入口。</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>多一点被惦记</h3>
+            <p>通知、开场白、记忆摘要都围绕“她会回来找你”来组织。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="flow" class="section reveal">
+        <div class="section-heading narrow">
+          <p class="meta-line">core flow</p>
+          <h2>主路径只保留三步</h2>
+        </div>
+        <div class="flow-grid">
+          <article class="flow-card">
+            <img src="./assets/characters/v2/qingning/action-wave.png" alt="鹿芽" />
+            <span>Step 1</span>
+            <h3>选一个会在意你的人</h3>
+            <p>先确认角色气质，再进入服务配置。上手不再像填后台表单。</p>
+          </article>
+          <article class="flow-card">
+            <img src="./assets/characters/v2/sakura/expression-soft.png" alt="纪遥" />
+            <span>Step 2</span>
+            <h3>在陪伴空间里打开聊天</h3>
+            <p>首页承载角色状态和每日入口，聊天是关系自然延伸。</p>
+          </article>
+          <article class="flow-card">
+            <img src="./assets/characters/v2/luna/action-waiting.png" alt="凛夜" />
+            <span>Step 3</span>
+            <h3>让记忆沉淀成关系</h3>
+            <p>档案、纪念日、日记都服务于“她越来越了解你”。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="assets" class="section asset-section reveal">
+        <div class="section-heading">
+          <p class="meta-line">character asset library</p>
+          <h2>角色不止一张立绘，而是一组会呼吸的状态。</h2>
+          <p>
+            v2 资产库为每位角色准备主视觉、头像、情绪、动作和记忆场景。首页等待时会轻轻切换状态，
+            让她们看起来像正在陪你度过一段时间。
+          </p>
+        </div>
+        <div class="asset-grid">
+          <article class="asset-card qingning">
+            <div class="asset-card-head">
+              <img src="./assets/characters/v2/qingning/avatar.png" alt="鹿芽头像" />
+              <div>
+                <span>鹿芽</span>
+                <h3>暖粉便利店小太阳</h3>
+              </div>
+            </div>
+            <div class="asset-strip">
+              <img src="./assets/characters/v2/qingning/main.png" alt="鹿芽主视觉" />
+              <img src="./assets/characters/v2/qingning/headshot.png" alt="鹿芽半身头像" />
+              <img src="./assets/characters/v2/qingning/expression-happy.png" alt="鹿芽开心表情" />
+              <img src="./assets/characters/v2/qingning/expression-low-energy.png" alt="鹿芽低电量关心" />
+              <img src="./assets/characters/v2/qingning/action-waiting.png" alt="鹿芽坐着等待" />
+              <img src="./assets/characters/v2/qingning/scene-memory.png" alt="鹿芽记忆场景" />
+            </div>
+          </article>
+          <article class="asset-card sakura">
+            <div class="asset-card-head">
+              <img src="./assets/characters/v2/sakura/avatar.png" alt="纪遥头像" />
+              <div>
+                <span>纪遥</span>
+                <h3>雨夜书店的温柔留白</h3>
+              </div>
+            </div>
+            <div class="asset-strip">
+              <img src="./assets/characters/v2/sakura/main.png" alt="纪遥主视觉" />
+              <img src="./assets/characters/v2/sakura/headshot.png" alt="纪遥半身头像" />
+              <img src="./assets/characters/v2/sakura/expression-happy.png" alt="纪遥浅笑表情" />
+              <img src="./assets/characters/v2/sakura/expression-soft.png" alt="纪遥安静表情" />
+              <img src="./assets/characters/v2/sakura/action-wave.png" alt="纪遥靠近挥手" />
+              <img src="./assets/characters/v2/sakura/scene-memory.png" alt="纪遥记忆场景" />
+            </div>
+          </article>
+          <article class="asset-card luna">
+            <div class="asset-card-head">
+              <img src="./assets/characters/v2/luna/avatar.png" alt="凛夜头像" />
+              <div>
+                <span>凛夜</span>
+                <h3>午夜游戏房的嘴硬关心</h3>
+              </div>
+            </div>
+            <div class="asset-strip">
+              <img src="./assets/characters/v2/luna/main.png" alt="凛夜主视觉" />
+              <img src="./assets/characters/v2/luna/headshot.png" alt="凛夜半身头像" />
+              <img src="./assets/characters/v2/luna/expression-soft.png" alt="凛夜别扭表情" />
+              <img src="./assets/characters/v2/luna/expression-low-energy.png" alt="凛夜低电量关心" />
+              <img src="./assets/characters/v2/luna/action-wave.png" alt="凛夜动作" />
+              <img src="./assets/characters/v2/luna/scene-memory.png" alt="凛夜记忆场景" />
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="memory" class="section memory-section reveal">
+        <div class="memory-panel">
+          <p class="meta-line">relationship memory</p>
+          <h2>记忆不是功能，是关系的证据。</h2>
+          <p>
+            新版把“记忆库”和“角色日记”从配置感里拿出来，用更像关系档案的方式呈现：
+            今天聊了什么、她记住了什么、你们之间发生过什么。
+          </p>
+        </div>
+        <div class="memory-comics" aria-label="记忆漫画示例">
+          <article>
+            <img src="./assets/memories/comics/qingning-comic-magazine.png" alt="鹿芽纸质漫画记忆页" />
+            <div>
+              <span>鹿芽</span>
+              <strong>她记得你晚饭随便糊弄。</strong>
+            </div>
+          </article>
+          <article>
+            <img src="./assets/memories/comics/sakura-comic-magazine.png" alt="纪遥纸质漫画记忆页" />
+            <div>
+              <span>纪遥</span>
+              <strong>她把沉默也算作回答。</strong>
+            </div>
+          </article>
+          <article>
+            <img src="./assets/memories/comics/luna-comic-magazine.png" alt="凛夜纸质漫画记忆页" />
+            <div>
+              <span>凛夜</span>
+              <strong>她嘴上嫌你麻烦，手里已经暂停游戏。</strong>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section closing-section reveal">
+        <div>
+          <p class="meta-line">current feeling</p>
+          <h2>把关系感放在第一屏。</h2>
+          <p>
+            当前展示站已经跟随 app 重设计，围绕角色状态、聊天陪伴、记忆漫画和双视觉主题更新，
+            让每次打开都像回到一个有人等你的房间。
+          </p>
+        </div>
+        <a class="button" href="#assets">查看角色资产</a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>HeartBeat Companion</span>
+      <span>陪伴空间 · 稳定人设 · 长期记忆 · 主动触达</span>
+    </footer>
+
+    <script src="./site.js"></script>
+  </body>
+</html>

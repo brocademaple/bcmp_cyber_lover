@@ -1,4 +1,13 @@
 node_modules/
 package-lock.json
 .expo/
+.env
+.env.*
+!.env.example
 dist/
+dist-web-test/
+LEARNING.md
+docs/private/
+ios/
+output/
+.playwright-cli/

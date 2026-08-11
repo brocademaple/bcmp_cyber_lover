@@ -16,6 +16,7 @@ export const PinkTheme = {
   border: '#ffd4e5',
   inputBg: '#fff0f5',
   shadow: 'rgba(255, 107, 157, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -36,6 +37,7 @@ export const PinkThemeDark = {
   border: '#4a2d3f',
   inputBg: '#3d2433',
   shadow: 'rgba(255, 107, 157, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
 };
 
@@ -57,6 +59,7 @@ export const BlueTheme = {
   border: '#d4e6f1',
   inputBg: '#ebf5fb',
   shadow: 'rgba(93, 173, 226, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -77,6 +80,7 @@ export const BlueThemeDark = {
   border: '#2d4a5a',
   inputBg: '#243847',
   shadow: 'rgba(93, 173, 226, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
 };
 
@@ -98,6 +102,7 @@ export const YellowTheme = {
   border: '#ffe8b3',
   inputBg: '#fffaed',
   shadow: 'rgba(249, 202, 36, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -118,6 +123,7 @@ export const YellowThemeDark = {
   border: '#4a3a1a',
   inputBg: '#3d3020',
   shadow: 'rgba(249, 202, 36, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
 };
 
@@ -139,6 +145,7 @@ export const PurpleTheme = {
   border: '#e1d5f7',
   inputBg: '#f3e5f5',
   shadow: 'rgba(162, 155, 254, 0.2)',
+  danger: '#e25563',
   chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
 };
 
@@ -159,7 +166,127 @@ export const PurpleThemeDark = {
   border: '#3d2a5a',
   inputBg: '#332447',
   shadow: 'rgba(162, 155, 254, 0.3)',
+  danger: '#ff6b81',
   chatBackgroundOverlay: 'rgba(0,0,0,0.55)',
+};
+
+// 午夜深色主题（凛夜）
+export const MidnightTheme = {
+  primary: '#7d6df6',
+  primaryLight: '#9da4ff',
+  primaryDark: '#241a4f',
+  accent: '#4dd4e8',
+  accentLight: '#202846',
+  background: '#0b0d16',
+  surface: '#151827',
+  text: '#f3f0ff',
+  textSecondary: '#9fa7c7',
+  bubbleUser: '#7d6df6',
+  bubbleAssistant: '#181c2c',
+  bubbleUserText: '#ffffff',
+  bubbleAssistantText: '#eef0ff',
+  border: '#2a3150',
+  inputBg: '#111523',
+  shadow: 'rgba(125, 109, 246, 0.3)',
+  danger: '#ff6b81',
+  chatBackgroundOverlay: 'rgba(4,6,14,0.68)',
+};
+
+export const MidnightThemeDark = {
+  ...MidnightTheme,
+  primary: '#9588ff',
+  primaryLight: '#b4bdff',
+  primaryDark: '#18122f',
+  surface: '#111421',
+  inputBg: '#0e1220',
+  border: '#252b46',
+  chatBackgroundOverlay: 'rgba(2,3,9,0.72)',
+};
+
+// 都市清透：低饱和、高明度、香槟金细线，适合作为默认主皮肤
+export const UrbanClearTheme = {
+  primary: '#c9a76b',
+  primaryLight: '#eadfc9',
+  primaryDark: '#8e7652',
+  accent: '#d9c4d9',
+  accentLight: '#f7f3f8',
+  background: '#fbfaf7',
+  surface: '#ffffff',
+  text: '#4b4540',
+  textSecondary: '#9a9188',
+  bubbleUser: '#d8c7ed',
+  bubbleAssistant: '#ffffff',
+  bubbleUserText: '#4f4760',
+  bubbleAssistantText: '#4b4540',
+  border: '#e8dfd0',
+  inputBg: '#f6f1ea',
+  shadow: 'rgba(150, 126, 92, 0.16)',
+  danger: '#c96f78',
+  chatBackgroundOverlay: 'rgba(255,251,246,0.72)',
+};
+
+export const UrbanClearThemeDark = {
+  primary: '#d8bd86',
+  primaryLight: '#4c4338',
+  primaryDark: '#9f845a',
+  accent: '#bda7c6',
+  accentLight: '#2b2630',
+  background: '#171512',
+  surface: '#211f1c',
+  text: '#f7efe3',
+  textSecondary: '#c5b8a7',
+  bubbleUser: '#6d5f7e',
+  bubbleAssistant: '#26231f',
+  bubbleUserText: '#fff8ef',
+  bubbleAssistantText: '#f7efe3',
+  border: '#3d352d',
+  inputBg: '#2b2722',
+  shadow: 'rgba(216, 189, 134, 0.24)',
+  danger: '#ff8f9a',
+  chatBackgroundOverlay: 'rgba(8,7,6,0.64)',
+};
+
+// 甜美柔软：雾粉、奶油纸感、贴纸式亲密细节，适合活动和情绪场景
+export const SoftSweetTheme = {
+  primary: '#f19ab8',
+  primaryLight: '#ffd7e6',
+  primaryDark: '#c96f91',
+  accent: '#d8b7ff',
+  accentLight: '#fff0f6',
+  background: '#fff8f8',
+  surface: '#fffdfb',
+  text: '#5a3b4c',
+  textSecondary: '#b78a9e',
+  bubbleUser: '#ffb8cf',
+  bubbleAssistant: '#fffdfb',
+  bubbleUserText: '#5a3b4c',
+  bubbleAssistantText: '#5a3b4c',
+  border: '#f4d5df',
+  inputBg: '#fff1f5',
+  shadow: 'rgba(241, 154, 184, 0.18)',
+  danger: '#d95f70',
+  chatBackgroundOverlay: 'rgba(255,246,249,0.7)',
+};
+
+export const SoftSweetThemeDark = {
+  primary: '#f4a8c4',
+  primaryLight: '#5f394b',
+  primaryDark: '#bd6b8b',
+  accent: '#c7a3f4',
+  accentLight: '#39283f',
+  background: '#1b1218',
+  surface: '#2a1c24',
+  text: '#ffe8f0',
+  textSecondary: '#d7aabd',
+  bubbleUser: '#b96586',
+  bubbleAssistant: '#2f2029',
+  bubbleUserText: '#fff7fa',
+  bubbleAssistantText: '#ffe8f0',
+  border: '#4a2f3e',
+  inputBg: '#352531',
+  shadow: 'rgba(244, 168, 196, 0.24)',
+  danger: '#ff7f91',
+  chatBackgroundOverlay: 'rgba(14,8,12,0.66)',
 };
 
 export const Colors = PinkTheme;
@@ -169,6 +296,9 @@ export const ThemeMap = {
   blue: BlueTheme,
   yellow: YellowTheme,
   purple: PurpleTheme,
+  midnight: MidnightTheme,
+  urbanClear: UrbanClearTheme,
+  softSweet: SoftSweetTheme,
 };
 
 export const ThemeMapDark = {
@@ -176,7 +306,9 @@ export const ThemeMapDark = {
   blue: BlueThemeDark,
   yellow: YellowThemeDark,
   purple: PurpleThemeDark,
+  midnight: MidnightThemeDark,
+  urbanClear: UrbanClearThemeDark,
+  softSweet: SoftSweetThemeDark,
 };
 
 export type ThemeType = keyof typeof ThemeMap;
-
