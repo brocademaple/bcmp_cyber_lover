@@ -6,7 +6,7 @@ export interface Message {
   content: string;
   timestamp: number;
   characterMood?: EmotionalState['mood'];
-  status?: 'sending' | 'sent' | 'failed';
+  status?: 'queued' | 'sending' | 'sent' | 'failed';
   errorMessage?: string;
   imageUri?: string;
   audioUri?: string;

@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Message } from '../types';
 import { useThemeColors, useThemeId } from '../utils/theme';
 import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { getMoodStateLabel } from '../services/characterPromptArchitectureService';
+import { resolveMessageMediaUri } from '../services/messageMedia';
 
 interface Props {
   message: Message;
@@ -27,6 +29,8 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
     : null;
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [message.imageUri]);
   const assistantBubbleStyle = [
     styles.assistantBubble,
     isUrbanClear && styles.urbanAssistantBubble,
@@ -76,8 +80,20 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
             ...(isUser ? userBubbleStyle : assistantBubbleStyle),
           ]}
         >
-          {message.imageUri && (
-            <Image source={{ uri: message.imageUri }} style={styles.messageImage} resizeMode="cover" />
+          {message.imageUri && !imageFailed && (
+            <Image
+              source={resolveMessageMediaUri(message.imageUri)}
+              style={styles.messageImage}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={120}
+              onError={() => setImageFailed(true)}
+            />
+          )}
+          {message.imageUri && imageFailed && (
+            <View style={[styles.imageFallback, { borderColor: C.border }]}>
+              <Text style={[styles.imageFallbackText, { color: C.textSecondary }]}>图片暂时不可用</Text>
+            </View>
           )}
           <Text style={[
             styles.messageText,
@@ -95,7 +111,13 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
           accessibilityLabel={replyMoodLabel ? `${dateTimeStr}，回复时心情：${replyMoodLabel}` : dateTimeStr}
         >
           <Text style={[styles.timestamp, { color: C.textSecondary }, isUser && styles.timestampRight]}>
-            {message.status === 'failed' ? `${dateTimeStr} · 未送达` : dateTimeStr}
+            {message.status === 'failed'
+              ? `${dateTimeStr} · 未送达`
+              : message.status === 'queued'
+                ? `${dateTimeStr} · 排队中`
+                : message.status === 'sending'
+                  ? `${dateTimeStr} · 发送中`
+                  : dateTimeStr}
           </Text>
           {replyMoodLabel && (
             <View
@@ -300,6 +322,19 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 10,
     marginBottom: 6,
+  },
+  imageFallback: {
+    width: 200,
+    height: 92,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  imageFallbackText: {
+    fontFamily: NOTO_SANS_SC.regular,
+    fontSize: 12,
   },
   messageText: {
     fontFamily: NOTO_SERIF_SC.regular,

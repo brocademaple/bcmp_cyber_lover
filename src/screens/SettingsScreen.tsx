@@ -9,11 +9,11 @@ import { format } from 'date-fns';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-const VISUAL_THEME_OPTIONS: Array<{
+const VISUAL_THEME_OPTIONS: {
   value: AppTheme;
   label: string;
   accent: string;
-}> = [
+}[] = [
   {
     value: 'urbanClear',
     label: '都市清透',

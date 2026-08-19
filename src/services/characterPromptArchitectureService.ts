@@ -164,7 +164,7 @@ function getMood(character: Character): Mood {
   return character.emotionalState?.mood ?? 'neutral';
 }
 
-function cleanLines(lines: Array<string | undefined | null>): string {
+function cleanLines(lines: (string | undefined | null)[]): string {
   return lines.filter((line): line is string => Boolean(line?.trim())).join('\n');
 }
 

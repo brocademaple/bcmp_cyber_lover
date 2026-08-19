@@ -28,7 +28,7 @@ import { oldestFirst } from '../utils/chatHistory';
 
 type DebugTab = 'persona' | 'prompt' | 'agents' | 'emotion' | 'trace';
 
-const TABS: Array<{ key: DebugTab; label: string }> = [
+const TABS: { key: DebugTab; label: string }[] = [
   { key: 'persona', label: 'Persona' },
   { key: 'prompt', label: 'Prompt' },
   { key: 'agents', label: 'Agents' },

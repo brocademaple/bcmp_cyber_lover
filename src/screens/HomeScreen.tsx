@@ -31,14 +31,14 @@ const DEFAULT_HOME_MOOD: Mood = 'neutral';
 const MOOD_ENTRY_VALID_MS = 5 * 60 * 1000;
 type StatusLineSet = Partial<Record<Mood, string[]>>;
 
-const STATUS_OPTIONS: Array<{
+const STATUS_OPTIONS: {
   id: string;
   label: string;
   detail: string;
   mood: Mood;
   frameIndex: number;
   mark: string;
-}> = [
+}[] = [
   { id: 'main', label: '自然待机', detail: '回到她平时陪你的样子。', mood: 'neutral', frameIndex: 0, mark: '✦' },
   { id: 'happy', label: '开心营业', detail: '让她用更明亮的状态迎接你。', mood: 'happy', frameIndex: 1, mark: '♡' },
   { id: 'soft', label: '安静陪着', detail: '少说一点，留一盏灯陪你。', mood: 'sad', frameIndex: 2, mark: '…' },
@@ -283,7 +283,7 @@ export default function HomeScreen({ navigation }: Props) {
   const isLandscape = winWidth > winHeight;
 
   const { characters, loadCharacters, updateEmotionalState } = useChatStore();
-  const { loadSettings, updateAdvanced, saveSettings, settings, setSelectedCharacter } = useSettingsStore();
+  const { updateAdvanced, saveSettings, settings, setSelectedCharacter } = useSettingsStore();
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusModalCharacterId, setStatusModalCharacterId] = useState<string | null>(null);
@@ -308,7 +308,6 @@ export default function HomeScreen({ navigation }: Props) {
 
   useEffect(() => {
     loadCharacters();
-    loadSettings();
   }, []);
 
   useEffect(() => {
