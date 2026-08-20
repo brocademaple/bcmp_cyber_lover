@@ -157,10 +157,13 @@ export default function ChatScreen({ route, navigation }: Props) {
     (settings.advanced.darkMode === 'auto' && systemScheme === 'dark');
 
   const character = getCharacter(characterId);
-  const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
   const chatMessages = messages[characterId] || [];
   const characterRef = useRef(character);
   const settingsRef = useRef(settings);
+  const getEffectiveNow = useCallback(
+    () => settingsRef.current.advanced.debugNowTs ?? Date.now(),
+    []
+  );
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [deliveryIssue, setDeliveryIssue] = useState<{
@@ -233,7 +236,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       };
       addMessage(characterId, greeting);
     }
-  }, [addMessage, autoGreet, character, characterId, chatMessages.length, historyLoadedCharacterId, moodEntry]);
+  }, [addMessage, autoGreet, character, characterId, chatMessages.length, getEffectiveNow, historyLoadedCharacterId, moodEntry]);
 
   useEffect(() => {
     if (
@@ -536,10 +539,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   // Auto-send AI daily greeting when opened from notification
   useEffect(() => {
     if (!autoGreet || !character || autoGreetSentRef.current) return;
-    if (!settings.service.apiKey) return;
+    if (!settingsRef.current.service.apiKey) return;
     autoGreetSentRef.current = true;
 
     const sendAutoGreet = async () => {
+      const latestSettings = settingsRef.current;
       isProcessingQueueRef.current = true;
       setTyping(true);
       const aiMsgId = genId();
@@ -549,8 +553,8 @@ export default function ChatScreen({ route, navigation }: Props) {
       try {
         const greeting = await generateDailyGreeting(
           character,
-          settings.service,
-          settings.advanced,
+          latestSettings.service,
+          latestSettings.advanced,
           getEffectiveNow()
         );
         const aiMsg: Message = {
@@ -583,7 +587,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     };
 
     sendAutoGreet();
-  }, [autoGreet, character, characterId, processQueuedSends]);
+  }, [addMessage, autoGreet, character, characterId, getEffectiveNow, processQueuedSends, setTyping]);
 
   const handleSend = useCallback(
     async (text: string, imageUri?: string) => {

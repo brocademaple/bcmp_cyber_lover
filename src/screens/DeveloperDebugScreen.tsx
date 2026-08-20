@@ -23,7 +23,7 @@ import { buildDailyDiaryFromMessages, buildRollupDiary, getMonthlyKey, getWeekly
 import { buildMemorySummaryDebugSurface } from '../services/memoryService';
 import { explainEmotionTransition } from '../services/relationshipService';
 import { exportDebugTurnTraces } from '../services/debugTraceExport';
-import { Character, DebugAgentSurface, DebugPromptSnapshot, Message } from '../types';
+import { DebugAgentSurface, DebugPromptSnapshot, Message } from '../types';
 import { oldestFirst } from '../utils/chatHistory';
 
 type DebugTab = 'persona' | 'prompt' | 'agents' | 'emotion' | 'trace';
@@ -160,7 +160,10 @@ export default function DeveloperDebugScreen() {
   const [emotionInput, setEmotionInput] = useState('今天有点累，但还是想和你说说话');
   const [exportStatus, setExportStatus] = useState('');
   const selectedCharacter = characters.find((character) => character.id === selectedCharacterId) ?? characters[0];
-  const selectedMessages = selectedCharacter ? messages[selectedCharacter.id] ?? [] : [];
+  const selectedMessages = useMemo(
+    () => (selectedCharacter ? messages[selectedCharacter.id] ?? [] : []),
+    [messages, selectedCharacter]
+  );
   const effectiveNow = settings.advanced.debugNowTs ?? Date.now();
 
   useEffect(() => {

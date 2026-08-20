@@ -36,6 +36,7 @@
 - 备份升级为带完整性校验和中断回滚的 schema v2，继续兼容 schema v1。
 - 新增文件导入/分享、ESLint、Vitest、GitHub Actions 和可复现锁文件。
 - 移除首屏大字体阻塞，Web 应用包从约 141 MB 降至约 68 MB。
+- 清零 ESLint warning 并将零 warning 固化为 CI 门槛；通话页退出会清理全部延迟和分析定时器。
 
 ### 发布门槛
 
@@ -45,10 +46,10 @@
 - [x] 视觉资产注册表与文档镜像检查通过
 - [x] Expo Web 导出成功
 - [x] 浏览器真实首屏截图，三位角色图片加载成功，控制台 0 error
-- [x] 单元测试、ESLint 与 GitHub CI 配置通过
+- [x] 单元测试、零 warning ESLint 与 GitHub CI 配置通过
 - [x] 公开 Web 产物无本地 API Key
 - [x] Git diff 无空白或误提交问题
-- [x] 提交并推送 GitHub：`0475466`
+- [x] 提交并推送 GitHub：Draft PR #5
 - [ ] 白天使用 Simulator 补一轮新包真实像素验收
 - [ ] 个人飞书用户授权恢复后同步本文并回读确认
 

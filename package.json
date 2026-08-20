@@ -10,7 +10,7 @@
     "build:web": "node scripts/build-pages-web.mjs",
     "serve:pages": "python3 -m http.server 4173 --directory docs",
     "build:android": "eas build --platform android",
-    "lint": "eslint App.tsx src tests --ext .ts,.tsx",
+    "lint": "eslint App.tsx src tests --ext .ts,.tsx --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build:pages-hero": "node scripts/build-cyberlover-hero.mjs",

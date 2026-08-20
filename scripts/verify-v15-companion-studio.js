@@ -79,6 +79,9 @@ assert('data management exposes backup, restore and diagnostics', dataScreen.inc
 assert('onboarding tests the service before persisting configuration', onboarding.includes('await testChatCompletion') && onboarding.indexOf('await testChatCompletion') < onboarding.indexOf('await saveSettings'));
 assert('onboarding hides API key input', onboarding.includes('secureTextEntry'));
 assert('call screen does not simulate speech-to-text', !call.includes('（语音消息）请和我说说话吧') && call.includes('Speech-to-Text API'));
-assert('call greeting comes from the selected character', call.includes('character.greeting.trim()'));
+assert(
+  'call greeting comes from the selected character',
+  call.includes('const characterGreeting = character?.greeting') && call.includes('characterGreeting.trim()')
+);
 
 if (!process.exitCode) console.log('V1.5 companion + character studio verification passed.');
