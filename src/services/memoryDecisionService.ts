@@ -2,6 +2,7 @@ import { AdvancedConfig, Character, DebugAgentSurface, MemoryConfig, Message, Se
 import { PROVIDER_CONFIGS } from '../store/settingsStore';
 import { evaluateMemoryDecision, MemoryDecision } from './relationshipService';
 import { recentChronological } from '../utils/chatHistory';
+import { fetchWithTimeout } from './requestTimeout';
 
 type LlmMemoryDecision = {
   action?: unknown;
@@ -34,7 +35,7 @@ function getApiKey(config: ServiceConfig): string {
   return config.apiKey.trim();
 }
 
-function extractAssistantContent(data: { choices?: Array<{ message?: { content?: string } }> }): string {
+function extractAssistantContent(data: { choices?: { message?: { content?: string } }[] }): string {
   return data.choices?.[0]?.message?.content || '';
 }
 
@@ -135,7 +136,7 @@ function evaluateLocalFallback(input: MemoryDecisionInput): MemoryDecision {
   return shouldRunDuringChatAutoMemory(input.memory) ? localDecision : { action: 'none' };
 }
 
-function buildMemoryJudgePrompt(input: MemoryDecisionInput): Array<{ role: string; content: string }> {
+function buildMemoryJudgePrompt(input: MemoryDecisionInput): { role: string; content: string }[] {
   const contextMessages = getMemoryContextMessages(input);
   const recentText = contextMessages
     .filter((message) => message.role !== 'system' && message.content.trim())
@@ -253,7 +254,7 @@ async function evaluateWithLlm(input: MemoryDecisionInput): Promise<MemoryDecisi
   const apiKey = getApiKey(input.service);
   if (!baseUrl || !apiKey || !input.service.model.trim()) return null;
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

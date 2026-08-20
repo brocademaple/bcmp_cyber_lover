@@ -51,6 +51,14 @@ import {
   evaluateMoodFromConversation,
   MoodJudgementResult,
 } from '../services/moodJudgementService';
+import {
+  PendingSendRecord,
+  enqueuePendingSend,
+  loadPendingSends,
+  markPendingSendAttempt,
+  removePendingSend,
+} from '../services/sendQueuePersistence';
+import { recordAppIssue } from '../services/appDiagnostics';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -85,11 +93,6 @@ function buildMoodJudgementCacheKey(characterId: string, mood: string, messages:
     lastMessage?.content.length ?? 0,
   ].join(':');
 }
-
-type PendingSend = {
-  characterId: string;
-  userMsg: Message;
-};
 
 type MemoryCaptureNotice =
   | (Extract<MemoryDecision, { action: 'ask' }> & {
@@ -130,8 +133,10 @@ export default function ChatScreen({ route, navigation }: Props) {
   const autoGreetSentRef = useRef(false);
   const moodEntryHandledKeyRef = useRef<string | null>(null);
   const didInitialScrollRef = useRef(false);
-  const sendQueueRef = useRef<PendingSend[]>([]);
+  const sendQueueRef = useRef<PendingSendRecord[]>([]);
   const isProcessingQueueRef = useRef(false);
+  const activeRequestControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
 
   const {
     messages,
@@ -152,14 +157,20 @@ export default function ChatScreen({ route, navigation }: Props) {
     (settings.advanced.darkMode === 'auto' && systemScheme === 'dark');
 
   const character = getCharacter(characterId);
-  const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
   const chatMessages = messages[characterId] || [];
   const characterRef = useRef(character);
   const settingsRef = useRef(settings);
+  const getEffectiveNow = useCallback(
+    () => settingsRef.current.advanced.debugNowTs ?? Date.now(),
+    []
+  );
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingId, setStreamingId] = useState<string | null>(null);
-  const [pendingUserMessages, setPendingUserMessages] = useState<Message[]>([]);
-  const [deliveryIssue, setDeliveryIssue] = useState<{ text: string; imageUri?: string } | null>(null);
+  const [deliveryIssue, setDeliveryIssue] = useState<{
+    messageId: string;
+    text: string;
+    imageUri?: string;
+  } | null>(null);
   const [memoryNotice, setMemoryNotice] = useState<MemoryCaptureNotice | null>(null);
   const [moodJudgement, setMoodJudgement] = useState<MoodJudgementResult | null>(null);
   const [isMoodJudging, setIsMoodJudging] = useState(false);
@@ -175,6 +186,14 @@ export default function ChatScreen({ route, navigation }: Props) {
     characterRef.current = character;
     settingsRef.current = settings;
   }, [character, settings]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      activeRequestControllerRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     didInitialScrollRef.current = false;
@@ -217,7 +236,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       };
       addMessage(characterId, greeting);
     }
-  }, [addMessage, autoGreet, character, characterId, chatMessages.length, historyLoadedCharacterId, moodEntry]);
+  }, [addMessage, autoGreet, character, characterId, chatMessages.length, getEffectiveNow, historyLoadedCharacterId, moodEntry]);
 
   useEffect(() => {
     if (
@@ -288,14 +307,21 @@ export default function ChatScreen({ route, navigation }: Props) {
         const next = sendQueueRef.current.shift();
         if (!next) continue;
 
-        setPendingUserMessages((pending) => pending.filter((message) => message.id !== next.userMsg.id));
-
         const latestSettings = settingsRef.current;
         const latestCharacter = useChatStore.getState().getCharacter(next.characterId) ?? characterRef.current;
         if (!latestCharacter) continue;
 
-        const historyForRequest = useChatStore.getState().messages[next.characterId] || [];
-        await addMessage(next.characterId, next.userMsg);
+        let historyForRequest = useChatStore.getState().messages[next.characterId] || [];
+        if (!historyForRequest.some((message) => message.id === next.userMsg.id)) {
+          await addMessage(next.characterId, { ...next.userMsg, status: 'queued' });
+          historyForRequest = useChatStore.getState().messages[next.characterId] || [];
+        }
+        historyForRequest = historyForRequest.filter((message) => message.id !== next.userMsg.id);
+        await markPendingSendAttempt(next.userMsg.id);
+        await updateMessage(next.characterId, next.userMsg.id, {
+          status: 'sending',
+          errorMessage: undefined,
+        });
 
         setTyping(true);
         const aiMsgId = genId();
@@ -307,7 +333,14 @@ export default function ChatScreen({ route, navigation }: Props) {
             status: 'failed',
             errorMessage: '请先在设置中配置服务提供商和API密钥',
           });
-          setDeliveryIssue({ text: next.userMsg.content, imageUri: next.userMsg.imageUri });
+          await removePendingSend(next.userMsg.id).catch((error) =>
+            recordAppIssue('发送队列清理', error, false)
+          );
+          setDeliveryIssue({
+            messageId: next.userMsg.id,
+            text: next.userMsg.content,
+            imageUri: next.userMsg.imageUri,
+          });
           setStreamingId(null);
           setStreamingContent('');
           continue;
@@ -328,6 +361,8 @@ export default function ChatScreen({ route, navigation }: Props) {
         let affinityDelta = 0;
 
         try {
+          const requestController = new AbortController();
+          activeRequestControllerRef.current = requestController;
           const debugSnapshot = buildPromptDebugSnapshot({
             character: latestCharacter,
             chatHistory: historyForRequest,
@@ -356,7 +391,8 @@ export default function ChatScreen({ route, navigation }: Props) {
               fullContent += chunk;
               setStreamingContent(fullContent);
             },
-            latestSettings.advanced.debugNowTs ?? Date.now()
+            latestSettings.advanced.debugNowTs ?? Date.now(),
+            requestController.signal
           );
 
           const aiMsg: Message = {
@@ -368,6 +404,9 @@ export default function ChatScreen({ route, navigation }: Props) {
           };
           await addMessage(next.characterId, aiMsg);
           await updateMessage(next.characterId, next.userMsg.id, { status: 'sent', errorMessage: undefined });
+          await removePendingSend(next.userMsg.id).catch((error) =>
+            recordAppIssue('发送队列清理', error, false)
+          );
           setDeliveryIssue(null);
 
           const now = latestSettings.advanced.debugNowTs ?? Date.now();
@@ -416,7 +455,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
           // 每次有效聊天后刷新该角色的日报/周记/月记
           await generateDiariesForCharacter(next.characterId);
-          void useDebugStore.getState().addTrace({
+          if (latestSettings.appMode === 'admin') void useDebugStore.getState().addTrace({
             id: `trace_${now}_${next.userMsg.id}`,
             timestamp: now,
             characterId: next.characterId,
@@ -439,9 +478,20 @@ export default function ChatScreen({ route, navigation }: Props) {
           });
         } catch (err: unknown) {
           const errorMsg = err instanceof Error ? err.message : '服务暂时没有连接好';
+          if (!isMountedRef.current && activeRequestControllerRef.current?.signal.aborted) {
+            await updateMessage(next.characterId, next.userMsg.id, { status: 'queued', errorMessage: undefined });
+            break;
+          }
           await updateMessage(next.characterId, next.userMsg.id, { status: 'failed', errorMessage: errorMsg });
-          setDeliveryIssue({ text: next.userMsg.content, imageUri: next.userMsg.imageUri });
-          void useDebugStore.getState().addTrace({
+          await removePendingSend(next.userMsg.id).catch((error) =>
+            recordAppIssue('发送队列清理', error, false)
+          );
+          setDeliveryIssue({
+            messageId: next.userMsg.id,
+            text: next.userMsg.content,
+            imageUri: next.userMsg.imageUri,
+          });
+          if (latestSettings.appMode === 'admin') void useDebugStore.getState().addTrace({
             id: `trace_error_${Date.now()}_${next.userMsg.id}`,
             timestamp: latestSettings.advanced.debugNowTs ?? Date.now(),
             characterId: next.characterId,
@@ -462,6 +512,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             errorMessage: errorMsg,
           });
         } finally {
+          activeRequestControllerRef.current = null;
           setStreamingId(null);
           setStreamingContent('');
         }
@@ -488,10 +539,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   // Auto-send AI daily greeting when opened from notification
   useEffect(() => {
     if (!autoGreet || !character || autoGreetSentRef.current) return;
-    if (!settings.service.apiKey) return;
+    if (!settingsRef.current.service.apiKey) return;
     autoGreetSentRef.current = true;
 
     const sendAutoGreet = async () => {
+      const latestSettings = settingsRef.current;
       isProcessingQueueRef.current = true;
       setTyping(true);
       const aiMsgId = genId();
@@ -501,8 +553,8 @@ export default function ChatScreen({ route, navigation }: Props) {
       try {
         const greeting = await generateDailyGreeting(
           character,
-          settings.service,
-          settings.advanced,
+          latestSettings.service,
+          latestSettings.advanced,
           getEffectiveNow()
         );
         const aiMsg: Message = {
@@ -535,31 +587,110 @@ export default function ChatScreen({ route, navigation }: Props) {
     };
 
     sendAutoGreet();
-  }, [autoGreet, character, characterId, processQueuedSends]);
+  }, [addMessage, autoGreet, character, characterId, getEffectiveNow, processQueuedSends, setTyping]);
 
   const handleSend = useCallback(
-    (text: string, imageUri?: string) => {
+    async (text: string, imageUri?: string) => {
       if (!character) return;
-      if (!settings.service.apiKey) {
-        setDeliveryIssue({ text, imageUri });
-        return;
-      }
 
       const userMsg: Message = {
         id: genId(),
         role: 'user',
         content: text,
         timestamp: settingsRef.current.advanced.debugNowTs ?? Date.now(),
-        status: 'sending',
+        status: settings.service.apiKey ? 'queued' : 'failed',
+        errorMessage: settings.service.apiKey ? undefined : '请先在设置中配置服务提供商和API密钥',
         imageUri,
       };
 
-      sendQueueRef.current.push({ characterId, userMsg });
-      setPendingUserMessages((pending) => [...pending, userMsg]);
+      if (!settings.service.apiKey) {
+        await addMessage(characterId, userMsg);
+        setDeliveryIssue({ messageId: userMsg.id, text, imageUri });
+        return;
+      }
+
+      const pendingSend: PendingSendRecord = {
+        characterId,
+        userMsg,
+        enqueuedAt: Date.now(),
+        attempts: 0,
+      };
+      try {
+        await enqueuePendingSend(pendingSend);
+        await addMessage(characterId, userMsg);
+      } catch (error) {
+        await recordAppIssue('发送队列保存', error, true);
+        await addMessage(characterId, {
+          ...userMsg,
+          status: 'failed',
+          errorMessage: '消息没有写入发送队列，请重试。',
+        });
+        setDeliveryIssue({ messageId: userMsg.id, text, imageUri });
+        return;
+      }
+      sendQueueRef.current.push(pendingSend);
       processQueuedSends();
     },
-    [character, characterId, settings.service.apiKey, processQueuedSends]
+    [addMessage, character, characterId, settings.service.apiKey, processQueuedSends]
   );
+
+  const retryDelivery = useCallback(async () => {
+    if (!deliveryIssue || !settings.service.apiKey) return;
+    const existing = useChatStore.getState().messages[characterId]?.find(
+      (message) => message.id === deliveryIssue.messageId
+    );
+    const userMsg: Message = existing
+      ? { ...existing, status: 'queued', errorMessage: undefined }
+      : {
+          id: deliveryIssue.messageId,
+          role: 'user',
+          content: deliveryIssue.text,
+          timestamp: Date.now(),
+          status: 'queued',
+          imageUri: deliveryIssue.imageUri,
+        };
+    if (existing) await updateMessage(characterId, userMsg.id, { status: 'queued', errorMessage: undefined });
+    else await addMessage(characterId, userMsg);
+    const pendingSend: PendingSendRecord = {
+      characterId,
+      userMsg,
+      enqueuedAt: Date.now(),
+      attempts: 0,
+    };
+    await enqueuePendingSend(pendingSend);
+    sendQueueRef.current.push(pendingSend);
+    setDeliveryIssue(null);
+    processQueuedSends();
+  }, [addMessage, characterId, deliveryIssue, processQueuedSends, settings.service.apiKey, updateMessage]);
+
+  useEffect(() => {
+    if (historyLoadedCharacterId !== characterId) return;
+    let cancelled = false;
+    loadPendingSends(characterId).then(async (pending) => {
+      if (cancelled || pending.length === 0) return;
+      const queuedIds = new Set(sendQueueRef.current.map((record) => record.userMsg.id));
+      for (const record of pending) {
+        if (cancelled || queuedIds.has(record.userMsg.id)) continue;
+        const existing = useChatStore.getState().messages[characterId]?.find(
+          (message) => message.id === record.userMsg.id
+        );
+        if (existing?.status === 'sent') {
+          await removePendingSend(existing.id).catch(() => undefined);
+          continue;
+        }
+        if (existing) {
+          await updateMessage(characterId, existing.id, { status: 'queued', errorMessage: undefined });
+        } else {
+          await addMessage(characterId, { ...record.userMsg, status: 'queued', errorMessage: undefined });
+        }
+        sendQueueRef.current.push(record);
+      }
+      if (!cancelled) processQueuedSends();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [addMessage, characterId, historyLoadedCharacterId, processQueuedSends, updateMessage]);
 
   const handleQuickReply = useCallback(
     (text: string) => {
@@ -650,7 +781,6 @@ export default function ChatScreen({ route, navigation }: Props) {
       });
     }
   }
-  displayMessages.push(...pendingUserMessages);
   const latestDisplayMessage = displayMessages[displayMessages.length - 1];
   const latestDisplayMessageKey = latestDisplayMessage
     ? [
@@ -849,7 +979,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   isSoftSweet && styles.softActionBtn,
                   { borderColor: C.border },
                 ]}
-                onPress={() => handleSend(deliveryIssue.text, deliveryIssue.imageUri)}
+                onPress={retryDelivery}
               >
                 <Text style={[styles.deliverySecondaryText, { color: C.primary }]}>重试</Text>
               </TouchableOpacity>

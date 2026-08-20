@@ -2,6 +2,7 @@ import { AdvancedConfig, Character, EmotionalState, Message, ServiceConfig } fro
 import { PROVIDER_CONFIGS } from '../store/settingsStore';
 import { recentChronological } from '../utils/chatHistory';
 import { resolveDefaultCharacterAssetKey } from '../utils/characterAssets';
+import { fetchWithTimeout } from './requestTimeout';
 
 type Mood = EmotionalState['mood'];
 
@@ -170,7 +171,7 @@ function getApiKey(config: ServiceConfig): string {
   return config.apiKey.trim();
 }
 
-function extractAssistantContent(data: { choices?: Array<{ message?: { content?: string } }> }): string {
+function extractAssistantContent(data: { choices?: { message?: { content?: string } }[] }): string {
   return data.choices?.[0]?.message?.content || '';
 }
 
@@ -237,7 +238,7 @@ function formatContextMessages(messages: Message[]): string {
     .join('\n');
 }
 
-function buildMoodJudgePrompt(input: MoodJudgementInput): Array<{ role: string; content: string }> {
+function buildMoodJudgePrompt(input: MoodJudgementInput): { role: string; content: string }[] {
   const state = input.character.emotionalState;
   const currentMood = state?.mood ?? 'neutral';
   const contextMessages = recentChronological(input.messages, 24);
@@ -305,7 +306,7 @@ async function evaluateWithLlm(input: MoodJudgementInput): Promise<LlmCandidate 
   const model = input.service.model.trim();
   if (!baseUrl || !apiKey || !model) return null;
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

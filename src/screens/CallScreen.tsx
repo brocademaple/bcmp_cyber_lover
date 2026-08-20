@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CameraView } from 'expo-camera';
+import { Camera, CameraView } from 'expo-camera';
 import * as Speech from 'expo-speech';
-import { RootStackParamList, CallType, Character } from '../types';
+import { RootStackParamList, Character } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { analyzeFrameWithEmotion } from '../services/aiService';
@@ -23,7 +23,7 @@ import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Call'>;
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 function getImageSource(source?: Character['imageUri']) {
   if (source == null) return null;
@@ -46,6 +46,8 @@ export default function CallScreen({ route, navigation }: Props) {
   const { getCharacter, addMessage, updateEmotionalState } = useChatStore();
   const { settings } = useSettingsStore();
   const character = getCharacter(characterId);
+  const characterGreeting = character?.greeting;
+  const characterName = character?.name;
   const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
 
   const [callState, setCallState] = useState({
@@ -63,39 +65,42 @@ export default function CallScreen({ route, navigation }: Props) {
   const cameraRef = useRef<CameraView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const analyzeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const connectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    requestPermissions();
-    return () => cleanup();
+  const cleanup = useCallback(() => {
+    Speech.stop();
+    if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
+    connectionTimerRef.current = null;
+    timerRef.current = null;
+    analyzeTimerRef.current = null;
   }, []);
 
-  useEffect(() => {
-    if (status === 'connected') {
-      timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
-      // Periodic frame analysis for video calls
-      if (callType === 'video' && settings.service.visionModel) {
-        analyzeTimerRef.current = setInterval(() => {
-          captureAndAnalyze();
-        }, 8000); // Every 8 seconds
-      }
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
-    };
-  }, [status]);
+  const speakGreeting = useCallback(() => {
+    if (!characterName || characterGreeting == null) return;
+    const configuredGreeting = characterGreeting.trim();
+    const greeting = configuredGreeting
+      ? configuredGreeting.slice(0, 80)
+      : callType === 'video'
+        ? `看到你了。这里是 ${characterName}，我们慢慢聊。`
+        : `听到你的来电了。这里是 ${characterName}。`;
+    setAiResponse(greeting);
+    Speech.speak(greeting, {
+      language: 'zh-CN',
+      rate: 1.0,
+      pitch: 1.2,
+    });
+  }, [callType, characterGreeting, characterName]);
 
-  const requestPermissions = async () => {
+  const requestPermissions = useCallback(async () => {
     try {
       if (callType === 'video') {
-        // CameraView permissions use useCameraPermissions hook; fallback via static method
-        const { Camera: StaticCamera } = require('expo-camera');
-        const camStatus = await StaticCamera.requestCameraPermissionsAsync();
+        const camStatus = await Camera.requestCameraPermissionsAsync();
         setCameraPermission(camStatus.granted);
       }
 
-      // Simulate connection delay
-      setTimeout(() => {
+      connectionTimerRef.current = setTimeout(() => {
         setStatus('connected');
         speakGreeting();
       }, 1500);
@@ -103,23 +108,7 @@ export default function CallScreen({ route, navigation }: Props) {
       void recordAppIssue('通话权限', e, true);
       Alert.alert('权限错误', '无法获取摄像头权限');
     }
-  };
-
-  const speakGreeting = () => {
-    if (!character) return;
-    const configuredGreeting = character.greeting.trim();
-    const greeting = configuredGreeting
-      ? configuredGreeting.slice(0, 80)
-      : callType === 'video'
-        ? `看到你了。这里是 ${character.name}，我们慢慢聊。`
-        : `听到你的来电了。这里是 ${character.name}。`;
-    setAiResponse(greeting);
-    Speech.speak(greeting, {
-      language: 'zh-CN',
-      rate: 1.0,
-      pitch: 1.2,
-    });
-  };
+  }, [callType, speakGreeting]);
 
   const captureAndAnalyze = useCallback(async () => {
     if (!cameraRef.current || callState.isCameraOff || isProcessing || !character) return;
@@ -160,7 +149,29 @@ export default function CallScreen({ route, navigation }: Props) {
     } finally {
       setIsProcessing(false);
     }
-  }, [callState, isProcessing, character, settings.service, characterId, updateEmotionalState]);
+  }, [callState.isCameraOff, callState.isMuted, isProcessing, character, settings.service, characterId, updateEmotionalState]);
+
+  useEffect(() => {
+    void requestPermissions();
+    return cleanup;
+  }, [cleanup, requestPermissions]);
+
+  useEffect(() => {
+    if (status === 'connected') {
+      timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+      if (callType === 'video' && settings.service.visionModel) {
+        analyzeTimerRef.current = setInterval(() => {
+          void captureAndAnalyze();
+        }, 8000);
+      }
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
+      timerRef.current = null;
+      analyzeTimerRef.current = null;
+    };
+  }, [callType, captureAndAnalyze, settings.service.visionModel, status]);
 
   const explainVoiceInputRequirement = () => {
     Alert.alert(
@@ -195,12 +206,6 @@ export default function CallScreen({ route, navigation }: Props) {
       await addMessage(characterId, callMsg);
     }
     navigation.goBack();
-  };
-
-  const cleanup = () => {
-    Speech.stop();
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
   };
 
   const formatDuration = (secs: number) => {

@@ -9,13 +9,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, ServiceProvider } from '../types';
+import { ServiceProvider } from '../types';
 import { useSettingsStore, PROVIDER_CONFIGS } from '../store/settingsStore';
 import { fetchModelList, testChatCompletion } from '../services/aiService';
 import { useThemeColors } from '../utils/theme';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ServiceSettings'>;
 type CapabilityTarget = 'all' | 'chat' | 'vision';
 type TestTone = 'idle' | 'success' | 'error';
 

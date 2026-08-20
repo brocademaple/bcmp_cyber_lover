@@ -17,9 +17,15 @@ import {
   getMoodEntryGreetingFallback,
   renderCharacterPromptLayers,
 } from './characterPromptArchitectureService';
+import { messageImageToProviderUrl } from './messageMedia';
+import {
+  createRequestScope,
+  fetchWithTimeout,
+  normalizeRequestError,
+} from './requestTimeout';
 
 interface ChatCompletionRequest {
-  messages: Array<{ role: string; content: string | ContentPart[] }>;
+  messages: { role: string; content: string | ContentPart[] }[];
   model: string;
   stream?: boolean;
   temperature?: number;
@@ -51,7 +57,7 @@ function supportsStreamingResponse(): boolean {
   );
 }
 
-function extractAssistantContent(data: { choices?: Array<{ message?: { content?: string } }> }): string {
+function extractAssistantContent(data: { choices?: { message?: { content?: string } }[] }): string {
   return data.choices?.[0]?.message?.content || '';
 }
 
@@ -174,10 +180,10 @@ function buildMessages(
   advanced: AdvancedConfig,
   imageUri?: string,
   nowTs = Date.now()
-): Array<{ role: string; content: string | ContentPart[] }> {
+): { role: string; content: string | ContentPart[] }[] {
   const systemMsg = buildSystemMessage(character, memory, chatHistory, nowTs);
 
-  const apiMessages: Array<{ role: string; content: string | ContentPart[] }> = [];
+  const apiMessages: { role: string; content: string | ContentPart[] }[] = [];
 
   if (!advanced.compatibilityMode) {
     apiMessages.push({ role: 'system', content: systemMsg });
@@ -233,7 +239,7 @@ function previewMessageContent(content: string | ContentPart[]): { preview: stri
   };
 }
 
-function toDebugMessages(messages: Array<{ role: string; content: string | ContentPart[] }>): DebugPromptMessage[] {
+function toDebugMessages(messages: { role: string; content: string | ContentPart[] }[]): DebugPromptMessage[] {
   return messages.map((message) => {
     const preview = previewMessageContent(message.content);
     return {
@@ -248,7 +254,7 @@ function buildSafeBaseRequestSummary(
   config: ServiceConfig,
   advanced: AdvancedConfig,
   model: string,
-  extras: Array<{ label: string; value: string }> = []
+  extras: { label: string; value: string }[] = []
 ) {
   const customKeys = Object.keys(advanced.customRequestParams ?? {});
   return [
@@ -442,7 +448,8 @@ export async function sendMessage(
   advanced: AdvancedConfig,
   imageUri?: string,
   onChunk?: (chunk: string) => void,
-  nowTs?: number
+  nowTs?: number,
+  signal?: AbortSignal
 ): Promise<string> {
   const baseUrl = getBaseUrl(config);
   const apiKey = getApiKey(config);
@@ -462,7 +469,22 @@ export async function sendMessage(
     imageUri,
   };
   const allHistory = [...chatHistory, newUserMsg];
-  const apiMessages = buildMessages(character, allHistory, memory, advanced, imageUri, effectiveNowTs);
+  const preparedHistory = await Promise.all(
+    allHistory.map(async (message) =>
+      message.imageUri
+        ? { ...message, imageUri: await messageImageToProviderUrl(message.imageUri) }
+        : message
+    )
+  );
+  const preparedImageUri = imageUri ? await messageImageToProviderUrl(imageUri) : undefined;
+  const apiMessages = buildMessages(
+    character,
+    preparedHistory,
+    memory,
+    advanced,
+    preparedImageUri,
+    effectiveNowTs
+  );
 
   const shouldStream = !!onChunk && supportsStreamingResponse();
   const requestBody: ChatCompletionRequest = {
@@ -478,21 +500,24 @@ export async function sendMessage(
     (requestBody as Record<string, unknown>)['enable_thinking'] = true;
   }
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(requestBody),
-  });
+  const requestScope = createRequestScope(45_000, signal);
+  try {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
+      signal: requestScope.signal,
+    });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`API错误 ${response.status}: ${errText}`);
-  }
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`API错误 ${response.status}: ${errText}`);
+    }
 
-  if (shouldStream && response.body) {
+    if (shouldStream && response.body) {
     // Stream response
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -524,10 +549,15 @@ export async function sendMessage(
       }
     }
 
-    return fullContent;
-  } else {
+      return fullContent;
+    }
+
     const data = await response.json();
     return extractAssistantContent(data);
+  } catch (error) {
+    throw normalizeRequestError(error, requestScope);
+  } finally {
+    requestScope.dispose();
   }
 }
 
@@ -537,7 +567,7 @@ export async function fetchModelList(config: ServiceConfig): Promise<string[]> {
   if (!baseUrl || !apiKey) return [];
 
   try {
-    const response = await fetch(`${baseUrl}/models`, {
+    const response = await fetchWithTimeout(`${baseUrl}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (!response.ok) return [];
@@ -554,7 +584,7 @@ export async function testConnection(config: ServiceConfig): Promise<boolean> {
   if (!baseUrl || !apiKey) return false;
 
   try {
-    const response = await fetch(`${baseUrl}/models`, {
+    const response = await fetchWithTimeout(`${baseUrl}/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     return response.ok;
@@ -577,7 +607,7 @@ export async function testChatCompletion(
   }
 
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -642,7 +672,7 @@ export async function generateMoodEntryGreeting(
   const effectiveNowTs = nowTs ?? advanced.debugNowTs ?? Date.now();
   const systemPrompt = buildSystemMessage(moodCharacter, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
   const userPrompt = buildMoodEntryGreetingPrompt(moodCharacter, mood);
-  const messages: Array<{ role: string; content: string }> = advanced.compatibilityMode
+  const messages: { role: string; content: string }[] = advanced.compatibilityMode
     ? [{ role: 'user', content: `[系统提示: ${systemPrompt}]\n\n${userPrompt}` }]
     : [
         { role: 'system', content: systemPrompt },
@@ -650,7 +680,7 @@ export async function generateMoodEntryGreeting(
       ];
 
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -691,7 +721,7 @@ export async function generateDailyGreeting(
 
   const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，体现出你在意用户今天的状态，不超过3句话，并符合这个时段的语境。`;
 
-  const messages: Array<{ role: string; content: string }> = [];
+  const messages: { role: string; content: string }[] = [];
   if (!advanced.compatibilityMode) {
     messages.push({ role: 'system', content: systemPrompt });
     messages.push({ role: 'user', content: userPrompt });
@@ -700,7 +730,7 @@ export async function generateDailyGreeting(
   }
 
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -734,7 +764,7 @@ export async function analyzeFrame(
     return '';
   }
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -779,7 +809,7 @@ export async function analyzeFrameWithEmotion(
 
   const prompt = `你正在和${character.name}视频通话。请分析画面中用户的情绪状态（开心/难过/疲惫/中性），然后用${character.name}的语气说一句关心的话（不超过30字）。格式：[情绪:xxx] 回复内容`;
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,10 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Character, Message } from '../types';
-import { loadChatMessages, saveChatMessages } from './chatPersistence';
+import { clearChatMessages, loadChatMessages, saveChatMessages } from './chatPersistence';
+import {
+  collectPortableMedia,
+  PortableMediaFile,
+  restorePortableMedia,
+} from './messageMedia';
+import { fnv1aChecksum } from './dataIntegrity';
 
-const EXPORT_SCHEMA_VERSION = 1;
+const EXPORT_SCHEMA_VERSION = 2;
+const LEGACY_EXPORT_SCHEMA_VERSION = 1;
 const EXPORT_DIR_NAME = 'bcmp-data-exports';
+const MAX_LOCAL_EXPORTS = 20;
+const RESTORE_MARKER_KEY = '@bcmp_restore_in_progress_v1';
 const CHARACTERS_KEY = '@bcmp_characters';
 const SETTINGS_KEY = '@bcmp_settings';
 const CHAT_RECORD_PREFIX = '@bcmp_chat_db_v1_';
@@ -18,6 +27,8 @@ export interface AppDataBundle {
   storage: Record<string, string>;
   characters: Character[];
   messagesByCharacter: Record<string, Message[]>;
+  mediaFiles?: Record<string, PortableMediaFile>;
+  checksum?: string;
 }
 export interface DataExportResult {
   uri: string;
@@ -70,15 +81,94 @@ function fileStamp(timestamp: number): string {
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isMessage(value: unknown): value is Message {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === 'string' &&
+    (value.role === 'user' || value.role === 'assistant' || value.role === 'system') &&
+    typeof value.content === 'string' &&
+    typeof value.timestamp === 'number' &&
+    Number.isFinite(value.timestamp)
+  );
+}
+
+function isCharacter(value: unknown): value is Character {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.avatar === 'string' &&
+    typeof value.systemPrompt === 'string' &&
+    typeof value.greeting === 'string' &&
+    typeof value.personality === 'string'
+  );
+}
+
+function bundleChecksum(bundle: Omit<AppDataBundle, 'checksum'>): string {
+  return fnv1aChecksum(JSON.stringify(bundle));
+}
+
+export function calculateAppDataBundleChecksum(bundle: AppDataBundle): string {
+  const { checksum: _checksum, ...payload } = bundle;
+  return bundleChecksum(payload);
+}
+
+function normalizePortableMessage(message: Message): Message {
+  if (message.status !== 'queued' && message.status !== 'sending') return message;
+  return {
+    ...message,
+    status: 'failed',
+    errorMessage: '这条消息来自备份中的未完成请求，请手动重试。',
+  };
+}
+
 export function validateAppDataBundle(value: unknown): AppDataBundle {
   if (!value || typeof value !== 'object') throw new Error('备份文件不是有效对象');
   const bundle = value as Partial<AppDataBundle>;
   if (bundle.kind !== 'heartbeat-companion-backup') throw new Error('备份文件类型不匹配');
-  if (bundle.schemaVersion !== EXPORT_SCHEMA_VERSION) throw new Error(`暂不支持 schema v${bundle.schemaVersion ?? 'unknown'}`);
-  if (!bundle.storage || typeof bundle.storage !== 'object') throw new Error('备份缺少设置数据');
-  if (!Array.isArray(bundle.characters)) throw new Error('备份缺少角色数据');
-  if (!bundle.messagesByCharacter || typeof bundle.messagesByCharacter !== 'object') throw new Error('备份缺少聊天数据');
-  return bundle as AppDataBundle;
+  if (
+    bundle.schemaVersion !== EXPORT_SCHEMA_VERSION &&
+    bundle.schemaVersion !== LEGACY_EXPORT_SCHEMA_VERSION
+  ) {
+    throw new Error(`暂不支持 schema v${bundle.schemaVersion ?? 'unknown'}`);
+  }
+  if (!isRecord(bundle.storage)) throw new Error('备份缺少设置数据');
+  if (!Object.entries(bundle.storage).every(([key, item]) => isPortableStorageKey(key) && typeof item === 'string')) {
+    throw new Error('备份包含无效或不可移植的设置项');
+  }
+  if (!Array.isArray(bundle.characters) || !bundle.characters.every(isCharacter)) {
+    throw new Error('备份包含无效角色数据');
+  }
+  if (!isRecord(bundle.messagesByCharacter)) throw new Error('备份缺少聊天数据');
+  for (const [characterId, messages] of Object.entries(bundle.messagesByCharacter)) {
+    if (!characterId || !Array.isArray(messages) || !messages.every(isMessage)) {
+      throw new Error(`备份包含无效聊天数据：${characterId || 'unknown'}`);
+    }
+  }
+  if (bundle.mediaFiles != null) {
+    if (!isRecord(bundle.mediaFiles)) throw new Error('备份媒体清单无效');
+    for (const [path, media] of Object.entries(bundle.mediaFiles)) {
+      if (
+        !path || path.includes('..') || !isRecord(media) ||
+        typeof media.mimeType !== 'string' ||
+        typeof media.dataBase64 !== 'string' ||
+        typeof media.checksum !== 'string'
+      ) {
+        throw new Error('备份包含无效媒体文件');
+      }
+    }
+  }
+  const validated = bundle as AppDataBundle;
+  if (validated.schemaVersion === EXPORT_SCHEMA_VERSION) {
+    if (!validated.checksum || validated.checksum !== calculateAppDataBundleChecksum(validated)) {
+      throw new Error('备份完整性校验失败');
+    }
+  }
+  return validated;
 }
 
 export async function exportAppData(
@@ -97,13 +187,21 @@ export async function exportAppData(
   const characters = parseCharacters(storage[CHARACTERS_KEY] ?? null);
   const characterIds = uniqueCharacterIds(allKeys, characters);
   const messagesByCharacter: Record<string, Message[]> = {};
+  const mediaFiles: Record<string, PortableMediaFile> = {};
 
   for (const characterId of characterIds) {
     const messages = await loadChatMessages(characterId);
-    if (messages.length > 0) messagesByCharacter[characterId] = messages;
+    if (messages.length > 0) {
+      const portable = await collectPortableMedia(messages);
+      messagesByCharacter[characterId] = portable.messages.map(normalizePortableMessage);
+      Object.assign(mediaFiles, portable.mediaFiles);
+      if (portable.messages.some((message, index) => message.imageUri !== messages[index]?.imageUri)) {
+        await saveChatMessages(characterId, portable.messages, { checkpoint: false });
+      }
+    }
   }
 
-  const bundle: AppDataBundle = {
+  const payload: Omit<AppDataBundle, 'checksum'> = {
     kind: 'heartbeat-companion-backup',
     schemaVersion: EXPORT_SCHEMA_VERSION,
     appVersion: '1.5.0',
@@ -111,9 +209,14 @@ export async function exportAppData(
     storage,
     characters,
     messagesByCharacter,
+    mediaFiles,
   };
+  const bundle: AppDataBundle = { ...payload, checksum: bundleChecksum(payload) };
   const uri = `${directory}heartbeat-companion-${reason}-${fileStamp(now)}.json`;
-  await FileSystem.writeAsStringAsync(uri, JSON.stringify(bundle, null, 2));
+  const temporaryUri = `${uri}.tmp`;
+  await FileSystem.writeAsStringAsync(temporaryUri, JSON.stringify(bundle, null, 2));
+  await FileSystem.moveAsync({ from: temporaryUri, to: uri });
+  await pruneAppDataExports();
 
   return {
     uri,
@@ -135,20 +238,92 @@ export async function listAppDataExports(): Promise<string[]> {
     .map((name) => `${directory}${name}`);
 }
 
+async function pruneAppDataExports(): Promise<void> {
+  const exports = await listAppDataExports();
+  await Promise.all(
+    exports.slice(MAX_LOCAL_EXPORTS).map((uri) =>
+      FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => undefined)
+    )
+  );
+}
+
+type RestoreMarker = {
+  startedAt: number;
+  sourceUri: string;
+  safetyBackupUri: string;
+};
+
+function parseRestoreMarker(raw: string | null): RestoreMarker | null {
+  if (!raw) return null;
+  try {
+    const marker = JSON.parse(raw) as Partial<RestoreMarker>;
+    return typeof marker.startedAt === 'number' &&
+      typeof marker.sourceUri === 'string' &&
+      typeof marker.safetyBackupUri === 'string'
+      ? marker as RestoreMarker
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function recoverInterruptedRestore(): Promise<boolean> {
+  const marker = parseRestoreMarker(await AsyncStorage.getItem(RESTORE_MARKER_KEY));
+  if (!marker) return false;
+  await restoreAppDataExportInternal(marker.safetyBackupUri, false);
+  return true;
+}
+
 export async function restoreAppDataExport(uri: string): Promise<DataExportResult> {
+  return restoreAppDataExportInternal(uri, true);
+}
+
+async function restoreAppDataExportInternal(
+  uri: string,
+  createSafetyBackup: boolean
+): Promise<DataExportResult> {
   const info = await FileSystem.getInfoAsync(uri);
   if (!info.exists) throw new Error('找不到所选备份文件');
   const bundle = validateAppDataBundle(JSON.parse(await FileSystem.readAsStringAsync(uri)));
 
-  // Always preserve the state that existed immediately before a restore.
-  await exportAppData('pre-restore');
+  // Manual restores always preserve the immediately preceding state. Startup
+  // recovery reuses the already-created safety backup to avoid recursion.
+  const safetyBackupUri = createSafetyBackup
+    ? (await exportAppData('pre-restore')).uri
+    : uri;
 
   const safePairs = Object.entries(bundle.storage).filter(([key]) => isPortableStorageKey(key));
-  if (safePairs.length > 0) await AsyncStorage.multiSet(safePairs);
+  const safeKeys = safePairs.map(([key]) => key);
+  const previousPairs = await AsyncStorage.multiGet(safeKeys);
+  const previousMessages: Record<string, Message[]> = {};
+  for (const characterId of Object.keys(bundle.messagesByCharacter)) {
+    previousMessages[characterId] = await loadChatMessages(characterId);
+  }
 
-  for (const [characterId, messages] of Object.entries(bundle.messagesByCharacter)) {
-    if (!Array.isArray(messages)) continue;
-    await saveChatMessages(characterId, messages);
+  await AsyncStorage.setItem(
+    RESTORE_MARKER_KEY,
+    JSON.stringify({ startedAt: Date.now(), sourceUri: uri, safetyBackupUri })
+  );
+
+  try {
+    await restorePortableMedia(bundle.mediaFiles ?? {});
+    if (safePairs.length > 0) await AsyncStorage.multiSet(safePairs);
+
+    for (const [characterId, messages] of Object.entries(bundle.messagesByCharacter)) {
+      await saveChatMessages(characterId, messages.map(normalizePortableMessage));
+    }
+    await AsyncStorage.removeItem(RESTORE_MARKER_KEY);
+  } catch (error) {
+    const previousExisting = previousPairs.filter((pair): pair is [string, string] => pair[1] != null);
+    const previousMissing = previousPairs.filter((pair) => pair[1] == null).map(([key]) => key);
+    if (previousExisting.length > 0) await AsyncStorage.multiSet(previousExisting);
+    if (previousMissing.length > 0) await AsyncStorage.multiRemove(previousMissing);
+    for (const [characterId, messages] of Object.entries(previousMessages)) {
+      await clearChatMessages(characterId);
+      if (messages.length > 0) await saveChatMessages(characterId, messages);
+    }
+    await AsyncStorage.removeItem(RESTORE_MARKER_KEY);
+    throw error;
   }
 
   return {

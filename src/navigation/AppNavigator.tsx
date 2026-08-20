@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -21,6 +21,8 @@ import DeveloperDebugScreen from '../screens/DeveloperDebugScreen';
 import CharacterEditorScreen from '../screens/CharacterEditorScreen';
 import CharacterSettingsScreen from '../screens/CharacterSettingsScreen';
 import DataManagementScreen from '../screens/DataManagementScreen';
+import { recoverInterruptedRestore } from '../services/appDataPortability';
+import { recordAppIssue } from '../services/appDiagnostics';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -39,6 +41,11 @@ export default function AppNavigator({ navigationRef }: Props) {
 
   useEffect(() => {
     const init = async () => {
+      try {
+        await recoverInterruptedRestore();
+      } catch (error) {
+        await recordAppIssue('恢复中断回滚', error, true);
+      }
       await loadSettings();
       const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
       const loadedSettings = useSettingsStore.getState().settings;

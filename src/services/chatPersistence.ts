@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Message } from '../types';
 import { clearSqliteMessages, readSqliteMessages, saveSqliteMessages } from './sqliteChatStorage';
-import { newestFirst } from '../utils/chatHistory';
+import { dedupeMessages, mergeMessageSourcesByPriority } from './chatMerge';
 
 const LEGACY_MESSAGES_KEY = '@bcmp_messages_';
 const CHAT_DB_INDEX_KEY = '@bcmp_chat_db_index_v1';
@@ -11,6 +11,10 @@ const CHAT_BACKUP_DIR = 'bcmp-chat-backups';
 const CHAT_BACKUP_SNAPSHOT_DIR = 'snapshots';
 const SCHEMA_VERSION = 1;
 const MAX_BACKUP_SNAPSHOTS_PER_CHARACTER = 20;
+const MIN_BACKUP_SNAPSHOT_INTERVAL_MS = 60_000;
+
+const lastSnapshotAt = new Map<string, number>();
+let persistenceWriteTail: Promise<void> = Promise.resolve();
 
 type ChatDbRecord = {
   schemaVersion: typeof SCHEMA_VERSION;
@@ -39,14 +43,6 @@ function getRecordKey(characterId: string) {
 
 function getLegacyKey(characterId: string) {
   return `${LEGACY_MESSAGES_KEY}${characterId}`;
-}
-
-function dedupeMessages(messages: Message[]) {
-  const byId = new Map<string, Message>();
-  for (const message of messages) {
-    byId.set(message.id, { ...byId.get(message.id), ...message });
-  }
-  return newestFirst(Array.from(byId.values()));
 }
 
 function parseMessages(raw: string | null): Message[] {
@@ -120,7 +116,7 @@ async function readBackupMessages(characterId: string): Promise<Message[]> {
   }
 }
 
-async function readBackupSnapshotMessages(characterId: string): Promise<Message[]> {
+async function readBackupSnapshotMessageSources(characterId: string): Promise<Message[][]> {
   const snapshotDir = await getBackupSnapshotDir(characterId);
   if (!snapshotDir) return [];
 
@@ -134,7 +130,7 @@ async function readBackupSnapshotMessages(characterId: string): Promise<Message[
     const snapshots = await Promise.all(
       snapshotFileNames.map((fileName) => readStorageFileMessages(`${snapshotDir}${fileName}`))
     );
-    return snapshots.flat();
+    return snapshots;
   } catch {
     return [];
   }
@@ -169,24 +165,51 @@ export async function loadChatMessages(characterId: string): Promise<Message[]> 
   const index = await readIndex();
   const indexedKey = index.conversations[characterId]?.storageKey;
 
-  const candidates = await Promise.all([
+  const [sqlite, indexed, current, legacy, liveBackup, snapshots] = await Promise.all([
     readSqliteMessages(characterId),
     indexedKey ? readStorageMessages(indexedKey) : Promise.resolve([]),
     readStorageMessages(getRecordKey(characterId)),
     readStorageMessages(getLegacyKey(characterId)),
     readBackupMessages(characterId),
-    readBackupSnapshotMessages(characterId),
+    readBackupSnapshotMessageSources(characterId),
   ]);
 
-  const messages = dedupeMessages(candidates.flat());
+  const messages = mergeMessageSourcesByPriority([
+    sqlite,
+    indexed,
+    current,
+    legacy,
+    liveBackup,
+    ...snapshots,
+  ]);
   if (messages.length > 0) {
-    await saveChatMessages(characterId, messages);
+    await saveChatMessages(characterId, messages, { checkpoint: false });
   }
 
   return messages;
 }
 
-export async function saveChatMessages(characterId: string, messages: Message[]) {
+type SaveChatOptions = {
+  checkpoint?: boolean;
+};
+
+export async function saveChatMessages(
+  characterId: string,
+  messages: Message[],
+  options: SaveChatOptions = {}
+) {
+  const operation = persistenceWriteTail.then(() =>
+    saveChatMessagesInternal(characterId, messages, options)
+  );
+  persistenceWriteTail = operation.catch(() => undefined);
+  return operation;
+}
+
+async function saveChatMessagesInternal(
+  characterId: string,
+  messages: Message[],
+  options: SaveChatOptions
+) {
   const normalized = dedupeMessages(messages);
   const updatedAt = normalized[0]?.timestamp ?? Date.now();
   const storageKey = getRecordKey(characterId);
@@ -203,13 +226,19 @@ export async function saveChatMessages(characterId: string, messages: Message[])
     await saveSqliteMessages(characterId, normalized);
   } catch {}
 
+  // Keep the legacy key readable for migration, while new writes use the v1
+  // record and SQLite canonical store to avoid duplicating the full history.
   await AsyncStorage.setItem(storageKey, serialized);
-  await AsyncStorage.setItem(getLegacyKey(characterId), JSON.stringify(normalized));
 
   if (backupUri) {
     try {
-      await FileSystem.writeAsStringAsync(backupUri, serialized);
-      await writeBackupSnapshot(characterId, serialized);
+      await writeStorageFileAtomically(backupUri, serialized);
+      const now = Date.now();
+      const previousSnapshotAt = lastSnapshotAt.get(characterId) ?? 0;
+      if (options.checkpoint !== false && now - previousSnapshotAt >= MIN_BACKUP_SNAPSHOT_INTERVAL_MS) {
+        await writeBackupSnapshot(characterId, serialized, now);
+        lastSnapshotAt.set(characterId, now);
+      }
     } catch {}
   }
 
@@ -224,13 +253,24 @@ export async function saveChatMessages(characterId: string, messages: Message[])
   await writeIndex(index);
 }
 
-async function writeBackupSnapshot(characterId: string, serialized: string) {
+async function writeStorageFileAtomically(uri: string, serialized: string) {
+  const temporaryUri = `${uri}.tmp`;
+  await FileSystem.writeAsStringAsync(temporaryUri, serialized);
+  try {
+    await FileSystem.moveAsync({ from: temporaryUri, to: uri });
+  } catch {
+    await FileSystem.deleteAsync(uri, { idempotent: true });
+    await FileSystem.moveAsync({ from: temporaryUri, to: uri });
+  }
+}
+
+async function writeBackupSnapshot(characterId: string, serialized: string, now: number) {
   const snapshotDir = await getBackupSnapshotDir(characterId);
   if (!snapshotDir) return;
 
-  const snapshotUri = `${snapshotDir}${Date.now()}.json`;
+  const snapshotUri = `${snapshotDir}${now}.json`;
   try {
-    await FileSystem.writeAsStringAsync(snapshotUri, serialized);
+    await writeStorageFileAtomically(snapshotUri, serialized);
     const fileNames = await FileSystem.readDirectoryAsync(snapshotDir);
     const staleFileNames = fileNames
       .filter((fileName) => fileName.endsWith('.json'))

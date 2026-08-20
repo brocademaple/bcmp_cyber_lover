@@ -208,7 +208,7 @@ function updatePromptSection(systemPrompt: string, label: string, nextText: stri
 
 function getDraftChanges(character: Character, draft: EditableDraft) {
   const original = makeDraft(character);
-  const labels: Array<[keyof EditableDraft, string]> = [
+  const labels: [keyof EditableDraft, string][] = [
     ['name', '名称'],
     ['personality', '性格标签'],
     ['greeting', '开场白'],
@@ -718,7 +718,7 @@ function ViewContent({
 }: {
   character: Character;
   mainImage?: Character['imageUri'];
-  promptSummary: Array<{ label: string; text: string }>;
+  promptSummary: { label: string; text: string }[];
   onEdit: (section?: EditSectionKey) => void;
 }) {
   const C = useThemeColors();
@@ -1079,7 +1079,7 @@ function PreviewContent({
   character: Character;
   draft: EditableDraft;
   changes: string[];
-  promptSummary: Array<{ label: string; text: string }>;
+  promptSummary: { label: string; text: string }[];
   onBackToEdit: () => void;
   onCancel: () => void;
   onApply: () => void;
@@ -1226,7 +1226,7 @@ function TagCluster({ values, strong }: { values: string[]; strong?: boolean }) 
   );
 }
 
-function PromptCard({ sections, onEdit }: { sections: Array<{ label: string; text: string }>; onEdit?: () => void }) {
+function PromptCard({ sections, onEdit }: { sections: { label: string; text: string }[]; onEdit?: () => void }) {
   const C = useThemeColors();
   return (
     <View style={[styles.promptCard, { backgroundColor: C.surface, borderColor: C.border }]}>

@@ -31,14 +31,14 @@ const DEFAULT_HOME_MOOD: Mood = 'neutral';
 const MOOD_ENTRY_VALID_MS = 5 * 60 * 1000;
 type StatusLineSet = Partial<Record<Mood, string[]>>;
 
-const STATUS_OPTIONS: Array<{
+const STATUS_OPTIONS: {
   id: string;
   label: string;
   detail: string;
   mood: Mood;
   frameIndex: number;
   mark: string;
-}> = [
+}[] = [
   { id: 'main', label: '自然待机', detail: '回到她平时陪你的样子。', mood: 'neutral', frameIndex: 0, mark: '✦' },
   { id: 'happy', label: '开心营业', detail: '让她用更明亮的状态迎接你。', mood: 'happy', frameIndex: 1, mark: '♡' },
   { id: 'soft', label: '安静陪着', detail: '少说一点，留一盏灯陪你。', mood: 'sad', frameIndex: 2, mark: '…' },
@@ -235,45 +235,6 @@ function CreateCard({ onPress, cardWidth }: { onPress: () => void; cardWidth: nu
   );
 }
 
-// 竖屏：单角色大图 + 名字 + 性格词（居中展示）
-function PortraitCharacterView({
-  character,
-  imageUri,
-  imageOpacity,
-  onPress,
-  imageSize,
-}: {
-  character: Character;
-  imageUri?: Character['imageUri'];
-  imageOpacity?: Animated.Value;
-  onPress: () => void;
-  imageSize: { width: number; height: number };
-}) {
-  const C = useThemeColors();
-  const activeImageUri = imageUri ?? getCharacterMainImage(character);
-  return (
-    <TouchableOpacity
-      style={styles.portraitCenter}
-      onPress={onPress}
-      activeOpacity={1}
-    >
-      <View style={[styles.portraitImageWrap, { width: imageSize.width, height: imageSize.height, backgroundColor: C.surface, borderColor: C.border }]}>
-        {activeImageUri ? (
-          <Animated.Image
-            source={getCharacterImageSource(activeImageUri)}
-            style={{ width: imageSize.width, height: imageSize.height, opacity: imageOpacity ?? 1 }}
-            resizeMode="contain"
-          />
-        ) : (
-          <Text style={styles.avatarLarge}>{character.avatar}</Text>
-        )}
-      </View>
-      <Text style={[styles.portraitName, { color: C.text }]}>{character.name}</Text>
-      <Text style={[styles.portraitPersonality, { color: C.textSecondary }]}>{character.personality}</Text>
-    </TouchableOpacity>
-  );
-}
-
 export default function HomeScreen({ navigation }: Props) {
   const C = useThemeColors();
   const themeId = useThemeId();
@@ -283,7 +244,7 @@ export default function HomeScreen({ navigation }: Props) {
   const isLandscape = winWidth > winHeight;
 
   const { characters, loadCharacters, updateEmotionalState } = useChatStore();
-  const { loadSettings, updateAdvanced, saveSettings, settings, setSelectedCharacter } = useSettingsStore();
+  const { updateAdvanced, saveSettings, settings, setSelectedCharacter } = useSettingsStore();
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusModalCharacterId, setStatusModalCharacterId] = useState<string | null>(null);
@@ -302,14 +263,9 @@ export default function HomeScreen({ navigation }: Props) {
   const cardWidthLandscape = Math.min(winWidth * 0.28, 220);
   const carouselPadding = 48;
 
-  // 竖屏时中央人设图区域尺寸（比例约 3:4，完整显示立绘全图）
-  const portraitImageWidth = winWidth * 0.78;
-  const portraitImageHeight = portraitImageWidth * (4 / 3);
-
   useEffect(() => {
-    loadCharacters();
-    loadSettings();
-  }, []);
+    void loadCharacters();
+  }, [loadCharacters]);
 
   useEffect(() => {
     if (characters.length > 0 && portraitIndex >= characters.length) {
@@ -322,7 +278,7 @@ export default function HomeScreen({ navigation }: Props) {
     if (selectedIndex >= 0 && selectedIndex !== portraitIndex) {
       setPortraitIndex(selectedIndex);
     }
-  }, [characters, settings.selectedCharacterId]);
+  }, [characters, portraitIndex, settings.selectedCharacterId]);
 
   const handleOpenChat = (character: Character) => {
     persistSelectedCharacter(character.id);
@@ -371,16 +327,6 @@ export default function HomeScreen({ navigation }: Props) {
     updateAdvanced({ theme, themeMode: 'manual' });
     await saveSettings(nextSettings);
     setShowThemeModal(false);
-  };
-
-  const handleToggleDarkMode = async () => {
-    const nextMode: 'light' | 'dark' = settings.advanced.darkMode === 'light' ? 'dark' : 'light';
-    const nextSettings = {
-      ...useSettingsStore.getState().settings,
-      advanced: { ...useSettingsStore.getState().settings.advanced, darkMode: nextMode },
-    };
-    updateAdvanced({ darkMode: nextMode });
-    await saveSettings(nextSettings);
   };
 
   const openStatusModal = (character: Character) => {
