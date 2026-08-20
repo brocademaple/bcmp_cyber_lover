@@ -121,7 +121,10 @@ function installMockFetch() {
 async function main() {
   const { sendMessage, generateDailyGreeting } = loadAiServiceForNode();
   const { requests, restore } = installMockFetch();
-  const deepNightTs = new Date('2026-06-16T01:30:00+08:00').getTime();
+  // debugNowTs is stored as an epoch number and interpreted in the device's
+  // local timezone by the app. Construct the fixture as local wall-clock time
+  // too, so this verification has the same semantics on macOS and UTC CI.
+  const deepNightTs = new Date(2026, 5, 16, 1, 30, 0).getTime();
 
   const character = {
     id: 'luna',
@@ -198,7 +201,7 @@ async function main() {
     ];
     const failed = checks.filter(([, ok]) => !ok);
 
-    console.log('debugNowTs = 2026-06-16T01:30:00+08:00');
+    console.log(`debugNowTs(local) = ${new Date(deepNightTs).toString()}`);
     for (const [label, ok] of checks) {
       console.log(`${ok ? 'PASS' : 'FAIL'} ${label}`);
     }
