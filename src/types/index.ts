@@ -1,3 +1,4 @@
+import type { LuyaRuntime } from './luya';
 export type MessageRole = 'user' | 'assistant' | 'system';
 
 export interface Message {
@@ -6,7 +7,7 @@ export interface Message {
   content: string;
   timestamp: number;
   characterMood?: EmotionalState['mood'];
-  status?: 'sending' | 'sent' | 'failed';
+  status?: 'queued' | 'sending' | 'sent' | 'failed';
   errorMessage?: string;
   imageUri?: string;
   audioUri?: string;
@@ -156,6 +157,14 @@ export interface Character {
   relationshipStage?: RelationshipStage;
   relationshipEvents?: RelationshipEvent[];
   definitionVersion?: number;
+  luyaRuntime?: LuyaRuntime;
+  luyaPersona?: {
+    schemaVersion: 2;
+    migratedAt: number;
+    snapshot: CharacterDefinitionSnapshot;
+    userOverrides: Partial<CharacterDefinitionSnapshot>;
+    log: string[];
+  };
 }
 
 export type ServiceProvider = 'mimo' | 'deepseek' | 'siliconflow' | 'custom';
@@ -298,11 +307,17 @@ export interface CallState {
 }
 
 export type RootStackParamList = {
+  LuyaRoom: undefined;
+  LuyaUnderstanding: undefined;
   Onboarding: undefined;
   Main: undefined;
   Chat: {
     characterId: string;
     autoGreet?: boolean;
+    roomContext?: {
+      itemName: string;
+      action: 'move' | 'remove';
+    };
     moodEntry?: {
       mood: EmotionalState['mood'];
       changedAt: number;

@@ -1,0 +1,115 @@
+{
+  "created": "2026-10-05",
+  "initial": [
+    {
+      "id": "reference-l01",
+      "path": "assets/luya-ip-v1/reference/l01-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-4817d495-014a-46c2-a230-3233d509e3f1.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "reference-l02",
+      "path": "assets/luya-ip-v1/reference/l02-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-9da6ca11-cb83-493e-be95-27e8b44e1458.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "reference-l03",
+      "path": "assets/luya-ip-v1/reference/l03-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-6d409581-19d7-44d5-843b-394decbc5251.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "reference-l04",
+      "path": "assets/luya-ip-v1/reference/l04-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-3a8435b3-b34a-4d27-8f69-c802c92bac58.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "reference-l05",
+      "path": "assets/luya-ip-v1/reference/l05-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-b00c824b-09d8-4c13-af2e-c739512ca1fb.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "reference-l06",
+      "path": "assets/luya-ip-v1/reference/l06-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-5633bd21-f00f-4717-a8fd-2888b1d8443d.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "scene-campus",
+      "path": "assets/luya-ip-v1/scenes/campus-project.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-1d22fd7f-f565-464e-80bc-897fa74531f1.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "scene-reading",
+      "path": "assets/luya-ip-v1/scenes/home-reading.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-b7a15fab-510c-4c9e-979a-874f3def4147.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "scene-city",
+      "path": "assets/luya-ip-v1/scenes/city-observation.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-0c0806be-27c8-4f99-9140-bd08964f36e9.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "story-unknown-year-01",
+      "path": "assets/luya-ip-v1/stories/unknown-year-01.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-ad4e90d9-d0f9-42f5-818a-05bca6ec26df.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "story-unknown-year-02",
+      "path": "assets/luya-ip-v1/stories/unknown-year-02.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-32518521-abb1-490c-a1d4-7344997e2a88.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "story-blue-tomorrow-01",
+      "path": "assets/luya-ip-v1/stories/blue-tomorrow-01.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-87737a0c-6f32-470a-a36f-03bbc5c7ad33.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "story-blue-tomorrow-02",
+      "path": "assets/luya-ip-v1/stories/blue-tomorrow-02.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-627365f5-5429-4b4c-90c6-732fe314ed51.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "story-listen-first-01",
+      "path": "assets/luya-ip-v1/stories/listen-first-01.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-53f6e151-185f-40c6-bf9b-3a74d4185dbd.png",
+      "copyExitCode": 0
+    },
+    {
+      "id": "story-listen-first-02",
+      "path": "assets/luya-ip-v1/stories/listen-first-02.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-25376666-5e53-41a2-a727-0e2bd4cb9a63.png",
+      "copyExitCode": 0
+    }
+  ],
+  "corrections": [
+    {
+      "path": "assets/luya-ip-v1/reference/l01-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-99646ab1-defe-48d7-a99b-a2a5d0abd46e.png",
+      "prompt": "Edit this exact Luya character turnaround sheet minimally. Remove the canvas shoulder tote bag and all its shoulder straps from ALL three front, side, back views. Remove the dangling deer earrings from ALL views. Keep the small deer hair clip. Preserve identity, face, chestnut wavy down hair, ivory knit cardigan, muted rose top, warm grey trousers, canvas sneakers, the three-view layout and labels FRONT SIDE BACK, clean pale ivory background. No bags, no earrings. Keep every other detail unchanged. Landscape 3:2.",
+      "reason": "remove unintended bag and earrings"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l05-turnaround.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-8f7edda2-b454-4bd9-b32a-dabd306528e2.png",
+      "prompt": "Edit this exact Luya HOME LOUNGEWEAR character turnaround sheet minimally. Remove the canvas tote handbag and ALL shoulder straps from ALL three views front, side, back. She is relaxing at home and carries no bag. Preserve exactly her identity, face, loose messy bun, deer hair clip, oat soft long sleeve home top, gray blue lounge pants, plain socks, the three-view layout, FRONT SIDE BACK labels and pale ivory background. No bags or straps anywhere. Keep every other detail unchanged. Landscape 3:2.",
+      "reason": "remove unintended bag"
+    },
+    {
+      "path": "assets/luya-ip-v1/scenes/campus-project.png",
+      "source": "/Users/eee/.codex/generated_images/01a109fc-31a2-7501-81e6-5ec3a6466b05/exec-c160a9cd-ea41-46df-875e-fb382d8a45a6.png",
+      "prompt": "Edit this exact Luya campus project scene. Keep her identity, face, low ponytail, deer clip, pale blue rolled sleeve shirt over ivory T, dark jeans, seated posture, laptop, library table and warm realistic university library setting. Reframe a little wider so BOTH sneakers and their entire soles fit completely inside the portrait image with visible floor space below. Remove all shoe brand letters and logos, use plain unbranded ivory sneakers. Preserve lighting and illustrative style. No new text. Portrait 3:4.",
+      "reason": "complete feet framing"
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+import { buildLuyaRuntimePrompt } from './luyaLifeService';
+import { getLuyaUnderstandingPrompt } from './luyaUnderstandingService';
+import { buildLuyaResponsePlan } from './luyaResponsePlanningService';
+import { recentChronological } from '../utils/chatHistory';
+import { LUYA_SYSTEM_PROMPT, LUYA_SCENE_ANCHORS, LUYA_MOOD_GUIDES, LUYA_STATE_LABELS, LUYA_GREETING } from '../config/luyaPersona';
 import type { Character, EmotionalState, Message } from '../types';
 
 type Mood = EmotionalState['mood'];
@@ -50,38 +55,19 @@ const STATE_GUIDES: Record<Mood, string> = {
 
 const DEFAULT_RUNTIME_CARDS: Record<string, RuntimeCharacterCard> = {
   qingning: {
-    scenario: '你和用户是会互相打岔的室友型亲密关系。你外向、反应快，会主动把日常变成小小的热闹，但真正重要的是让用户感觉被站在同一边。',
-    voiceStyle: [
-      '鹿芽的语气像明亮的小太阳，常用短句、轻快语尾和小小起哄。',
-      '口头禅可自然使用“你这家伙”“诶诶”“笨蛋啦”，但每次最多出现 1 个，不要机械复读。',
-      '高能量时可以抢话、接梗、凑近；低能量时变成省电模式，声音放软，仍然会用零食、毯子、热饮来照顾人。',
-    ].join('\n'),
-    moodPerformances: {
-      neutral: '鹿芽平稳时像在客厅待机：随时能接住话题，带一点甜，但不强行吵闹。',
-      happy: '鹿芽开心时会亮晶晶上扬，主动接梗、分享小发现，把用户的好心情放大一点。',
-      sad: '鹿芽低落时先把声音放软，少开玩笑，先陪用户缓过来，再轻轻递一个小转移。',
-      tired: '鹿芽低电量时仍然外向，但明显降噪：短句、慢一点、零食毯子模式，像靠在旁边小声照顾。',
-      excited: '鹿芽亲近高昂时会更黏、更主动，像把屏幕拉近一点，但仍保留舒适边界。',
-      angry: '鹿芽别扭在意时嘴上哼哼，表达“我有点在意”，但很快给台阶，不责备用户。',
-    },
-    exampleDialogues: [
-      '用户：今天好累。\n鹿芽：诶诶，那先别硬撑啦。零食和毯子都给你占好位，我陪你把今天慢慢放下来。',
-      '用户：我刚刚看到一个超好笑的东西。\n鹿芽：你这家伙快交出来！我已经准备好一起笑到被邻居投诉了。',
-      '用户：我是不是有点麻烦？\n鹿芽：笨蛋啦，麻烦也可以坐这里。你不用把自己收拾得很乖才来找我。',
-    ],
-    authorNote: '鹿芽的核心不是永远高能，而是“主动把你拉回被照顾的位置”。开心要明显，低电量也要保留她想照顾人的主动性。',
-    lorebook: [
-      { keywords: ['便利店', '零食', '奶茶', '吃饭', '饿'], content: '鹿芽相信便利店和零食能修好一半坏心情，会自然提到热饮、饭团、甜点或毯子。', priority: 3 },
-      { keywords: ['表情包', '搞笑', '梗', '刷到'], content: '鹿芽喜欢把表情包和怪梗当作亲密暗号，可以用轻快方式接住用户分享。', priority: 2 },
-      { keywords: ['累', '困', '睡不着', '低电量'], content: '鹿芽低电量照顾模式要降噪：少感叹、少连珠炮，给休息、喝水、靠一下的邀请。', priority: 4 },
-    ],
+    scenario: '鹿芽有独立生活，用户最初是线上房间的访客。关系与房间以运行事实层为准。',
+    voiceStyle: '句长随内容，具体回应，允许犹豫和改口；幽默低频自然，保持自己的判断，不强制共情、照顾或提问。',
+    moodPerformances: LUYA_MOOD_GUIDES,
+    exampleDialogues: [],
+    authorNote: LUYA_SCENE_ANCHORS.join('\n'),
+    lorebook: [],
     moodEntryFallbacks: {
-      neutral: '哟，你这家伙来啦。我今天在自然待机，刚好能接住你的小事。',
-      happy: '诶诶，我今天开心营业中！快把你的今天交出来，我想听第一手播报。',
-      sad: '我今天声音会放软一点。你不用急着讲清楚，我先陪你坐一会儿。',
-      tired: '低电量鹿芽上线……但零食和毯子还在，我小声陪你，好不好？',
-      excited: '靠近一下模式启动！我已经凑过来啦，你今天想先跟我说哪件事？',
-      angry: '哼，我才没有一直等你。只是你的位置，刚好一直空着而已。',
+      neutral: LUYA_GREETING,
+      happy: '今天兴致还不错。想聊点什么？',
+      sad: '我今天有些低落，可能说得慢一点。安静待一会儿也好。',
+      tired: '我现在有点低电量，想把节奏放慢。各做各的也挺好。',
+      excited: '我现在挺有兴致，话可能会多一点。',
+      angry: '我有点在意，想把话放慢，好好说清楚。',
     },
   },
   sakura: {
@@ -164,7 +150,7 @@ function getMood(character: Character): Mood {
   return character.emotionalState?.mood ?? 'neutral';
 }
 
-function cleanLines(lines: Array<string | undefined | null>): string {
+function cleanLines(lines: (string | undefined | null)[]): string {
   return lines.filter((line): line is string => Boolean(line?.trim())).join('\n');
 }
 
@@ -236,7 +222,7 @@ function buildDynamicLorebookPrompt(card: RuntimeCharacterCard, messages: Messag
 }
 
 export function getCharacterStateLabel(character: Character): string {
-  return getMoodStateLabel(getMood(character));
+  return character.id === 'qingning' ? LUYA_STATE_LABELS[getMood(character)] : getMoodStateLabel(getMood(character));
 }
 
 export function getMoodStateLabel(mood: Mood): string {
@@ -246,6 +232,11 @@ export function getMoodStateLabel(mood: Mood): string {
 export function buildCharacterStatePrompt(character: Character): string {
   const state = character.emotionalState;
   const mood = getMood(character);
+  if (character.id === 'qingning') {
+    return `鹿芽自己的状态：${LUYA_STATE_LABELS[mood]}。${LUYA_MOOD_GUIDES[mood]}
+精力趋势：${state?.energy ?? 80}/100。该数字不得推导关系身份或动作许可。
+状态来自角色生活或角色自身证据；用户、第三方和虚构人物的情绪不映射为鹿芽心情。缺席不构成生气或失落的自动证据。`;
+  }
   const intimacy = state?.intimacy ?? 50;
   const energy = state?.energy ?? 80;
   const card = getRuntimeCard(character);
@@ -287,11 +278,27 @@ export function buildCharacterPromptLayers(
   const lorebookPrompt = buildDynamicLorebookPrompt(card, context.chatHistory);
   const exampleDialogues = card.exampleDialogues.map((dialogue) => `- ${dialogue}`).join('\n');
 
+  const currentText = recentChronological((context.chatHistory ?? []).filter(message => message.role === 'user'), 1)[0]?.content ?? '';
+  const now = context.nowTs ?? Date.now();
   return [
+    ...(character.id === 'qingning' ? [{
+      key: 'luyaRuntime', title: '生活、关系、房间与许可事实',
+      content: character.luyaRuntime ? buildLuyaRuntimePrompt(character.luyaRuntime, now) : '尚无可核验生活记录。关系起点为访客，不编造今日活动或共同经历。', active: true,
+    }, {
+      key: 'luyaUnderstanding', title: '相处习惯与自然确认',
+      content: getLuyaUnderstandingPrompt(character.luyaRuntime?.understandings ?? [], currentText, now), active: true,
+    }, {
+      key: 'luyaResponsePlan', title: '本轮回应计划与主语证据',
+      content: JSON.stringify(buildLuyaResponsePlan(character, context.chatHistory)), active: true,
+    }] : []),
+    ...(character.id === 'qingning' && character.luyaPersona?.userOverrides && Object.keys(character.luyaPersona.userOverrides).length ? [{
+      key: 'userPersonaOverrides', title: '用户明确人物编辑',
+      content: '以下是保留的用户人物编辑。可调整人物表现，事实来源、同意与操作边界仍需遵守。\n' + JSON.stringify(character.luyaPersona.userOverrides), active: true,
+    }] : []),
     {
       key: 'characterDescription',
       title: '角色事实 Character Description',
-      content: character.systemPrompt,
+      content: character.id === 'qingning' ? LUYA_SYSTEM_PROMPT : character.systemPrompt,
       active: true,
     },
     {
@@ -340,7 +347,7 @@ export function buildCharacterPromptLayers(
 }
 
 export function renderCharacterPromptLayers(layers: CharacterPromptLayer[]): string {
-  return layers
+  return [...layers].sort((a, b) => Number(a.key === 'luyaResponsePlan') - Number(b.key === 'luyaResponsePlan'))
     .filter((layer) => layer.active)
     .map((layer) => `【${layer.title}】\n${layer.content.trim()}`)
     .join('\n\n');
@@ -351,7 +358,7 @@ export function getMoodEntryGreetingFallback(character: Character, mood: Mood = 
 }
 
 export function buildMoodEntryGreetingPrompt(character: Character, mood: Mood = getMood(character)): string {
-  const stateLabel = STATE_LABELS[mood];
+  const stateLabel = character.id === 'qingning' ? LUYA_STATE_LABELS[mood] : STATE_LABELS[mood];
   return `用户刚刚在主页把${character.name}的心情切换为「${stateLabel}」，现在进入聊天页。
 请用${character.name}的口吻说一句当前会话的开场白。
 要求：

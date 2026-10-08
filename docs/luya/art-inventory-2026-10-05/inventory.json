@@ -1,0 +1,1101 @@
+{
+  "date": "2026-10-05",
+  "scope": "Local source assets, docs mirrors, website art; user-device uploads excluded",
+  "sourceAssetCount": 60,
+  "sourceBytes": 105414833,
+  "websiteOnlyCount": 3,
+  "docsMirrorCount": 37,
+  "mirrorMismatches": [],
+  "exactDuplicates": [
+    [
+      "assets/adaptive-icon.png",
+      "assets/icon.png",
+      "assets/splash.png"
+    ]
+  ],
+  "assets": [
+    {
+      "path": "assets/adaptive-icon.png",
+      "group": "应用 · 图标与启动",
+      "title": "adaptive-icon",
+      "status": "配置使用",
+      "usage": "app.json 原生／Web 配置；icon、adaptive-icon、splash 文件内容完全相同",
+      "width": 1024,
+      "height": 1024,
+      "hasAlpha": false,
+      "bytes": 1917903,
+      "sha256": "42f048c8a11613fcd181da0de1693c81f6b4592c3140bfa7cdbe18f1afd6de7f",
+      "directReferences": [
+        "app.json:18"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/characters/v2/luna/action-waiting.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 有些在意（文件名：等待）",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2137003,
+      "sha256": "67e51a3e56aec5816f0b2c8e812d38bf8b773d2fccb566acafbb485c7c2f07eb",
+      "directReferences": [
+        "src/utils/characterAssets.ts:88"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/action-waiting.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/action-wave.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 有些兴奋（文件名：挥手）",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2215307,
+      "sha256": "e50f0c4dcfb4c3dab4380fa34cd10f17ecb6ef1382710a83cae8ef1bea998ab0",
+      "directReferences": [
+        "src/utils/characterAssets.ts:87"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/action-wave.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/avatar.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 完整方形头像",
+      "status": "管理员／保留",
+      "usage": "首页、聊天、档案、通话头像；具体优先级随页面变化",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2190146,
+      "sha256": "5b82a45ed609a4688b9ce1e0af93938e04fcdc40fd30448982fec83f12ae153e",
+      "directReferences": [
+        "src/utils/characterAssets.ts:80"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/avatar.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/expression-happy.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 兴致不错",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2059576,
+      "sha256": "8321e1c348f9ec01812be650e4c4ac92096cdb6b192a12a9b95a4c88cf35d618",
+      "directReferences": [
+        "src/utils/characterAssets.ts:84"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/expression-happy.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/expression-low-energy.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 低电量",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2234945,
+      "sha256": "f37607af7f2fd3c5af1ece4540febe87ad97f9d046394ae4f23a558dc1892615",
+      "directReferences": [
+        "src/utils/characterAssets.ts:86"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/expression-low-energy.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/expression-soft.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 安静陪着",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2070226,
+      "sha256": "60817359c1e21bb2cdafd2a324921123e095c9c3ff14d0c31b7b07d2ffcca967",
+      "directReferences": [
+        "src/utils/characterAssets.ts:85"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/expression-soft.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/headshot.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 轻量人脸头像",
+      "status": "管理员／保留",
+      "usage": "首页、聊天、档案、通话头像；具体优先级随页面变化",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": false,
+      "bytes": 428998,
+      "sha256": "a2174eca7ff5f8c8af954cd4589d8403cb17dfbd50450c3c29e26197005ad55c",
+      "directReferences": [
+        "src/utils/characterAssets.ts:81"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/headshot.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/main.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 经典主立绘",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2050564,
+      "sha256": "930aa64f4449098d0703718929ce8a7ea111e06cf62af45bc2d70c9b77994342",
+      "directReferences": [
+        "src/utils/characterAssets.ts:79",
+        "src/utils/characterAssets.ts:83"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/main.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/luna/scene-memory.png",
+      "group": "凛夜 · 经典人物",
+      "title": "凛夜 / 记忆插画回退",
+      "status": "管理员／保留",
+      "usage": "记忆页图片加载失败时备用",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2305376,
+      "sha256": "2a705542ea268abe5c4d6dc536d381cc75a903ad168d3bdc83b15aade3181964",
+      "directReferences": [
+        "src/utils/characterAssets.ts:90"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/luna/scene-memory.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/action-waiting.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 有些在意（文件名：等待）",
+      "status": "当前／回退",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 941,
+      "height": 1672,
+      "hasAlpha": false,
+      "bytes": 2581838,
+      "sha256": "26771a3a8e5c49674027e57c915777d675db3b3f77b9db796319754543201611",
+      "directReferences": [
+        "src/utils/characterAssets.ts:54"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/action-waiting.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/action-wave.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 有些兴奋（文件名：挥手）",
+      "status": "当前／回退",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2368485,
+      "sha256": "11d9c4cca7025359ca86c79b7542159506cde896300e43de5a54b74fcf91461f",
+      "directReferences": [
+        "src/utils/characterAssets.ts:53"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/action-wave.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/avatar.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 完整方形头像",
+      "status": "当前／回退",
+      "usage": "首页、聊天、档案、通话头像；具体优先级随页面变化",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2538090,
+      "sha256": "d1480a6bd384825ba3739d00b9d88286fbb90cb179d9fea41eca48a6508627a5",
+      "directReferences": [
+        "src/utils/characterAssets.ts:46"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/avatar.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/expression-happy.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 兴致不错",
+      "status": "当前／回退",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2744535,
+      "sha256": "09e99aca4e8ccc2d3f5da996e1b62c54e161b3579153487dd07da4a29968c844",
+      "directReferences": [
+        "src/utils/characterAssets.ts:50"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/expression-happy.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/expression-low-energy.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 低电量",
+      "status": "当前／回退",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2342859,
+      "sha256": "c59d0367a360b842abc3cdfb0a2d7013b61f910029dec08cdde7b51f24cb0957",
+      "directReferences": [
+        "src/utils/characterAssets.ts:52"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/expression-low-energy.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/expression-soft.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 安静陪着",
+      "status": "当前／回退",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2491450,
+      "sha256": "10453405ec43b70aa226de3976fec180e2844537e05208f2dfe4ebc49d35eecd",
+      "directReferences": [
+        "src/utils/characterAssets.ts:51"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/expression-soft.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/headshot.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 轻量人脸头像",
+      "status": "当前／回退",
+      "usage": "首页、聊天、档案、通话头像；具体优先级随页面变化",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": false,
+      "bytes": 478426,
+      "sha256": "fcedc5792ee5a8dfff13358956143030bae52f5dd9b8e1dc1967cc3211a83881",
+      "directReferences": [
+        "src/utils/characterAssets.ts:47"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/headshot.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/main.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 经典主立绘",
+      "status": "当前／回退",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2455585,
+      "sha256": "f731a68877778716cef317f09a376ba1902edf7e7569f36188c9a5cb1cdc19e9",
+      "directReferences": [
+        "src/utils/characterAssets.ts:45",
+        "src/utils/characterAssets.ts:49"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/main.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/qingning/scene-memory.png",
+      "group": "鹿芽 · 经典人物",
+      "title": "鹿芽 / 记忆插画回退",
+      "status": "当前／回退",
+      "usage": "记忆页图片加载失败时备用",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2606766,
+      "sha256": "73c1021f163043ee02cc1987e34e0f3d6b564eccbcfdbb2ab7694e7fee179b9a",
+      "directReferences": [
+        "src/utils/characterAssets.ts:56"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/qingning/scene-memory.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/action-waiting.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 有些在意（文件名：等待）",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2483763,
+      "sha256": "ae35a3149c3347534ebd6797edd0eaff61dcf2d0e2cb2dc6e36cd8a316b238d1",
+      "directReferences": [
+        "src/utils/characterAssets.ts:71"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/action-waiting.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/action-wave.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 有些兴奋（文件名：挥手）",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2265701,
+      "sha256": "d147c20f594055d55372740f810cc4891a49aff7e2a3ac547a46e18736c3b62c",
+      "directReferences": [
+        "src/utils/characterAssets.ts:70"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/action-wave.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/avatar.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 完整方形头像",
+      "status": "管理员／保留",
+      "usage": "首页、聊天、档案、通话头像；具体优先级随页面变化",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2634713,
+      "sha256": "8571605804553b812390ad5a410d408520edd0ce1a1bf8b8fbf7ea6e72924229",
+      "directReferences": [
+        "src/utils/characterAssets.ts:63"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/avatar.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/expression-happy.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 兴致不错",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2485084,
+      "sha256": "28a24dae9c62a95638dfa78f56f78c549371c3af2232d14ed8a4a753fa394e8b",
+      "directReferences": [
+        "src/utils/characterAssets.ts:67"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/expression-happy.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/expression-low-energy.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 低电量",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2514439,
+      "sha256": "70243b3c43c4f2c978d921020320b4ba377338732d5ff5f125c7bfb0b9ec52e0",
+      "directReferences": [
+        "src/utils/characterAssets.ts:69"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/expression-low-energy.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/expression-soft.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 安静陪着",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2488969,
+      "sha256": "a0c9f05ab39ee062ff960ba6506db3d9fb02b1d17d40f2528ccaca1ca0d5d6b2",
+      "directReferences": [
+        "src/utils/characterAssets.ts:68"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/expression-soft.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/headshot.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 轻量人脸头像",
+      "status": "管理员／保留",
+      "usage": "首页、聊天、档案、通话头像；具体优先级随页面变化",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": false,
+      "bytes": 462799,
+      "sha256": "77954d015d50b55b3fd3a0c4694e4f81e0e5091199189cb03a0b1f1270c39570",
+      "directReferences": [
+        "src/utils/characterAssets.ts:64"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/headshot.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/main.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 经典主立绘",
+      "status": "管理员／保留",
+      "usage": "经典展示与状态抽屉；六帧按状态索引选择",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2491904,
+      "sha256": "872d07d66f251a59157548847d920857ce6be1b2d53a5d794cb63698f74c51f8",
+      "directReferences": [
+        "src/utils/characterAssets.ts:62",
+        "src/utils/characterAssets.ts:66"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/main.png"
+      ]
+    },
+    {
+      "path": "assets/characters/v2/sakura/scene-memory.png",
+      "group": "纪遥 · 经典人物",
+      "title": "纪遥 / 记忆插画回退",
+      "status": "管理员／保留",
+      "usage": "记忆页图片加载失败时备用",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2589359,
+      "sha256": "2fdf8edc0ccc6bc646a5abb9e0ad1dbe9d12daf2adfff89443a78f22edfda446",
+      "directReferences": [
+        "src/utils/characterAssets.ts:73"
+      ],
+      "mirrors": [
+        "docs/assets/characters/v2/sakura/scene-memory.png"
+      ]
+    },
+    {
+      "path": "assets/favicon.png",
+      "group": "应用 · 图标与启动",
+      "title": "favicon",
+      "status": "配置使用",
+      "usage": "app.json 原生／Web 配置；icon、adaptive-icon、splash 文件内容完全相同",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": false,
+      "bytes": 515658,
+      "sha256": "8df4bea9216194f80d7e4031368a99ebf3414364f25f176d920d5a8ed301ab45",
+      "directReferences": [
+        "app.json:33"
+      ],
+      "mirrors": [
+        "docs/assets/favicon.png"
+      ]
+    },
+    {
+      "path": "assets/icon.png",
+      "group": "应用 · 图标与启动",
+      "title": "icon",
+      "status": "配置使用",
+      "usage": "app.json 原生／Web 配置；icon、adaptive-icon、splash 文件内容完全相同",
+      "width": 1024,
+      "height": 1024,
+      "hasAlpha": false,
+      "bytes": 1917903,
+      "sha256": "42f048c8a11613fcd181da0de1693c81f6b4592c3140bfa7cdbe18f1afd6de7f",
+      "directReferences": [
+        "app.json:7"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v1/life-focus.png",
+      "group": "鹿芽 · 生活插画",
+      "title": "专注做事",
+      "status": "条件展示",
+      "usage": "首页生活画面：对应居家日程时展示；缺图或无对应日程时回退经典立绘",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": false,
+      "bytes": 2227752,
+      "sha256": "8b483ece5fd281014fef7807494d08e2c653264477594f8955ba3751138463b8",
+      "directReferences": [
+        "src/utils/luyaArt.ts:7"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v1/life-reading.png",
+      "group": "鹿芽 · 生活插画",
+      "title": "翻一会儿书",
+      "status": "条件展示",
+      "usage": "首页生活画面：对应居家日程时展示；缺图或无对应日程时回退经典立绘",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": false,
+      "bytes": 2480298,
+      "sha256": "730515efdd8e32b5fce7e21cdf0152142b3cb00d75f6775ee14d5715f352f9b7",
+      "directReferences": [
+        "src/utils/luyaArt.ts:8"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v1/life-rest.png",
+      "group": "鹿芽 · 生活插画",
+      "title": "把节奏放慢",
+      "status": "条件展示",
+      "usage": "首页生活画面：对应居家日程时展示；缺图或无对应日程时回退经典立绘",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": false,
+      "bytes": 2367972,
+      "sha256": "de8181fc2e0ea364a7e8a04577b454e80b2a330ae2e5d3919aee9f20177e9a7a",
+      "directReferences": [
+        "src/utils/luyaArt.ts:9"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v1/room-day.png",
+      "group": "鹿芽 · 共同房间",
+      "title": "日间房间 · 横版 v1",
+      "status": "备用回退",
+      "usage": "共同房间按上海时间 07:00–18:00 日景，其余夜景；竖图优先，旧横图回退",
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "bytes": 2705461,
+      "sha256": "4ecae29b785db356e082f806902ae5d53a28b5c754b93d9b430d4c75621d0074",
+      "directReferences": [
+        "src/utils/luyaArt.ts:3"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v1/room-night.png",
+      "group": "鹿芽 · 共同房间",
+      "title": "夜间房间 · 横版 v1",
+      "status": "备用回退",
+      "usage": "共同房间按上海时间 07:00–18:00 日景，其余夜景；竖图优先，旧横图回退",
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "bytes": 2357816,
+      "sha256": "0a9373a3b379abf6694f2080a0216c9d7ead32cf0ffe9d01dbbe9e2c5ba2b05c",
+      "directReferences": [
+        "src/utils/luyaArt.ts:4"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v2/room-day-portrait.png",
+      "group": "鹿芽 · 共同房间",
+      "title": "日间房间 · 竖版 v2",
+      "status": "当前",
+      "usage": "共同房间按上海时间 07:00–18:00 日景，其余夜景；竖图优先，旧横图回退",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2387623,
+      "sha256": "e0b91715fad2fd1ec7ba57c9eb47d052e0c4418a497b9e8f4ed2a5f6bdf948db",
+      "directReferences": [
+        "src/utils/luyaArt.ts:5"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/luya-art-v2/room-night-portrait.png",
+      "group": "鹿芽 · 共同房间",
+      "title": "夜间房间 · 竖版 v2",
+      "status": "当前",
+      "usage": "共同房间按上海时间 07:00–18:00 日景，其余夜景；竖图优先，旧横图回退",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": false,
+      "bytes": 2149757,
+      "sha256": "486b89fd9c2b0abd0f0a1599dd51e4e2af2d2f5ed135971481aa6a10e3714c75",
+      "directReferences": [
+        "src/utils/luyaArt.ts:6"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/memories/comics/luna-comic-grid.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "凛夜 / 方格漫画",
+      "status": "未见当前入口",
+      "usage": "源码未见直接引用；文档镜像保留",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2023259,
+      "sha256": "a882007b657b436996a86a8058af9944c60074227e4d35b6ebb8db9988dac721",
+      "directReferences": [],
+      "mirrors": [
+        "docs/assets/memories/comics/luna-comic-grid.png"
+      ]
+    },
+    {
+      "path": "assets/memories/comics/luna-comic-magazine.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "凛夜 / 竖版漫画",
+      "status": "管理员／保留",
+      "usage": "无记忆时的预置示例；已有记忆无 visualUri 时作背景；不等同于真实共同经历",
+      "width": 941,
+      "height": 1672,
+      "hasAlpha": false,
+      "bytes": 2853606,
+      "sha256": "43f360b55cb368e1010183752a8fd8bc4c04bb377df76dd1e9ca6fed6c984c52",
+      "directReferences": [
+        "src/utils/memoryVisuals.ts:76"
+      ],
+      "mirrors": [
+        "docs/assets/memories/comics/luna-comic-magazine.png"
+      ]
+    },
+    {
+      "path": "assets/memories/comics/qingning-comic-grid.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "鹿芽 / 方格漫画",
+      "status": "未见当前入口",
+      "usage": "源码未见直接引用；文档镜像保留",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2690905,
+      "sha256": "973bb251d821ddb1060a0d0eb200dfe201edd88ae29fec26412b736033ccf638",
+      "directReferences": [],
+      "mirrors": [
+        "docs/assets/memories/comics/qingning-comic-grid.png"
+      ]
+    },
+    {
+      "path": "assets/memories/comics/qingning-comic-magazine.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "鹿芽 / 竖版漫画",
+      "status": "当前示例／回退",
+      "usage": "无记忆时的预置示例；已有记忆无 visualUri 时作背景；不等同于真实共同经历",
+      "width": 941,
+      "height": 1672,
+      "hasAlpha": false,
+      "bytes": 3129279,
+      "sha256": "219cf1d539868fd2b9cf8a58f279f5872504c8c46c03b78aa97be64fdb5dc3e0",
+      "directReferences": [
+        "src/utils/memoryVisuals.ts:37"
+      ],
+      "mirrors": [
+        "docs/assets/memories/comics/qingning-comic-magazine.png"
+      ]
+    },
+    {
+      "path": "assets/memories/comics/sakura-comic-grid.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "纪遥 / 方格漫画",
+      "status": "未见当前入口",
+      "usage": "源码未见直接引用；文档镜像保留",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2594605,
+      "sha256": "f610d159e0dd1fe4d1fecb2abe47b6575a19b337143bcbb437cee95326d88d28",
+      "directReferences": [],
+      "mirrors": [
+        "docs/assets/memories/comics/sakura-comic-grid.png"
+      ]
+    },
+    {
+      "path": "assets/memories/comics/sakura-comic-magazine.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "纪遥 / 竖版漫画",
+      "status": "管理员／保留",
+      "usage": "无记忆时的预置示例；已有记忆无 visualUri 时作背景；不等同于真实共同经历",
+      "width": 941,
+      "height": 1672,
+      "hasAlpha": false,
+      "bytes": 3120312,
+      "sha256": "73a9523b0eb83c0d327b65c50b4607db538fe593a8708a60bbf45064eb09ba8f",
+      "directReferences": [
+        "src/utils/memoryVisuals.ts:56"
+      ],
+      "mirrors": [
+        "docs/assets/memories/comics/sakura-comic-magazine.png"
+      ]
+    },
+    {
+      "path": "assets/memories/luna-midnight-game.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "凛夜 / 单幅情景插画",
+      "status": "未见当前入口",
+      "usage": "源码未见直接引用；文档镜像保留",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 1788547,
+      "sha256": "efc3cf610dd0b5cf8e10cd199111b048b43dc0e380c5fd08ff11ba403e9a87ec",
+      "directReferences": [],
+      "mirrors": [
+        "docs/assets/memories/luna-midnight-game.png"
+      ]
+    },
+    {
+      "path": "assets/memories/qingning-convenience-evening.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "鹿芽 / 单幅情景插画",
+      "status": "未见当前入口",
+      "usage": "源码未见直接引用；文档镜像保留",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2527455,
+      "sha256": "b86f7fc91f9706a423a45199442d251dbe8ed40f76f66ef9933d8af3ae67c394",
+      "directReferences": [],
+      "mirrors": [
+        "docs/assets/memories/qingning-convenience-evening.png"
+      ]
+    },
+    {
+      "path": "assets/memories/sakura-rainy-bookstore.png",
+      "group": "记忆 · 插画与漫画",
+      "title": "纪遥 / 单幅情景插画",
+      "status": "未见当前入口",
+      "usage": "源码未见直接引用；文档镜像保留",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": false,
+      "bytes": 2184094,
+      "sha256": "2e0121d1a49c2d68494dbdc7749baea2e3e84f4e22fbb44050ab48d35e7a20eb",
+      "directReferences": [],
+      "mirrors": [
+        "docs/assets/memories/sakura-rainy-bookstore.png"
+      ]
+    },
+    {
+      "path": "assets/splash.png",
+      "group": "应用 · 图标与启动",
+      "title": "splash",
+      "status": "配置使用",
+      "usage": "app.json 原生／Web 配置；icon、adaptive-icon、splash 文件内容完全相同",
+      "width": 1024,
+      "height": 1024,
+      "hasAlpha": false,
+      "bytes": 1917903,
+      "sha256": "42f048c8a11613fcd181da0de1693c81f6b4592c3140bfa7cdbe18f1afd6de7f",
+      "directReferences": [
+        "app.json:51"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/soft-sweet/avatar-frame-pink.png",
+      "group": "主题 · 装饰切片",
+      "title": "甜系 / avatar-frame-pink",
+      "status": "未见当前入口",
+      "usage": "当前源码未见引用；原始切片板目录 design/figma/exports 当前无文件",
+      "width": 212,
+      "height": 95,
+      "hasAlpha": true,
+      "bytes": 47774,
+      "sha256": "e009c5b822ae2656e41179bb70ef12a3cd86eb718fac262317904429828c61f1",
+      "directReferences": [],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/soft-sweet/bow-divider.png",
+      "group": "主题 · 装饰切片",
+      "title": "甜系 / bow-divider",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 252,
+      "height": 54,
+      "hasAlpha": true,
+      "bytes": 14162,
+      "sha256": "672dad5319ed2213b461d2a860d533d731ec72688dd80377bfb45e46601a4f24",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:189",
+        "src/components/ThemeArtworkLayer.tsx:195"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/soft-sweet/bubble-pink.png",
+      "group": "主题 · 装饰切片",
+      "title": "甜系 / bubble-pink",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 385,
+      "height": 93,
+      "hasAlpha": true,
+      "bytes": 50152,
+      "sha256": "374d19038b21df7963e663a8011ef3e2759ebc6e987803d5016c7533e9d8bce5",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:186",
+        "src/components/ThemeArtworkLayer.tsx:193"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/soft-sweet/heart-charm-card.png",
+      "group": "主题 · 装饰切片",
+      "title": "甜系 / heart-charm-card",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 154,
+      "height": 220,
+      "hasAlpha": true,
+      "bytes": 76860,
+      "sha256": "72d516a36ab832cc73317a91fafe5bf4d763da55eda73455efa2063214220439",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:187"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/soft-sweet/input-bar.png",
+      "group": "主题 · 装饰切片",
+      "title": "甜系 / input-bar",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 438,
+      "height": 72,
+      "hasAlpha": true,
+      "bytes": 35942,
+      "sha256": "632f9c3f060712f29ea96986dc0906b09f9c11b9ff95a4a803af5a3631c313ee",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:194"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/soft-sweet/ribbon-panel.png",
+      "group": "主题 · 装饰切片",
+      "title": "甜系 / ribbon-panel",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 393,
+      "height": 88,
+      "hasAlpha": true,
+      "bytes": 63126,
+      "sha256": "5436ba8ada1836b6f826ed2e50d1c110f91dbbd42f7eec16fc0b0b1b6397a3b6",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:188"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/city-glass-card.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / city-glass-card",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 316,
+      "height": 180,
+      "hasAlpha": true,
+      "bytes": 103097,
+      "sha256": "5a3dd50f67209378aa753bf89348e1bca0e85307b6099f3f20489711a1519926",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:199",
+        "src/components/ThemeArtworkLayer.tsx:207"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/crystal-pendants.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / crystal-pendants",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 395,
+      "height": 159,
+      "hasAlpha": true,
+      "bytes": 106080,
+      "sha256": "de859d2491f0572d39dd1b8fbbc9bf42cb25a25afbb9cf9798bb78c8f95f96d0",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:200"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/night-city-card.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / night-city-card",
+      "status": "未见当前入口",
+      "usage": "当前源码未见引用；原始切片板目录 design/figma/exports 当前无文件",
+      "width": 188,
+      "height": 216,
+      "hasAlpha": true,
+      "bytes": 83649,
+      "sha256": "0a3e85f9c016acc74da600e844d7aa79f0ecf5552eb9c7b5702dd7280bc3248a",
+      "directReferences": [],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/pearl-chat-bubble.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / pearl-chat-bubble",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 470,
+      "height": 82,
+      "hasAlpha": true,
+      "bytes": 46014,
+      "sha256": "c31e28bac221c22439bcedbdc6a230c694378372cb08ec9cceecc352d0761cee",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:206"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/rose-chat-bubble.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / rose-chat-bubble",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 502,
+      "height": 90,
+      "hasAlpha": true,
+      "bytes": 73803,
+      "sha256": "afb669955b0af6b4dacfc6f07e28b7c7f892238af97e5dc2c2f3bdc5006fae53",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:205"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/round-window.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / round-window",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 175,
+      "height": 175,
+      "hasAlpha": true,
+      "bytes": 58140,
+      "sha256": "b782927ad031b4e1dac3a681dd3191ebf967176f0efd2ff7e970d7087798c66b",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:208"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "assets/style/urban-luxury/slider-pendant.png",
+      "group": "主题 · 装饰切片",
+      "title": "都市 / slider-pendant",
+      "status": "未见当前入口",
+      "usage": "ThemeArtworkLayer 内有 require；当前 src 中没有该组件的调用。原始切片板目录 design/figma/exports 当前无文件",
+      "width": 417,
+      "height": 139,
+      "hasAlpha": true,
+      "bytes": 81020,
+      "sha256": "74bccf19547f8fce28ea656ba54572539a540d1b6f573edee0d59102e856e2e7",
+      "directReferences": [
+        "src/components/ThemeArtworkLayer.tsx:201"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "docs/assets/companion-space-concept.png",
+      "group": "网站 · 宣传与概念",
+      "title": "companion-space-concept",
+      "status": "网站使用",
+      "usage": "网站六屏概念图，不代表当前运行界面",
+      "width": 1610,
+      "height": 977,
+      "hasAlpha": false,
+      "bytes": 1631298,
+      "sha256": "1ff2442491f0d90cc9052ceb98a541d5e5a7a0fded3f4b9fe9a1a379bad6bd63",
+      "directReferences": [
+        "docs/index.html:86"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "docs/assets/cyberlover-home-hero-preview.webp",
+      "group": "网站 · 宣传与概念",
+      "title": "cyberlover-home-hero-preview",
+      "status": "网站使用",
+      "usage": "网站分享预览图",
+      "width": 1920,
+      "height": 960,
+      "hasAlpha": false,
+      "bytes": 251224,
+      "sha256": "93debaaf63d712f9634fa04c6864c0dfc9773f42575564312b575627ca14b959",
+      "directReferences": [
+        "docs/index.html:11"
+      ],
+      "mirrors": []
+    },
+    {
+      "path": "docs/assets/cyberlover-home-hero.webp",
+      "group": "网站 · 宣传与概念",
+      "title": "cyberlover-home-hero",
+      "status": "网站使用",
+      "usage": "宣传站 hero，不属于 Expo 页面背景",
+      "width": 3200,
+      "height": 1600,
+      "hasAlpha": false,
+      "bytes": 747158,
+      "sha256": "211fc4f18a62eaa1e867f1f1bda1eea9c464ce92c41753fee2f1009b9e75c026",
+      "directReferences": [
+        "docs/index.html:13",
+        "docs/index.html:67",
+        "docs/styles.css:219"
+      ],
+      "mirrors": []
+    }
+  ],
+  "historicalScreenshotPaths": [
+    "output/playwright/experience-2026-10-05/home-life-390.jpg",
+    "output/playwright/experience-2026-10-05/home-classic-390.jpg",
+    "output/playwright/experience-2026-10-05/room-day-final-390.jpg",
+    "output/playwright/experience-2026-10-05/room-night-final-390.jpg",
+    "output/playwright/experience-2026-10-05/memory-fullscreen-final.jpg",
+    "output/playwright/experience-2026-10-05/profile-avatar-390.jpg",
+    "output/playwright/experience-2026-10-05/chat-state-final.jpg"
+  ]
+}

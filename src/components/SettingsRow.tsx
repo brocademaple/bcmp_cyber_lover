@@ -6,6 +6,7 @@ interface SettingsRowProps {
   label: string;
   description?: string;
   value?: boolean;
+  disabled?: boolean;
   onToggle?: (val: boolean) => void;
   onPress?: () => void;
   showArrow?: boolean;
@@ -16,6 +17,7 @@ export function SettingsRow({
   label,
   description,
   value,
+  disabled,
   onToggle,
   onPress,
   showArrow,
@@ -35,6 +37,8 @@ export function SettingsRow({
         {children}
         {onToggle !== undefined && (
           <Switch
+            accessibilityLabel={label}
+            disabled={disabled}
             value={value}
             onValueChange={onToggle}
             trackColor={{ false: C.border, true: C.primary }}

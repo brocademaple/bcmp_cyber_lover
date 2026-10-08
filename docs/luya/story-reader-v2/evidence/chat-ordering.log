@@ -1,0 +1,19 @@
+PASS newestFirst puts latest message first
+PASS isNewestFirst recognizes normalized storage order
+PASS oldestFirst keeps display/API order chronological
+PASS recentChronological returns the newest N in chronological order
+PASS filterByDate returns only one local calendar day in chronological order
+PASS searchMessages filters by query and sender role
+PASS buildChatArchives excludes failed messages from counts
+PASS buildChatArchives keeps latest archive first
+PASS mood entry display messages sort by timestamp with chat history
+PASS message ordering preserves the assistant mood snapshot
+PASS ChatScreen waits for persisted history before writing first greeting
+PASS ChatScreen merges mood entry into chronological display order
+PASS ChatScreen snapshots the character mood used for each persisted assistant reply
+PASS ChatBubble shows full assistant date-time and the captured reply mood
+PASS chatPersistence reads durable file snapshots during recovery
+PASS chatPersistence writes capped durable file snapshots on save
+PASS native chat storage uses SQLite as the primary local message store
+PASS web/default chat storage avoids static expo-sqlite imports
+PASS chatPersistence keeps legacy AsyncStorage migration sources readable

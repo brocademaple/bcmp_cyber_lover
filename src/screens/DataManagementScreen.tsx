@@ -10,6 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
+import * as DocumentPicker from 'expo-document-picker';
+import * as Sharing from 'expo-sharing';
 import { RootStackParamList } from '../types';
 import { useThemeColors } from '../utils/theme';
 import {
@@ -102,6 +104,58 @@ export default function DataManagementScreen({ navigation }: Props) {
     );
   };
 
+  const importBackup = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/json',
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const selected = result.assets[0];
+    Alert.alert(
+      '导入并恢复备份',
+      `将校验并恢复 ${selected.name}。当前数据会先自动创建恢复前备份。`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确认恢复',
+          style: 'destructive',
+          onPress: async () => {
+            setBusy(true);
+            try {
+              const restored = await restoreAppDataExport(selected.uri);
+              setLastResult(restored);
+              await refresh();
+              Alert.alert('导入完成', '备份已经通过完整性校验并写回本机。');
+            } catch (error) {
+              await recordAppIssue('数据导入恢复', error, false);
+              Alert.alert('导入失败', error instanceof Error ? error.message : '无法读取该备份');
+            } finally {
+              setBusy(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const shareLatest = async () => {
+    const latest = exports[0];
+    if (!latest) {
+      Alert.alert('没有可分享的备份', '请先创建一次本地备份。');
+      return;
+    }
+    if (!(await Sharing.isAvailableAsync())) {
+      Alert.alert('当前平台不支持分享', latest);
+      return;
+    }
+    await Sharing.shareAsync(latest, {
+      mimeType: 'application/json',
+      dialogTitle: '导出心动伴侣备份',
+      UTI: 'public.json',
+    });
+  };
+
   const clearDiagnostics = async () => {
     await clearAppIssues();
     await refresh();
@@ -140,6 +194,20 @@ export default function DataManagementScreen({ navigation }: Props) {
               disabled={busy}
             >
               <Text style={[styles.secondaryText, { color: C.text }]}>恢复最近备份</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: C.background, borderColor: C.border }]}
+              onPress={importBackup}
+              disabled={busy}
+            >
+              <Text style={[styles.secondaryText, { color: C.text }]}>从文件导入</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryButton, { backgroundColor: C.background, borderColor: C.border }]}
+              onPress={shareLatest}
+              disabled={busy}
+            >
+              <Text style={[styles.secondaryText, { color: C.text }]}>分享最近备份</Text>
             </TouchableOpacity>
           </View>
           {lastResult && (

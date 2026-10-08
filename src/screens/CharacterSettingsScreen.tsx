@@ -1,6 +1,6 @@
+import { LUYA_RELATIONSHIP_LABELS } from '../services/luyaRelationshipService';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Image,
   ImageSourcePropType,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -17,6 +17,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { Character, CharacterDiary, ChatArchive, Message, RootStackParamList } from '../types';
 import { useChatStore } from '../store/chatStore';
+import ResilientImage from '../components/ResilientImage';
+import { getDefaultCharacterAssetSet } from '../utils/characterAssets';
+import { getCharacterAvatarImage, getCharacterMainImage } from '../utils/characterDisplayImages';
+import { useIsFocused } from '@react-navigation/native';
 import { useSettingsStore } from '../store/settingsStore';
 import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { useThemeColors } from '../utils/theme';
@@ -42,14 +46,6 @@ const MOOD_TO_LABEL: Record<string, string> = {
 function getImageSource(imageUri: Character['imageUri']): ImageSourcePropType | undefined {
   if (!imageUri) return undefined;
   return typeof imageUri === 'string' ? { uri: imageUri } : imageUri;
-}
-
-function getMainImage(character: Character): Character['imageUri'] {
-  return character.assetSet?.main ?? character.imageUri;
-}
-
-function getAvatarImage(character: Character): Character['imageUri'] {
-  return character.assetSet?.avatar ?? getMainImage(character);
 }
 
 function MetricPill({ label, value, color }: { label: string; value: number; color: string }) {
@@ -82,6 +78,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default function CharacterSettingsScreen({ route, navigation }: Props) {
   const { characterId } = route.params;
   const C = useThemeColors();
+  const isFocused = useIsFocused();
   const { width } = useWindowDimensions();
   const pagerRef = useRef<ScrollView>(null);
 
@@ -129,8 +126,13 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
   const moodValue = emotion?.mood === 'happy' ? 85 : emotion?.mood === 'tired' ? 38 : 62;
   const intimacyValue = emotion?.intimacy ?? 50;
   const energyValue = emotion?.energy ?? 50;
-  const mainImage = getMainImage(character);
-  const avatarImage = getAvatarImage(character);
+  const mainImage = getCharacterMainImage(character);
+  const avatarImage = getCharacterAvatarImage(character);
+  const defaultAssets = getDefaultCharacterAssetSet(character);
+  const avatarFallbacks = [defaultAssets?.headshot, defaultAssets?.avatar, defaultAssets?.main]
+    .map(getImageSource).filter((source): source is ImageSourcePropType => source !== undefined);
+  const mainFallbacks = [defaultAssets?.main].map(getImageSource)
+    .filter((source): source is ImageSourcePropType => source !== undefined);
   const characterArchives = archives[characterId] ?? [];
   const characterMessages = messages[characterId] ?? [];
   const pageWidth = width;
@@ -150,7 +152,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]} edges={['bottom']}>
       {mainImage && (
-        <Image source={getImageSource(mainImage)} style={styles.backdropImage} resizeMode="cover" />
+        <ResilientImage source={getImageSource(mainImage)} fallbackSources={mainFallbacks} retryKey={String(isFocused)} style={styles.backdropImage} resizeMode="cover" accessible={false} />
       )}
       <View style={[styles.backdropVeil, { backgroundColor: C.background + 'E8' }]} />
 
@@ -163,7 +165,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
           <View style={styles.heroTop}>
             <View style={styles.avatarWrap}>
               {avatarImage ? (
-                <Image source={getImageSource(avatarImage)} style={styles.avatarImage} resizeMode="cover" />
+                <ResilientImage source={getImageSource(avatarImage)} fallbackSources={avatarFallbacks} retryKey={String(isFocused)} style={styles.avatarImage} resizeMode="cover" accessibilityLabel={`${character.name}的头像`} fallbackLabel="头像未加载" retryLabel="重试" />
               ) : (
                 <Text style={styles.avatarFallback}>{character.avatar}</Text>
               )}
@@ -171,7 +173,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
 
             <View style={styles.heroCopy}>
               <Text style={[styles.name, { color: C.text }]}>{character.name}</Text>
-              <Text style={[styles.meta, { color: C.primary }]}>{moodLabel} · 亲密度 {intimacyValue}%</Text>
+              <Text style={[styles.meta, { color: C.primary }]}>{moodLabel} · {character.id === 'qingning' ? LUYA_RELATIONSHIP_LABELS[character.luyaRuntime?.relationship.stage ?? 'visitor'] : `亲密度 ${intimacyValue}%`}</Text>
             </View>
 
             {isAdmin && (
@@ -184,11 +186,11 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
             )}
           </View>
 
-          <View style={styles.metrics}>
+          {(isAdmin || character.id !== 'qingning') && <View style={styles.metrics}>
             <MetricPill label="心情" value={moodValue} color="#F76F98" />
             <MetricPill label="亲密" value={intimacyValue} color={C.primary} />
             <MetricPill label="活力" value={energyValue} color="#7FC9D8" />
-          </View>
+          </View>}
         </View>
 
         <View style={[styles.segmented, { backgroundColor: C.surface + 'E8', borderColor: C.border }]}>
@@ -197,6 +199,9 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
               key={page.key}
               style={[styles.segmentItem, pageIndex === index && { backgroundColor: C.primary }]}
               onPress={() => scrollToPage(index)}
+              accessibilityRole="tab"
+              accessibilityLabel={`${page.label}页`}
+              accessibilityState={{ selected: pageIndex === index }}
             >
               <Text style={[styles.segmentText, { color: pageIndex === index ? '#fff' : C.textSecondary }]}>
                 {page.label}
@@ -228,11 +233,10 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
           ))}
         </ScrollView>
 
-        <View style={styles.pageDots}>
+        <View style={styles.pageDots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
           {pages.map((page, index) => (
-            <TouchableOpacity
+            <View
               key={`${page.key}-dot`}
-              onPress={() => scrollToPage(index)}
               style={[
                 styles.pageDot,
                 { backgroundColor: pageIndex === index ? C.primary : C.border },
@@ -537,14 +541,16 @@ function AnniversaryPage({ character }: { character: Character }) {
 function TimelinePage({ character }: { character: Character }) {
   const C = useThemeColors();
   const stage = character.relationshipStage ?? deriveRelationshipStage(character.emotionalState?.intimacy ?? 50);
-  const events = (character.relationshipEvents ?? [])
+  const stageLabel = character.id === 'qingning' ? LUYA_RELATIONSHIP_LABELS[character.luyaRuntime?.relationship.stage ?? 'visitor'] : RELATIONSHIP_STAGE_LABELS[stage];
+  const sourced = (character.luyaRuntime?.relationship.evidence ?? []).map(e => ({ id: e.id, title: e.summary, detail: `来源：${e.sourceIds.join('、')}`, timestamp: e.timestamp, verified: e.confirmed }));
+  const events = [...(character.relationshipEvents ?? []), ...sourced]
     .slice()
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 20);
 
   return (
     <>
-      <Text style={[styles.pageEyebrow, { color: C.primary }]}>当前章节 · {RELATIONSHIP_STAGE_LABELS[stage]}</Text>
+      <Text style={[styles.pageEyebrow, { color: C.primary }]}>当前章节 · {stageLabel}</Text>
       <Text style={[styles.pageTitle, { color: C.text }]}>你们的关系时间线</Text>
       <Text style={[styles.pageLead, { color: C.textSecondary }]}>这里只记录被确认的记忆、纪念日和关系章节。每个变化都能回到真实互动。</Text>
 
@@ -607,11 +613,11 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   backdropImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.2,
   },
   backdropVeil: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   shell: {
     paddingTop: 14,
@@ -712,7 +718,7 @@ const styles = StyleSheet.create({
   },
   segmentItem: {
     flex: 1,
-    minHeight: 38,
+    minHeight: 44,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',

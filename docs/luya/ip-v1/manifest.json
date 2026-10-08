@@ -1,0 +1,195 @@
+{
+  "created": "2026-10-05",
+  "characterId": "qingning",
+  "provenance": "authored-fiction",
+  "assets": [
+    {
+      "path": "assets/luya-ip-v1/reference/approved-hairstyles.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2488538,
+      "sha256": "06bd83f29d019d2c4564e891735babc7d7580242965d3882a83c2518c9f37b9e"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/approved-looks.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 1870797,
+      "sha256": "6097d857e6472ba542ef5e8510aae457e9c686d82d64332f0bddfa653fd09b76"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l01-turnaround.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1835012,
+      "sha256": "6b00d0e35a02f16fb8ae46236283fdbeed113e98fdfb42939f5b382387c16151"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l02-turnaround.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1873216,
+      "sha256": "1d931181649992d6e016335f7a57b60241bd1448631f3b22af0f08fb4db9270b"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l03-turnaround.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1881604,
+      "sha256": "4803d7f68a836a088e5463b4dcaf3192d74130afa096f2b9ebdfd6f8912a023e"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l04-turnaround.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1986458,
+      "sha256": "0c41a3c19d20fc8cfbcf819a9b5b8c5a98136cf284f9996811163250b1575a5a"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l05-turnaround.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1711438,
+      "sha256": "d2d5200958f7904278239ea9da371bdb06b6b08351f29b1bf1b2a8a5864b7f14"
+    },
+    {
+      "path": "assets/luya-ip-v1/reference/l06-turnaround.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1971938,
+      "sha256": "7c8fad3230337a418f8daf8dddb82144ea81d96ede62b018c82b65b8e3424b8a"
+    },
+    {
+      "path": "assets/luya-ip-v1/scenes/campus-project.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2327019,
+      "sha256": "ff904778e015d7dcd0fcfcdf646729ca21c16bb55e1395eb51d34a1291e8c9c3"
+    },
+    {
+      "path": "assets/luya-ip-v1/scenes/city-observation.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2512162,
+      "sha256": "f2df3b5564f05082615f8c618010eda26da8742dea129dcc3ebb2a00b892f7a7"
+    },
+    {
+      "path": "assets/luya-ip-v1/scenes/home-reading.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2399362,
+      "sha256": "1b0ad1171d0f35e815a62d3aec3a4e6621fc67ffce81b99b17e69f9e38105b36"
+    },
+    {
+      "path": "assets/luya-ip-v1/stories/blue-tomorrow-01.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2219722,
+      "sha256": "b3785ee0e92c06bf4d0eb32fa8851a65f9cbb1a7ba351761c2bd35430b735a8a"
+    },
+    {
+      "path": "assets/luya-ip-v1/stories/blue-tomorrow-02.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2209976,
+      "sha256": "7b2d2ae3a246cc46f1435beb4a848039977ab16ea6fa02490af0154260d3c7d1"
+    },
+    {
+      "path": "assets/luya-ip-v1/stories/listen-first-01.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2158979,
+      "sha256": "734107a570bc7ea321e0901351ceb8d1f8bc1e02dad34817642226d7c4633ad4"
+    },
+    {
+      "path": "assets/luya-ip-v1/stories/listen-first-02.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2341895,
+      "sha256": "01784980cfccb9c37dc4069836729fe8067a45c00fbe844cf51d63d41464e53f"
+    },
+    {
+      "path": "assets/luya-ip-v1/stories/unknown-year-01.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2449503,
+      "sha256": "4a149d580ee02554308153a0f84b6f3562cfc5172225b54a9fdcff41dbbd86ac"
+    },
+    {
+      "path": "assets/luya-ip-v1/stories/unknown-year-02.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 2548471,
+      "sha256": "7a652e0441eb174ce56c2b92e2c36ad774a827d5242cb0f2b4a3c2010fbf2089"
+    }
+  ],
+  "preservedOriginals": {
+    "assets/adaptive-icon.png": "42f048c8a11613fcd181da0de1693c81f6b4592c3140bfa7cdbe18f1afd6de7f",
+    "assets/characters/v2/luna/action-waiting.png": "67e51a3e56aec5816f0b2c8e812d38bf8b773d2fccb566acafbb485c7c2f07eb",
+    "assets/characters/v2/luna/action-wave.png": "e50f0c4dcfb4c3dab4380fa34cd10f17ecb6ef1382710a83cae8ef1bea998ab0",
+    "assets/characters/v2/luna/avatar.png": "5b82a45ed609a4688b9ce1e0af93938e04fcdc40fd30448982fec83f12ae153e",
+    "assets/characters/v2/luna/expression-happy.png": "8321e1c348f9ec01812be650e4c4ac92096cdb6b192a12a9b95a4c88cf35d618",
+    "assets/characters/v2/luna/expression-low-energy.png": "f37607af7f2fd3c5af1ece4540febe87ad97f9d046394ae4f23a558dc1892615",
+    "assets/characters/v2/luna/expression-soft.png": "60817359c1e21bb2cdafd2a324921123e095c9c3ff14d0c31b7b07d2ffcca967",
+    "assets/characters/v2/luna/headshot.png": "a2174eca7ff5f8c8af954cd4589d8403cb17dfbd50450c3c29e26197005ad55c",
+    "assets/characters/v2/luna/main.png": "930aa64f4449098d0703718929ce8a7ea111e06cf62af45bc2d70c9b77994342",
+    "assets/characters/v2/luna/scene-memory.png": "2a705542ea268abe5c4d6dc536d381cc75a903ad168d3bdc83b15aade3181964",
+    "assets/characters/v2/qingning/action-waiting.png": "26771a3a8e5c49674027e57c915777d675db3b3f77b9db796319754543201611",
+    "assets/characters/v2/qingning/action-wave.png": "11d9c4cca7025359ca86c79b7542159506cde896300e43de5a54b74fcf91461f",
+    "assets/characters/v2/qingning/avatar.png": "d1480a6bd384825ba3739d00b9d88286fbb90cb179d9fea41eca48a6508627a5",
+    "assets/characters/v2/qingning/expression-happy.png": "09e99aca4e8ccc2d3f5da996e1b62c54e161b3579153487dd07da4a29968c844",
+    "assets/characters/v2/qingning/expression-low-energy.png": "c59d0367a360b842abc3cdfb0a2d7013b61f910029dec08cdde7b51f24cb0957",
+    "assets/characters/v2/qingning/expression-soft.png": "10453405ec43b70aa226de3976fec180e2844537e05208f2dfe4ebc49d35eecd",
+    "assets/characters/v2/qingning/headshot.png": "fcedc5792ee5a8dfff13358956143030bae52f5dd9b8e1dc1967cc3211a83881",
+    "assets/characters/v2/qingning/main.png": "f731a68877778716cef317f09a376ba1902edf7e7569f36188c9a5cb1cdc19e9",
+    "assets/characters/v2/qingning/scene-memory.png": "73c1021f163043ee02cc1987e34e0f3d6b564eccbcfdbb2ab7694e7fee179b9a",
+    "assets/characters/v2/sakura/action-waiting.png": "ae35a3149c3347534ebd6797edd0eaff61dcf2d0e2cb2dc6e36cd8a316b238d1",
+    "assets/characters/v2/sakura/action-wave.png": "d147c20f594055d55372740f810cc4891a49aff7e2a3ac547a46e18736c3b62c",
+    "assets/characters/v2/sakura/avatar.png": "8571605804553b812390ad5a410d408520edd0ce1a1bf8b8fbf7ea6e72924229",
+    "assets/characters/v2/sakura/expression-happy.png": "28a24dae9c62a95638dfa78f56f78c549371c3af2232d14ed8a4a753fa394e8b",
+    "assets/characters/v2/sakura/expression-low-energy.png": "70243b3c43c4f2c978d921020320b4ba377338732d5ff5f125c7bfb0b9ec52e0",
+    "assets/characters/v2/sakura/expression-soft.png": "a0c9f05ab39ee062ff960ba6506db3d9fb02b1d17d40f2528ccaca1ca0d5d6b2",
+    "assets/characters/v2/sakura/headshot.png": "77954d015d50b55b3fd3a0c4694e4f81e0e5091199189cb03a0b1f1270c39570",
+    "assets/characters/v2/sakura/main.png": "872d07d66f251a59157548847d920857ce6be1b2d53a5d794cb63698f74c51f8",
+    "assets/characters/v2/sakura/scene-memory.png": "2fdf8edc0ccc6bc646a5abb9e0ad1dbe9d12daf2adfff89443a78f22edfda446",
+    "assets/favicon.png": "8df4bea9216194f80d7e4031368a99ebf3414364f25f176d920d5a8ed301ab45",
+    "assets/icon.png": "42f048c8a11613fcd181da0de1693c81f6b4592c3140bfa7cdbe18f1afd6de7f",
+    "assets/luya-art-v1/life-focus.png": "8b483ece5fd281014fef7807494d08e2c653264477594f8955ba3751138463b8",
+    "assets/luya-art-v1/life-reading.png": "730515efdd8e32b5fce7e21cdf0152142b3cb00d75f6775ee14d5715f352f9b7",
+    "assets/luya-art-v1/life-rest.png": "de8181fc2e0ea364a7e8a04577b454e80b2a330ae2e5d3919aee9f20177e9a7a",
+    "assets/luya-art-v1/room-day.png": "4ecae29b785db356e082f806902ae5d53a28b5c754b93d9b430d4c75621d0074",
+    "assets/luya-art-v1/room-night.png": "0a9373a3b379abf6694f2080a0216c9d7ead32cf0ffe9d01dbbe9e2c5ba2b05c",
+    "assets/luya-art-v2/room-day-portrait.png": "e0b91715fad2fd1ec7ba57c9eb47d052e0c4418a497b9e8f4ed2a5f6bdf948db",
+    "assets/luya-art-v2/room-night-portrait.png": "486b89fd9c2b0abd0f0a1599dd51e4e2af2d2f5ed135971481aa6a10e3714c75",
+    "assets/memories/comics/luna-comic-grid.png": "a882007b657b436996a86a8058af9944c60074227e4d35b6ebb8db9988dac721",
+    "assets/memories/comics/luna-comic-magazine.png": "43f360b55cb368e1010183752a8fd8bc4c04bb377df76dd1e9ca6fed6c984c52",
+    "assets/memories/comics/qingning-comic-grid.png": "973bb251d821ddb1060a0d0eb200dfe201edd88ae29fec26412b736033ccf638",
+    "assets/memories/comics/qingning-comic-magazine.png": "219cf1d539868fd2b9cf8a58f279f5872504c8c46c03b78aa97be64fdb5dc3e0",
+    "assets/memories/comics/sakura-comic-grid.png": "f610d159e0dd1fe4d1fecb2abe47b6575a19b337143bcbb437cee95326d88d28",
+    "assets/memories/comics/sakura-comic-magazine.png": "73a9523b0eb83c0d327b65c50b4607db538fe593a8708a60bbf45064eb09ba8f",
+    "assets/memories/luna-midnight-game.png": "efc3cf610dd0b5cf8e10cd199111b048b43dc0e380c5fd08ff11ba403e9a87ec",
+    "assets/memories/qingning-convenience-evening.png": "b86f7fc91f9706a423a45199442d251dbe8ed40f76f66ef9933d8af3ae67c394",
+    "assets/memories/sakura-rainy-bookstore.png": "2e0121d1a49c2d68494dbdc7749baea2e3e84f4e22fbb44050ab48d35e7a20eb",
+    "assets/splash.png": "42f048c8a11613fcd181da0de1693c81f6b4592c3140bfa7cdbe18f1afd6de7f",
+    "assets/style/soft-sweet/avatar-frame-pink.png": "e009c5b822ae2656e41179bb70ef12a3cd86eb718fac262317904429828c61f1",
+    "assets/style/soft-sweet/bow-divider.png": "672dad5319ed2213b461d2a860d533d731ec72688dd80377bfb45e46601a4f24",
+    "assets/style/soft-sweet/bubble-pink.png": "374d19038b21df7963e663a8011ef3e2759ebc6e987803d5016c7533e9d8bce5",
+    "assets/style/soft-sweet/heart-charm-card.png": "72d516a36ab832cc73317a91fafe5bf4d763da55eda73455efa2063214220439",
+    "assets/style/soft-sweet/input-bar.png": "632f9c3f060712f29ea96986dc0906b09f9c11b9ff95a4a803af5a3631c313ee",
+    "assets/style/soft-sweet/ribbon-panel.png": "5436ba8ada1836b6f826ed2e50d1c110f91dbbd42f7eec16fc0b0b1b6397a3b6",
+    "assets/style/urban-luxury/city-glass-card.png": "5a3dd50f67209378aa753bf89348e1bca0e85307b6099f3f20489711a1519926",
+    "assets/style/urban-luxury/crystal-pendants.png": "de859d2491f0572d39dd1b8fbbc9bf42cb25a25afbb9cf9798bb78c8f95f96d0",
+    "assets/style/urban-luxury/night-city-card.png": "0a3e85f9c016acc74da600e844d7aa79f0ecf5552eb9c7b5702dd7280bc3248a",
+    "assets/style/urban-luxury/pearl-chat-bubble.png": "c31e28bac221c22439bcedbdc6a230c694378372cb08ec9cceecc352d0761cee",
+    "assets/style/urban-luxury/rose-chat-bubble.png": "afb669955b0af6b4dacfc6f07e28b7c7f892238af97e5dc2c2f3bdc5006fae53",
+    "assets/style/urban-luxury/round-window.png": "b782927ad031b4e1dac3a681dd3191ebf967176f0efd2ff7e970d7087798c66b",
+    "assets/style/urban-luxury/slider-pendant.png": "74bccf19547f8fce28ea656ba54572539a540d1b6f573edee0d59102e856e2e7"
+  },
+  "preservedDataSources": {
+    "src/config/luyaPersona.ts": "8473560dc919449dc42d680122028a78d5453473f44042828d2374532e38728a",
+    "src/services/chatPersistence.ts": "1da782d18f049f0e01346f91cb298409a19a25f80262c4e2a97f6d8c9a142c92",
+    "src/store/chatStore.ts": "1243ebc9ac5152addc301368007f49b6051d6a3de466fd338b1e4ecc85659da1",
+    "src/utils/chatHistory.ts": "724241823e01b01abd4f5a77f1d28b6bf9f6bcd446188d23abd6d1c06c9dd3dc",
+    "src/utils/memoryVisuals.ts": "0dc67b98f0e93c3e05675b3e75a094a98bb29861d5ffcd0d2df51cf62bfc456b"
+  }
+}

@@ -1,15 +1,14 @@
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const NOTIFICATION_ID_KEY = '@bcmp_daily_notification_id';
 
 // Pre-written notification texts per character (shown in notification before AI generates greeting)
 const NOTIFICATION_TEXTS: Record<string, string[]> = {
   qingning: [
-    '喂，你这家伙今天有好好吃饭吗？我可盯着你呢 🍱',
-    '诶诶，我有点无聊……来聊五毛钱的嘛～',
-    '笨蛋，今天开心吗？不许敷衍我哦。',
-    '累的话就回来吐槽，我帮你接着 🦌',
+    '有空时，可以来房间坐坐。无需急着回复。',
+    '想聊聊或各做各的，都可以来房间。',
   ],
   sakura: [
     '……今天过得还好吗？我在，想听你说。',
@@ -49,12 +48,13 @@ export async function scheduleDailyNotification(
   characterName: string,
   hour: number = 20,
   minute: number = 0
-): Promise<void> {
+): Promise<'scheduled' | 'permission_denied' | 'unavailable'> {
+  if (Platform.OS === 'web') return 'unavailable';
   // Cancel existing scheduled notification
   await cancelDailyNotification();
 
   const hasPermission = await requestNotificationPermission();
-  if (!hasPermission) return;
+  if (!hasPermission) return 'permission_denied';
 
   const notifText = getNotificationText(characterId);
 
@@ -73,6 +73,7 @@ export async function scheduleDailyNotification(
   });
 
   await AsyncStorage.setItem(NOTIFICATION_ID_KEY, id);
+  return 'scheduled';
 }
 
 export async function cancelDailyNotification(): Promise<void> {

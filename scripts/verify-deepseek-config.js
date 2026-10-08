@@ -34,7 +34,7 @@ const apiKey = envLine?.split('=')[1]?.trim() ?? '';
 assert(apiKey.startsWith('sk-') && apiKey.length > 20, '.env.local should contain a DeepSeek-style API key');
 assert(settings.includes("provider: 'deepseek' as const"), 'default service provider should be DeepSeek');
 assert(settings.includes("const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1'"), 'DeepSeek base URL should be configured');
-assert(settings.includes("const DEEPSEEK_DEFAULT_MODEL = 'deepseek-chat'"), 'DeepSeek default model should be configured');
+assert(settings.includes("const DEEPSEEK_DEFAULT_MODEL = 'deepseek-flash'"), 'DeepSeek default model should be Flash');
 assert(settings.includes('EXPO_PUBLIC_DEEPSEEK_API_KEY'), 'settings should read EXPO_PUBLIC_DEEPSEEK_API_KEY');
 assert(settings.includes('applyEnvDeepSeekFallback'), 'saved settings without a key should fall back to env DeepSeek config');
 assert(onboarding.includes('configuredApiKey'), 'onboarding should detect an existing configured key');

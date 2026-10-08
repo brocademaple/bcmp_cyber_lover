@@ -26,7 +26,6 @@ import { useSettingsStore } from '../store/settingsStore';
 import { resolveDefaultCharacterAssetKey } from '../utils/characterAssets';
 import { useThemeColors } from '../utils/theme';
 import {
-  applyCharacterDefinition,
   getCharacterDefinition,
   listCharacterRevisions,
   saveCharacterRevision,
@@ -36,6 +35,8 @@ import {
   buildSimpleCharacterPrompt,
   createBlankCharacter,
 } from '../services/characterStudioService';
+
+import { mergeCurrentCharacterDefinition, saveCharacterDefinitionUpdate } from '../services/characterDefinitionUpdateService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CharacterEditor'>;
 type EditorMode = 'view' | 'editing' | 'preview';
@@ -208,7 +209,7 @@ function updatePromptSection(systemPrompt: string, label: string, nextText: stri
 
 function getDraftChanges(character: Character, draft: EditableDraft) {
   const original = makeDraft(character);
-  const labels: Array<[keyof EditableDraft, string]> = [
+  const labels: [keyof EditableDraft, string][] = [
     ['name', '名称'],
     ['personality', '性格标签'],
     ['greeting', '开场白'],
@@ -419,33 +420,39 @@ export default function CharacterEditorScreen({ route }: Props) {
   };
 
   const applyDraft = async () => {
-    const isCreating = creatingCharacter?.id === activeCharacter.id;
-    if (!isCreating) {
-      await saveCharacterRevision(activeCharacter, '应用新设定前的自动备份');
+    try {
+      const isCreating = creatingCharacter?.id === activeCharacter.id;
+      const definition = {
+        name: draft.name.trim(),
+        personality: draft.personality.trim(),
+        greeting: draft.greeting.trim(),
+        systemPrompt: draft.systemPrompt.trim(),
+        profile: buildProfile(activeCharacter, draft),
+        relationshipRules: buildRelationshipRules(activeCharacter, draft),
+      };
+      const updated = isCreating
+        ? mergeCurrentCharacterDefinition(activeCharacter, definition, 1)
+        : await saveCharacterDefinitionUpdate({
+          getCurrent: () => useChatStore.getState().getCharacter(activeCharacter.id),
+          backup: (current) => saveCharacterRevision(current, '应用新设定前的自动备份'),
+          save: saveCharacter,
+          definition,
+        });
+      if (isCreating) await saveCharacter(updated);
+      setSelectedCharacter(updated.id);
+      await saveSettings({
+        ...useSettingsStore.getState().settings,
+        selectedCharacterId: updated.id,
+      });
+      setDirty(false);
+      setCreatingCharacter(null);
+      setEditingSection('all');
+      setMode('view');
+      setRevisions(await listCharacterRevisions(updated.id));
+      Alert.alert('已应用', `${updated.name} 的设定已经更新。`);
+    } catch (error) {
+      Alert.alert('暂时未能应用设定', error instanceof Error ? error.message : '请稍后重试，编辑内容仍保留在这里。');
     }
-    const updated: Character = {
-      ...activeCharacter,
-      name: draft.name.trim(),
-      personality: draft.personality.trim(),
-      greeting: draft.greeting.trim(),
-      systemPrompt: draft.systemPrompt.trim(),
-      profile: buildProfile(activeCharacter, draft),
-      relationshipRules: buildRelationshipRules(activeCharacter, draft),
-      definitionVersion: isCreating ? 1 : (activeCharacter.definitionVersion ?? 1) + 1,
-    };
-
-    await saveCharacter(updated);
-    setSelectedCharacter(updated.id);
-    await saveSettings({
-      ...useSettingsStore.getState().settings,
-      selectedCharacterId: updated.id,
-    });
-    setDirty(false);
-    setCreatingCharacter(null);
-    setEditingSection('all');
-    setMode('view');
-    setRevisions(await listCharacterRevisions(updated.id));
-    Alert.alert('已应用', `${updated.name} 的设定已经更新。`);
   };
 
   const restoreRevision = (revision: CharacterRevision) => {
@@ -457,12 +464,20 @@ export default function CharacterEditorScreen({ route }: Props) {
         {
           text: '确认回退',
           onPress: async () => {
-            await saveCharacterRevision(activeCharacter, '回退前的自动备份');
-            const restored = applyCharacterDefinition(activeCharacter, revision.definition, revision.version);
-            await saveCharacter(restored);
-            resetDraftFromCharacter(restored);
-            setRevisions(await listCharacterRevisions(restored.id));
-            Alert.alert('已回退', `${restored.name} 的角色设定已恢复，关系数据保持不变。`);
+            try {
+              const restored = await saveCharacterDefinitionUpdate({
+                getCurrent: () => useChatStore.getState().getCharacter(activeCharacter.id),
+                backup: (current) => saveCharacterRevision(current, '回退前的自动备份'),
+                save: saveCharacter,
+                definition: revision.definition,
+                version: revision.version,
+              });
+              resetDraftFromCharacter(restored);
+              setRevisions(await listCharacterRevisions(restored.id));
+              Alert.alert('已回退', `${restored.name} 的角色设定已恢复，关系数据保持不变。`);
+            } catch (error) {
+              Alert.alert('暂时未能回退', error instanceof Error ? error.message : '请稍后重试。');
+            }
           },
         },
       ]
@@ -718,7 +733,7 @@ function ViewContent({
 }: {
   character: Character;
   mainImage?: Character['imageUri'];
-  promptSummary: Array<{ label: string; text: string }>;
+  promptSummary: { label: string; text: string }[];
   onEdit: (section?: EditSectionKey) => void;
 }) {
   const C = useThemeColors();
@@ -1079,7 +1094,7 @@ function PreviewContent({
   character: Character;
   draft: EditableDraft;
   changes: string[];
-  promptSummary: Array<{ label: string; text: string }>;
+  promptSummary: { label: string; text: string }[];
   onBackToEdit: () => void;
   onCancel: () => void;
   onApply: () => void;
@@ -1226,7 +1241,7 @@ function TagCluster({ values, strong }: { values: string[]; strong?: boolean }) 
   );
 }
 
-function PromptCard({ sections, onEdit }: { sections: Array<{ label: string; text: string }>; onEdit?: () => void }) {
+function PromptCard({ sections, onEdit }: { sections: { label: string; text: string }[]; onEdit?: () => void }) {
   const C = useThemeColors();
   return (
     <View style={[styles.promptCard, { backgroundColor: C.surface, borderColor: C.border }]}>

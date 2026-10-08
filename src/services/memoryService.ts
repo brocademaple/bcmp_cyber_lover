@@ -2,7 +2,7 @@ import { Message, ServiceConfig, Character, MemoryConfig, DebugAgentSurface } fr
 import { sendMessage } from './aiService';
 import { oldestFirst, recentChronological } from '../utils/chatHistory';
 
-const SUMMARY_PROMPT = `请将以下聊天记录进行简洁的总结，提取关键信息：用户的喜好、重要事件、情感状态等。用第三人称描述用户。总结要简短，不超过300字。
+const SUMMARY_PROMPT = `请简洁总结以下聊天中的明确事实，保留来源和真实主语，区分用户、鹿芽、第三方与虚构人物。分享不代表认同，重复不代表稳定偏好，角色想象动作不等于现实操作。不得推断诊断、敏感身份、人格标签或未确认相处习惯，不将示例或模型生成情节写成共同经历。没有明确事实则返回空字符串。总结不超过300字。
 
 聊天记录：
 `;
@@ -22,7 +22,10 @@ export async function summarizeHistory(
 
   const summaryCharacter: Character = {
     ...character,
-    systemPrompt: '你是一个专业的对话总结助手。',
+    id: 'history-summary-agent',
+    systemPrompt: '你是一个专业的对话总结助手。' ,
+    luyaPersona: undefined,
+    luyaRuntime: undefined,
   };
 
   try {

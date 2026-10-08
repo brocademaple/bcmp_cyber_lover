@@ -1,3 +1,7 @@
+import { resolveLuyaRoomFromDialogue } from '../services/luyaRoomService';
+import { applyLuyaUserTurn } from '../services/luyaRelationshipService';
+import { processLuyaUnderstandingTurn, observeLuyaSharing, getUnderstandingCards, decideUnderstanding } from '../services/luyaUnderstandingService';
+import LuyaUnderstandingCard from '../components/LuyaUnderstandingCard';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -9,8 +13,7 @@ import {
   Platform,
   StatusBar,
   useColorScheme,
-  Image,
-  ImageBackground,
+  ImageSourcePropType,
   InteractionManager,
   ScrollView,
 } from 'react-native';
@@ -26,6 +29,10 @@ import {
   DebugRequestItem,
 } from '../types';
 import { useChatStore } from '../store/chatStore';
+import ResilientImage from '../components/ResilientImage';
+import { getDefaultCharacterAssetSet } from '../utils/characterAssets';
+import { getCharacterAvatarImage, getCharacterMainImage } from '../utils/characterDisplayImages';
+import { useIsFocused } from '@react-navigation/native';
 import { useSettingsStore } from '../store/settingsStore';
 import { useDebugStore } from '../store/debugStore';
 import {
@@ -51,6 +58,14 @@ import {
   evaluateMoodFromConversation,
   MoodJudgementResult,
 } from '../services/moodJudgementService';
+import {
+  PendingSendRecord,
+  enqueuePendingSend,
+  loadPendingSends,
+  markPendingSendAttempt,
+  removePendingSend,
+} from '../services/sendQueuePersistence';
+import { recordAppIssue } from '../services/appDiagnostics';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -59,9 +74,9 @@ function genId() {
   return `msg_${++msgIdCounter}`;
 }
 
-function getImageSource(source?: Character['imageUri']) {
+function getImageSource(source?: Character['imageUri']): ImageSourcePropType | null {
   if (source == null) return null;
-  return typeof source === 'number' ? source : { uri: source };
+  return typeof source === 'string' ? { uri: source } : source;
 }
 
 const QUICK_REPLIES = [
@@ -85,11 +100,6 @@ function buildMoodJudgementCacheKey(characterId: string, mood: string, messages:
     lastMessage?.content.length ?? 0,
   ].join(':');
 }
-
-type PendingSend = {
-  characterId: string;
-  userMsg: Message;
-};
 
 type MemoryCaptureNotice =
   | (Extract<MemoryDecision, { action: 'ask' }> & {
@@ -120,6 +130,7 @@ function buildDisplayMessages(chatMessages: Message[], moodEntryMessage: Message
 export default function ChatScreen({ route, navigation }: Props) {
   const { characterId, autoGreet, moodEntry } = route.params;
   const C = useThemeColors();
+  const isFocused = useIsFocused();
   const themeId = useThemeId();
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
@@ -130,8 +141,10 @@ export default function ChatScreen({ route, navigation }: Props) {
   const autoGreetSentRef = useRef(false);
   const moodEntryHandledKeyRef = useRef<string | null>(null);
   const didInitialScrollRef = useRef(false);
-  const sendQueueRef = useRef<PendingSend[]>([]);
+  const sendQueueRef = useRef<PendingSendRecord[]>([]);
   const isProcessingQueueRef = useRef(false);
+  const activeRequestControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
 
   const {
     messages,
@@ -152,14 +165,20 @@ export default function ChatScreen({ route, navigation }: Props) {
     (settings.advanced.darkMode === 'auto' && systemScheme === 'dark');
 
   const character = getCharacter(characterId);
-  const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
   const chatMessages = messages[characterId] || [];
   const characterRef = useRef(character);
   const settingsRef = useRef(settings);
+  const getEffectiveNow = useCallback(
+    () => settingsRef.current.advanced.debugNowTs ?? Date.now(),
+    []
+  );
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingId, setStreamingId] = useState<string | null>(null);
-  const [pendingUserMessages, setPendingUserMessages] = useState<Message[]>([]);
-  const [deliveryIssue, setDeliveryIssue] = useState<{ text: string; imageUri?: string } | null>(null);
+  const [deliveryIssue, setDeliveryIssue] = useState<{
+    messageId: string;
+    text: string;
+    imageUri?: string;
+  } | null>(null);
   const [memoryNotice, setMemoryNotice] = useState<MemoryCaptureNotice | null>(null);
   const [moodJudgement, setMoodJudgement] = useState<MoodJudgementResult | null>(null);
   const [isMoodJudging, setIsMoodJudging] = useState(false);
@@ -175,6 +194,14 @@ export default function ChatScreen({ route, navigation }: Props) {
     characterRef.current = character;
     settingsRef.current = settings;
   }, [character, settings]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      activeRequestControllerRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     didInitialScrollRef.current = false;
@@ -217,7 +244,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       };
       addMessage(characterId, greeting);
     }
-  }, [addMessage, autoGreet, character, characterId, chatMessages.length, historyLoadedCharacterId, moodEntry]);
+  }, [addMessage, autoGreet, character, characterId, chatMessages.length, getEffectiveNow, historyLoadedCharacterId, moodEntry]);
 
   useEffect(() => {
     if (
@@ -288,14 +315,36 @@ export default function ChatScreen({ route, navigation }: Props) {
         const next = sendQueueRef.current.shift();
         if (!next) continue;
 
-        setPendingUserMessages((pending) => pending.filter((message) => message.id !== next.userMsg.id));
-
         const latestSettings = settingsRef.current;
+        if (next.characterId === 'qingning') {
+          try {
+          await useChatStore.getState().ensureLuyaRuntime(latestSettings.advanced.debugNowTs ?? Date.now());
+          await useChatStore.getState().updateLuyaRuntime((runtime) => ({
+            ...applyLuyaUserTurn(runtime, next.userMsg, useChatStore.getState().messages[next.characterId] ?? []),
+            understandings: processLuyaUnderstandingTurn(runtime.understandings, next.userMsg),
+            understandingObservations: observeLuyaSharing(runtime.understandingObservations, next.userMsg),
+          }));
+          } catch (error) {
+            await recordAppIssue('回复前状态保存', error, false);
+            await updateMessage(next.characterId, next.userMsg.id, { status: 'failed', errorMessage: '状态未能保存，请重试。' });
+            setDeliveryIssue({ messageId: next.userMsg.id, text: next.userMsg.content, imageUri: next.userMsg.imageUri });
+            continue;
+          }
+        }
         const latestCharacter = useChatStore.getState().getCharacter(next.characterId) ?? characterRef.current;
         if (!latestCharacter) continue;
 
-        const historyForRequest = useChatStore.getState().messages[next.characterId] || [];
-        await addMessage(next.characterId, next.userMsg);
+        let historyForRequest = useChatStore.getState().messages[next.characterId] || [];
+        if (!historyForRequest.some((message) => message.id === next.userMsg.id)) {
+          await addMessage(next.characterId, { ...next.userMsg, status: 'queued' });
+          historyForRequest = useChatStore.getState().messages[next.characterId] || [];
+        }
+        historyForRequest = historyForRequest.filter((message) => message.id !== next.userMsg.id);
+        await markPendingSendAttempt(next.userMsg.id);
+        await updateMessage(next.characterId, next.userMsg.id, {
+          status: 'sending',
+          errorMessage: undefined,
+        });
 
         setTyping(true);
         const aiMsgId = genId();
@@ -307,7 +356,14 @@ export default function ChatScreen({ route, navigation }: Props) {
             status: 'failed',
             errorMessage: '请先在设置中配置服务提供商和API密钥',
           });
-          setDeliveryIssue({ text: next.userMsg.content, imageUri: next.userMsg.imageUri });
+          await removePendingSend(next.userMsg.id).catch((error) =>
+            recordAppIssue('发送队列清理', error, false)
+          );
+          setDeliveryIssue({
+            messageId: next.userMsg.id,
+            text: next.userMsg.content,
+            imageUri: next.userMsg.imageUri,
+          });
           setStreamingId(null);
           setStreamingContent('');
           continue;
@@ -328,6 +384,11 @@ export default function ChatScreen({ route, navigation }: Props) {
         let affinityDelta = 0;
 
         try {
+          if (latestCharacter.luyaRuntime && (latestSettings.advanced.debugNowTs ?? Date.now()) < latestCharacter.luyaRuntime.updatedAt) {
+            throw new Error('模拟时间早于已保存的生活记录，请在设置恢复到记录时间之后再发送；历史数据未改动。');
+          }
+          const requestController = new AbortController();
+          activeRequestControllerRef.current = requestController;
           const debugSnapshot = buildPromptDebugSnapshot({
             character: latestCharacter,
             chatHistory: historyForRequest,
@@ -356,7 +417,8 @@ export default function ChatScreen({ route, navigation }: Props) {
               fullContent += chunk;
               setStreamingContent(fullContent);
             },
-            latestSettings.advanced.debugNowTs ?? Date.now()
+            latestSettings.advanced.debugNowTs ?? Date.now(),
+            requestController.signal
           );
 
           const aiMsg: Message = {
@@ -368,8 +430,16 @@ export default function ChatScreen({ route, navigation }: Props) {
           };
           await addMessage(next.characterId, aiMsg);
           await updateMessage(next.characterId, next.userMsg.id, { status: 'sent', errorMessage: undefined });
+          await removePendingSend(next.userMsg.id).catch((error) =>
+            recordAppIssue('发送队列清理', error, false)
+          );
           setDeliveryIssue(null);
 
+          try {
+          if (next.characterId === 'qingning') await useChatStore.getState().updateLuyaRuntime((runtime) => ({
+            ...resolveLuyaRoomFromDialogue(runtime, next.userMsg, aiMsg),
+            understandings: processLuyaUnderstandingTurn(runtime.understandings, next.userMsg, aiMsg),
+          }));
           const now = latestSettings.advanced.debugNowTs ?? Date.now();
           affinityDelta = calculateAffinityDelta(latestCharacter, next.userMsg.content);
           emotionBefore = latestCharacter.emotionalState;
@@ -416,7 +486,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
           // 每次有效聊天后刷新该角色的日报/周记/月记
           await generateDiariesForCharacter(next.characterId);
-          void useDebugStore.getState().addTrace({
+          if (latestSettings.appMode === 'admin') void useDebugStore.getState().addTrace({
             id: `trace_${now}_${next.userMsg.id}`,
             timestamp: now,
             characterId: next.characterId,
@@ -437,11 +507,25 @@ export default function ChatScreen({ route, navigation }: Props) {
             memoryDecisionDetail: formatMemoryDecisionDetail(memoryDecision),
             assistantText: aiMsg.content,
           });
+          } catch (postError) {
+            await recordAppIssue('回复后状态整理', postError, false);
+          }
         } catch (err: unknown) {
           const errorMsg = err instanceof Error ? err.message : '服务暂时没有连接好';
+          if (!isMountedRef.current && activeRequestControllerRef.current?.signal.aborted) {
+            await updateMessage(next.characterId, next.userMsg.id, { status: 'queued', errorMessage: undefined });
+            break;
+          }
           await updateMessage(next.characterId, next.userMsg.id, { status: 'failed', errorMessage: errorMsg });
-          setDeliveryIssue({ text: next.userMsg.content, imageUri: next.userMsg.imageUri });
-          void useDebugStore.getState().addTrace({
+          await removePendingSend(next.userMsg.id).catch((error) =>
+            recordAppIssue('发送队列清理', error, false)
+          );
+          setDeliveryIssue({
+            messageId: next.userMsg.id,
+            text: next.userMsg.content,
+            imageUri: next.userMsg.imageUri,
+          });
+          if (latestSettings.appMode === 'admin') void useDebugStore.getState().addTrace({
             id: `trace_error_${Date.now()}_${next.userMsg.id}`,
             timestamp: latestSettings.advanced.debugNowTs ?? Date.now(),
             characterId: next.characterId,
@@ -462,6 +546,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             errorMessage: errorMsg,
           });
         } finally {
+          activeRequestControllerRef.current = null;
           setStreamingId(null);
           setStreamingContent('');
         }
@@ -488,10 +573,12 @@ export default function ChatScreen({ route, navigation }: Props) {
   // Auto-send AI daily greeting when opened from notification
   useEffect(() => {
     if (!autoGreet || !character || autoGreetSentRef.current) return;
-    if (!settings.service.apiKey) return;
+    if (!settingsRef.current.life.enabled || !settingsRef.current.life.allowProactiveMessages || character.luyaRuntime?.boundaries.quietUntilNextUserTurn) return;
+    if (!settingsRef.current.service.apiKey) return;
     autoGreetSentRef.current = true;
 
     const sendAutoGreet = async () => {
+      const latestSettings = settingsRef.current;
       isProcessingQueueRef.current = true;
       setTyping(true);
       const aiMsgId = genId();
@@ -499,10 +586,12 @@ export default function ChatScreen({ route, navigation }: Props) {
       setStreamingContent('');
 
       try {
+        if (characterId === 'qingning') await useChatStore.getState().ensureLuyaRuntime(getEffectiveNow());
+        const liveCharacter = useChatStore.getState().getCharacter(characterId) ?? character;
         const greeting = await generateDailyGreeting(
-          character,
-          settings.service,
-          settings.advanced,
+          liveCharacter,
+          latestSettings.service,
+          latestSettings.advanced,
           getEffectiveNow()
         );
         const aiMsg: Message = {
@@ -535,31 +624,110 @@ export default function ChatScreen({ route, navigation }: Props) {
     };
 
     sendAutoGreet();
-  }, [autoGreet, character, characterId, processQueuedSends]);
+  }, [addMessage, autoGreet, character, characterId, getEffectiveNow, processQueuedSends, setTyping]);
 
   const handleSend = useCallback(
-    (text: string, imageUri?: string) => {
+    async (text: string, imageUri?: string) => {
       if (!character) return;
-      if (!settings.service.apiKey) {
-        setDeliveryIssue({ text, imageUri });
-        return;
-      }
 
       const userMsg: Message = {
         id: genId(),
         role: 'user',
         content: text,
         timestamp: settingsRef.current.advanced.debugNowTs ?? Date.now(),
-        status: 'sending',
+        status: settings.service.apiKey ? 'queued' : 'failed',
+        errorMessage: settings.service.apiKey ? undefined : '请先在设置中配置服务提供商和API密钥',
         imageUri,
       };
 
-      sendQueueRef.current.push({ characterId, userMsg });
-      setPendingUserMessages((pending) => [...pending, userMsg]);
+      if (!settings.service.apiKey) {
+        await addMessage(characterId, userMsg);
+        setDeliveryIssue({ messageId: userMsg.id, text, imageUri });
+        return;
+      }
+
+      const pendingSend: PendingSendRecord = {
+        characterId,
+        userMsg,
+        enqueuedAt: Date.now(),
+        attempts: 0,
+      };
+      try {
+        await enqueuePendingSend(pendingSend);
+        await addMessage(characterId, userMsg);
+      } catch (error) {
+        await recordAppIssue('发送队列保存', error, true);
+        await addMessage(characterId, {
+          ...userMsg,
+          status: 'failed',
+          errorMessage: '消息没有写入发送队列，请重试。',
+        });
+        setDeliveryIssue({ messageId: userMsg.id, text, imageUri });
+        return;
+      }
+      sendQueueRef.current.push(pendingSend);
       processQueuedSends();
     },
-    [character, characterId, settings.service.apiKey, processQueuedSends]
+    [addMessage, character, characterId, settings.service.apiKey, processQueuedSends]
   );
+
+  const retryDelivery = useCallback(async () => {
+    if (!deliveryIssue || !settings.service.apiKey) return;
+    const existing = useChatStore.getState().messages[characterId]?.find(
+      (message) => message.id === deliveryIssue.messageId
+    );
+    const userMsg: Message = existing
+      ? { ...existing, status: 'queued', errorMessage: undefined }
+      : {
+          id: deliveryIssue.messageId,
+          role: 'user',
+          content: deliveryIssue.text,
+          timestamp: Date.now(),
+          status: 'queued',
+          imageUri: deliveryIssue.imageUri,
+        };
+    if (existing) await updateMessage(characterId, userMsg.id, { status: 'queued', errorMessage: undefined });
+    else await addMessage(characterId, userMsg);
+    const pendingSend: PendingSendRecord = {
+      characterId,
+      userMsg,
+      enqueuedAt: Date.now(),
+      attempts: 0,
+    };
+    await enqueuePendingSend(pendingSend);
+    sendQueueRef.current.push(pendingSend);
+    setDeliveryIssue(null);
+    processQueuedSends();
+  }, [addMessage, characterId, deliveryIssue, processQueuedSends, settings.service.apiKey, updateMessage]);
+
+  useEffect(() => {
+    if (historyLoadedCharacterId !== characterId) return;
+    let cancelled = false;
+    loadPendingSends(characterId).then(async (pending) => {
+      if (cancelled || pending.length === 0) return;
+      const queuedIds = new Set(sendQueueRef.current.map((record) => record.userMsg.id));
+      for (const record of pending) {
+        if (cancelled || queuedIds.has(record.userMsg.id)) continue;
+        const existing = useChatStore.getState().messages[characterId]?.find(
+          (message) => message.id === record.userMsg.id
+        );
+        if (existing?.status === 'sent') {
+          await removePendingSend(existing.id).catch(() => undefined);
+          continue;
+        }
+        if (existing) {
+          await updateMessage(characterId, existing.id, { status: 'queued', errorMessage: undefined });
+        } else {
+          await addMessage(characterId, { ...record.userMsg, status: 'queued', errorMessage: undefined });
+        }
+        sendQueueRef.current.push(record);
+      }
+      if (!cancelled) processQueuedSends();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [addMessage, characterId, historyLoadedCharacterId, processQueuedSends, updateMessage]);
 
   const handleQuickReply = useCallback(
     (text: string) => {
@@ -650,7 +818,6 @@ export default function ChatScreen({ route, navigation }: Props) {
       });
     }
   }
-  displayMessages.push(...pendingUserMessages);
   const latestDisplayMessage = displayMessages[displayMessages.length - 1];
   const latestDisplayMessageKey = latestDisplayMessage
     ? [
@@ -680,14 +847,14 @@ export default function ChatScreen({ route, navigation }: Props) {
     );
   }
 
-  const backgroundImage = character.assetSet?.main ?? character.imageUri;
-  const identityImage = character.assetSet?.headshot ?? character.assetSet?.avatar ?? backgroundImage;
-  const backgroundSource =
-    backgroundImage != null
-      ? typeof backgroundImage === 'number'
-        ? backgroundImage
-        : { uri: backgroundImage }
-      : null;
+  const backgroundImage = getCharacterMainImage(character);
+  const identityImage = getCharacterAvatarImage(character);
+  const backgroundSource = getImageSource(backgroundImage);
+  const defaultAssets = getDefaultCharacterAssetSet(character);
+  const identityFallbacks = [defaultAssets?.headshot, defaultAssets?.avatar, defaultAssets?.main]
+    .map(getImageSource).filter((source): source is ImageSourcePropType => source !== null);
+  const backgroundFallbacks = [defaultAssets?.main].map(getImageSource)
+    .filter((source): source is ImageSourcePropType => source !== null);
 
   const backgroundOverlayColors: [string, string, string] = [
     C.chatBackgroundOverlay,
@@ -695,7 +862,6 @@ export default function ChatScreen({ route, navigation }: Props) {
     isUrbanClear || isSoftSweet ? C.background + 'EE' : C.chatBackgroundOverlay,
   ];
   const identityTop = insets.top + 8;
-  const messageListTop = identityTop + 92;
 
   const content = (
     <>
@@ -705,7 +871,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={[styles.chatHeader, { top: identityTop }]}>
+        <View style={[styles.chatHeader, { paddingTop: identityTop, backgroundColor: C.background }]}>
           <TouchableOpacity
             style={[
               styles.chatHeaderButton,
@@ -727,17 +893,21 @@ export default function ChatScreen({ route, navigation }: Props) {
               isUrbanClear && styles.urbanChatIdentityBar,
               isSoftSweet && styles.softChatIdentityBar,
               {
-                backgroundColor: isSoftSweet ? C.surface + 'F4' : C.surface + 'EE',
+                backgroundColor: C.surface,
                 borderColor: C.border,
                 shadowColor: C.shadow,
               },
             ]}
             accessibilityLabel={`${character.name}当前状态：${getCharacterStateLabel(character)}`}
           >
-            {getImageSource(identityImage) ? (
-              <Image
+              <ResilientImage
                 key={`chat-identity-${character.id}`}
-                source={getImageSource(identityImage)!}
+                source={getImageSource(identityImage) ?? undefined}
+                fallbackSources={identityFallbacks}
+                retryKey={String(isFocused)}
+                accessibilityLabel={`${character.name}的头像`}
+                fallbackLabel="头像未加载"
+                retryLabel="重试"
                 style={[
                   styles.chatIdentityAvatar,
                   isUrbanClear && styles.urbanIdentityAvatar,
@@ -745,18 +915,6 @@ export default function ChatScreen({ route, navigation }: Props) {
                 ]}
                 resizeMode="cover"
               />
-            ) : (
-              <View
-                style={[
-                  styles.chatIdentityAvatarFallback,
-                  isUrbanClear && styles.urbanIdentityAvatar,
-                  isSoftSweet && styles.softIdentityAvatar,
-                  { backgroundColor: C.primaryLight },
-                ]}
-              >
-                <Text style={styles.chatIdentityEmoji}>{character.avatar}</Text>
-              </View>
-            )}
             <View style={styles.chatIdentityCopy}>
               <Text style={[styles.chatIdentityName, { color: C.text }]} numberOfLines={1}>
                 {character.name}
@@ -784,7 +942,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               accessibilityLabel="校准当前会话状态"
             >
               <Text style={[styles.chatMoodIcon, { color: C.primary }]}>
-                {isMoodJudging ? '…' : '♡'}
+                {isMoodJudging ? '校准中' : '状态'}
               </Text>
             </TouchableOpacity>
 
@@ -799,12 +957,28 @@ export default function ChatScreen({ route, navigation }: Props) {
               onPress={() => navigation.navigate('CharacterSettings', { characterId, initialPage: 'archive' })}
               activeOpacity={0.78}
               accessibilityRole="button"
-              accessibilityLabel="打开角色档案和聊天记录"
+              accessibilityLabel="打开聊天留档"
             >
-              <Text style={[styles.chatSettingsIcon, { color: C.text }]}>☰</Text>
+              <Text style={[styles.chatSettingsIcon, { color: C.text }]}>留档</Text>
             </TouchableOpacity>
           </View>
         </View>
+
+        {route.params.roomContext && (
+          <View style={[styles.roomContext, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.roomContextText, { color: C.text }]}>
+              关于「{route.params.roomContext.itemName}」的{route.params.roomContext.action === 'move' ? '移动' : '收起'}，先聊过再一起决定。
+            </Text>
+            <View style={styles.roomContextActions}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="开始输入商量内容" onPress={() => inputRef.current?.focus()} style={styles.roomContextAction}>
+                <Text style={{ color: C.primary, fontSize: 13 }}>开始商量</Text>
+              </TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="关闭房间商量提示" onPress={() => navigation.setParams({ roomContext: undefined })} style={styles.roomContextAction}>
+                <Text style={{ color: C.textSecondary, fontSize: 13 }}>关闭提示</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <FlatList
           ref={flatListRef}
@@ -815,9 +989,12 @@ export default function ChatScreen({ route, navigation }: Props) {
               message={item}
               characterAvatar={character.avatar}
               characterName={character.name}
+              characterId={character.id}
+              characterPortrait={identityImage}
             />
           )}
-          contentContainerStyle={[styles.messageList, { paddingTop: messageListTop }]}
+          style={styles.flex}
+          contentContainerStyle={styles.messageList}
         />
 
         {deliveryIssue && (
@@ -849,7 +1026,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   isSoftSweet && styles.softActionBtn,
                   { borderColor: C.border },
                 ]}
-                onPress={() => handleSend(deliveryIssue.text, deliveryIssue.imageUri)}
+                onPress={retryDelivery}
               >
                 <Text style={[styles.deliverySecondaryText, { color: C.primary }]}>重试</Text>
               </TouchableOpacity>
@@ -857,6 +1034,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {characterId === 'qingning' && character?.luyaRuntime && getUnderstandingCards(character.luyaRuntime.understandings).slice(0, 1).map((item) => <LuyaUnderstandingCard key={item.id} item={item} onDetails={() => navigation.navigate('LuyaUnderstanding')} onDecision={(id, decision, editedText) => useChatStore.getState().updateLuyaRuntime((runtime) => ({ ...runtime, understandings: decideUnderstanding(runtime.understandings, id, decision, settingsRef.current.advanced.debugNowTs ?? Date.now(), editedText) }))} />)}
         {memoryNotice && (
           <View
             style={[
@@ -1038,18 +1216,15 @@ export default function ChatScreen({ route, navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       {backgroundSource ? (
-        <ImageBackground
-          source={backgroundSource}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        >
+        <View style={styles.backgroundImage}>
+          <ResilientImage source={backgroundSource} fallbackSources={backgroundFallbacks} retryKey={String(isFocused)} style={StyleSheet.absoluteFill} resizeMode="cover" accessible={false} />
           <LinearGradient
             colors={backgroundOverlayColors}
             locations={[0, 0.46, 1]}
             style={styles.backgroundOverlay}
           />
           {content}
-        </ImageBackground>
+        </View>
       ) : (
         content
       )}
@@ -1058,21 +1233,24 @@ export default function ChatScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  roomContext: { marginHorizontal: 16, marginBottom: 8, padding: 12, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth },
+  roomContextText: { fontSize: 13, lineHeight: 20 },
+  roomContextActions: { flexDirection: 'row', gap: 16 },
+  roomContextAction: { minHeight: 44, justifyContent: 'center' },
   container: { flex: 1 },
   flex: { flex: 1 },
   contentChrome: {
     zIndex: 10,
   },
   backgroundImage: { flex: 1 },
-  backgroundOverlay: StyleSheet.absoluteFillObject,
+  backgroundOverlay: StyleSheet.absoluteFill,
   messageList: {
-    paddingTop: 122,
+    paddingTop: 12,
     paddingBottom: 12,
   },
   chatHeader: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
     zIndex: 20,
     minHeight: 68,
     flexDirection: 'row',
@@ -1118,13 +1296,14 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   chatSettingsIcon: {
-    fontSize: 25,
-    lineHeight: 30,
+    fontFamily: NOTO_SANS_SC.medium,
+    fontSize: 13,
+    lineHeight: 20,
   },
   chatMoodIcon: {
     fontFamily: NOTO_SERIF_SC.bold,
-    fontSize: 28,
-    lineHeight: 30,
+    fontSize: 13,
+    lineHeight: 20,
     marginTop: -1,
   },
   chatIdentityBar: {

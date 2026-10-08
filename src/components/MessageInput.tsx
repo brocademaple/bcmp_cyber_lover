@@ -6,12 +6,14 @@ import {
   StyleSheet,
   Text,
   ActivityIndicator,
-  Image,
   Platform,
+  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { useThemeColors, useThemeId } from '../utils/theme';
 import { NOTO_SANS_SC } from '../utils/appFonts';
+import { persistMessageImage, resolveMessageMediaUri } from '../services/messageMedia';
 
 interface Props {
   onSend: (text: string, imageUri?: string) => void;
@@ -59,7 +61,13 @@ const MessageInput = forwardRef<MessageInputHandle, Props>(
       });
 
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
+        const asset = result.assets[0];
+        try {
+          const durableUri = await persistMessageImage(asset.uri, asset.mimeType ?? undefined);
+          setSelectedImage(durableUri);
+        } catch {
+          Alert.alert('图片没有保存好', '无法把这张图片复制到应用媒体目录，请重新选择。');
+        }
       }
     };
 
@@ -77,7 +85,12 @@ const MessageInput = forwardRef<MessageInputHandle, Props>(
       >
         {selectedImage && (
           <View style={styles.imagePreviewRow}>
-            <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+            <Image
+              source={resolveMessageMediaUri(selectedImage)}
+              style={styles.imagePreview}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
             <TouchableOpacity onPress={() => setSelectedImage(undefined)} style={styles.removeImageBtn}>
               <Text style={styles.removeImageText}>✕</Text>
             </TouchableOpacity>
@@ -135,6 +148,8 @@ const MessageInput = forwardRef<MessageInputHandle, Props>(
     );
   }
 );
+
+MessageInput.displayName = 'MessageInput';
 
 export default MessageInput;
 

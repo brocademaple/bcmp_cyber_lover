@@ -125,12 +125,12 @@ assert(
 );
 assert(
   'chatPersistence reads durable file snapshots during recovery',
-  chatPersistence.includes('readBackupSnapshotMessages(characterId)') &&
+  chatPersistence.includes('readBackupSnapshotMessageSources(characterId)') &&
     chatPersistence.includes('readDirectoryAsync(snapshotDir)')
 );
 assert(
   'chatPersistence writes capped durable file snapshots on save',
-  chatPersistence.includes('writeBackupSnapshot(characterId, serialized)') &&
+  chatPersistence.includes('writeBackupSnapshot(characterId, serialized, now)') &&
     chatPersistence.includes('MAX_BACKUP_SNAPSHOTS_PER_CHARACTER')
 );
 assert(

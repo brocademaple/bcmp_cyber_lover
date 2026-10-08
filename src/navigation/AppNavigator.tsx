@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import LuyaRoomScreen from '../screens/LuyaRoomScreen';
+import LuyaUnderstandingScreen from '../screens/LuyaUnderstandingScreen';
+import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -21,6 +23,8 @@ import DeveloperDebugScreen from '../screens/DeveloperDebugScreen';
 import CharacterEditorScreen from '../screens/CharacterEditorScreen';
 import CharacterSettingsScreen from '../screens/CharacterSettingsScreen';
 import DataManagementScreen from '../screens/DataManagementScreen';
+import { recoverInterruptedRestore } from '../services/appDataPortability';
+import { recordAppIssue } from '../services/appDiagnostics';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -39,6 +43,11 @@ export default function AppNavigator({ navigationRef }: Props) {
 
   useEffect(() => {
     const init = async () => {
+      try {
+        await recoverInterruptedRestore();
+      } catch (error) {
+        await recordAppIssue('恢复中断回滚', error, true);
+      }
       await loadSettings();
       const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
       const loadedSettings = useSettingsStore.getState().settings;
@@ -76,16 +85,18 @@ export default function AppNavigator({ navigationRef }: Props) {
           headerTintColor: tintColor,
           headerTitleStyle: { fontFamily: NOTO_SERIF_SC.bold, fontWeight: undefined, color: tintColor },
           contentStyle: { backgroundColor: C.background },
-          headerBackTitleVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
           headerLeft: navigation.canGoBack()
             ? () => (
                 <TouchableOpacity
                   onPress={() => navigation.goBack()}
+                  accessibilityRole="button"
+                  accessibilityLabel="返回上一页"
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 21,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: isImmersive ? 'rgba(10,10,18,0.22)' : C.surface + 'CC',
@@ -132,8 +143,10 @@ export default function AppNavigator({ navigationRef }: Props) {
         <Stack.Screen
           name="MemorySettings"
           component={MemorySettingsScreen}
-          options={{ title: '记忆' }}
+          options={{ title: '故事与记忆' }}
         />
+        <Stack.Screen name="LuyaRoom" component={LuyaRoomScreen} options={{ title: '共同房间', headerShown: false }} />
+        <Stack.Screen name="LuyaUnderstanding" component={LuyaUnderstandingScreen} options={{ title: '鹿芽怎样理解我', headerShown: false }} />
         <Stack.Screen
           name="DataManagement"
           component={DataManagementScreen}

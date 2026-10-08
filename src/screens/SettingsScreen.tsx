@@ -9,11 +9,11 @@ import { format } from 'date-fns';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-const VISUAL_THEME_OPTIONS: Array<{
+const VISUAL_THEME_OPTIONS: {
   value: AppTheme;
   label: string;
   accent: string;
-}> = [
+}[] = [
   {
     value: 'urbanClear',
     label: '都市清透',
@@ -67,6 +67,7 @@ export default function SettingsScreen({ navigation }: Props) {
   const C = useThemeColors();
   const { settings, setAppMode, setDebugNowTs, updateAdvanced, saveSettings } = useSettingsStore();
   const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [developerEntryOpen, setDeveloperEntryOpen] = useState(false);
   const isAdmin = settings.appMode === 'admin';
   const debugNow = settings.advanced.debugNowTs;
   const effectiveNow = debugNow ?? Date.now();
@@ -178,16 +179,20 @@ export default function SettingsScreen({ navigation }: Props) {
           />
           <MenuItem
             icon="▣"
-            label="记忆漫画"
-            description="查看她记住的多格漫画与关系片段"
+            label="故事与漫画"
+            description="人物故事、设定图集与共同记忆"
             onPress={() => navigation.navigate('MemorySettings')}
           />
-          <MenuItem
-            icon="✦"
-            label="角色创作工作台"
-            description="创建、预览、体检与回退角色设定"
-            onPress={() => navigation.navigate('CharacterEditor', {})}
-          />
+          <MenuItem icon="⌂" label="共同房间" description="公共区、私人角落与有来源的纪念物" onPress={() => navigation.navigate('LuyaRoom')} />
+          <MenuItem icon="◎" label="鹿芽怎样理解我" description="确认、修改或撤销相处习惯" onPress={() => navigation.navigate('LuyaUnderstanding')} />
+          {isAdmin && (
+            <MenuItem
+              icon="✦"
+              label="角色创作工作台"
+              description="创建、预览、体检与回退角色设定"
+              onPress={() => navigation.navigate('CharacterEditor', {})}
+            />
+          )}
           <MenuItem
             icon="↺"
             label="数据与恢复"
@@ -271,7 +276,7 @@ export default function SettingsScreen({ navigation }: Props) {
           </>
         )}
 
-        <View style={[styles.modeFooter, { borderColor: C.border }]}>
+        {(developerEntryOpen || isAdmin) && <View style={[styles.modeFooter, { borderColor: C.border }]}>
           <Text style={[styles.groupLabel, { color: C.textSecondary }]}>模式</Text>
           <View style={[styles.modeRow, { backgroundColor: C.surface, borderColor: C.border }]}>
             <TouchableOpacity
@@ -289,11 +294,11 @@ export default function SettingsScreen({ navigation }: Props) {
               <Text style={[styles.modeLabel, { color: isAdmin ? '#fff' : C.text }]}>开发者模式</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View>}
 
-        <View style={styles.versionTap}>
-          <Text style={[styles.versionText, { color: C.textSecondary }]}>HeartBeat Companion · v1.5</Text>
-        </View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="高级入口，长按展开" onLongPress={() => setDeveloperEntryOpen(true)} delayLongPress={1200} style={styles.versionTap}>
+          <Text style={[styles.versionText, { color: C.textSecondary }]}>HeartBeat Companion · 鹿芽 v2 · 长按查看高级入口</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

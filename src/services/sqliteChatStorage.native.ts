@@ -83,7 +83,6 @@ export async function saveSqliteMessages(characterId: string, messages: Message[
   const updatedAt = messages[0]?.timestamp ?? Date.now();
 
   await db.withTransactionAsync(async () => {
-    await db.runAsync('DELETE FROM messages WHERE character_id = ?', [characterId]);
     for (const message of messages) {
       await db.runAsync(
         `INSERT OR REPLACE INTO messages (
@@ -116,6 +115,10 @@ export async function saveSqliteMessages(characterId: string, messages: Message[
         ]
       );
     }
+    const countRow = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM messages WHERE character_id = ?',
+      [characterId]
+    );
     await db.runAsync(
       `INSERT OR REPLACE INTO conversations (
         character_id,
@@ -123,7 +126,7 @@ export async function saveSqliteMessages(characterId: string, messages: Message[
         updated_at,
         schema_version
       ) VALUES (?, ?, ?, ?)`,
-      [characterId, messages.length, updatedAt, SCHEMA_VERSION]
+      [characterId, countRow?.count ?? messages.length, updatedAt, SCHEMA_VERSION]
     );
   });
 }

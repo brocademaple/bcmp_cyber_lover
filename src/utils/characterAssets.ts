@@ -94,7 +94,7 @@ export const DEFAULT_CHARACTER_ASSETS: Record<DefaultCharacterAssetKey, Characte
 };
 
 const DEFAULT_CHARACTER_ALIAS_MAP = Object.fromEntries(
-  (Object.entries(DEFAULT_CHARACTER_ASSETS) as Array<[DefaultCharacterAssetKey, CharacterAssetBundle]>)
+  (Object.entries(DEFAULT_CHARACTER_ASSETS) as [DefaultCharacterAssetKey, CharacterAssetBundle][])
     .flatMap(([key, bundle]) => bundle.aliases.map((alias) => [normalizeCharacterAssetAlias(alias), key]))
 ) as Record<string, DefaultCharacterAssetKey>;
 
@@ -115,7 +115,7 @@ export function resolveDefaultCharacterAssetKey(
 
   const normalizedImageUri = typeof imageUri === 'string' ? normalizeAssetPath(imageUri) : undefined;
   if (normalizedImageUri) {
-    const imagePathMatch = (Object.entries(LEGACY_ROOT_CHARACTER_IDS) as Array<[DefaultCharacterAssetKey, string[]]>)
+    const imagePathMatch = (Object.entries(LEGACY_ROOT_CHARACTER_IDS) as [DefaultCharacterAssetKey, string[]][])
       .find(([, ids]) =>
         ids.some((legacyId) =>
           buildLegacyRootAssetFragments(legacyId).some((fragment) => normalizedImageUri.endsWith(fragment))

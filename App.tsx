@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useFonts } from 'expo-font';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
@@ -7,18 +7,15 @@ import { NavigationContainerRef } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { setupNotificationHandler } from './src/services/notificationService';
 import { RootStackParamList } from './src/types';
-import { APP_FONT_SOURCES, installNotoSerifSCGlobalFont } from './src/utils/appFonts';
+import AppErrorBoundary from './src/components/AppErrorBoundary';
+import ImageRecoveryProbe from './src/dev/ImageRecoveryProbe';
 
 setupNotificationHandler();
 
 export default function App() {
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
-  const [fontsLoaded, fontError] = useFonts(APP_FONT_SOURCES);
-
-  if (fontsLoaded) {
-    installNotoSerifSCGlobalFont();
-  }
-
+  const isImageRecoveryProbe = __DEV__ && Platform.OS === 'web' && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('experienceProbe') === 'images';
   useEffect(() => {
     // Handle notification tap: navigate to the character's chat
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
@@ -40,21 +37,13 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
-  useEffect(() => {
-    if (fontError) {
-      console.warn('Noto Serif SC failed to load; falling back to system fonts.', fontError);
-    }
-  }, [fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <AppNavigator navigationRef={navigationRef} />
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <AppErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          {isImageRecoveryProbe ? <ImageRecoveryProbe /> : <AppNavigator navigationRef={navigationRef} />}
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
   );
 }

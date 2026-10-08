@@ -1,7 +1,9 @@
+import { getDeepSeekRequestParams } from './deepseekRequest';
 import { AdvancedConfig, Character, DebugAgentSurface, MemoryConfig, Message, ServiceConfig } from '../types';
 import { PROVIDER_CONFIGS } from '../store/settingsStore';
-import { evaluateMemoryDecision, MemoryDecision } from './relationshipService';
+import { evaluateMemoryDecision, isLuyaExplicitMemoryText, MemoryDecision } from './relationshipService';
 import { recentChronological } from '../utils/chatHistory';
+import { fetchWithTimeout } from './requestTimeout';
 
 type LlmMemoryDecision = {
   action?: unknown;
@@ -34,7 +36,7 @@ function getApiKey(config: ServiceConfig): string {
   return config.apiKey.trim();
 }
 
-function extractAssistantContent(data: { choices?: Array<{ message?: { content?: string } }> }): string {
+function extractAssistantContent(data: { choices?: { message?: { content?: string } }[] }): string {
   return data.choices?.[0]?.message?.content || '';
 }
 
@@ -135,7 +137,7 @@ function evaluateLocalFallback(input: MemoryDecisionInput): MemoryDecision {
   return shouldRunDuringChatAutoMemory(input.memory) ? localDecision : { action: 'none' };
 }
 
-function buildMemoryJudgePrompt(input: MemoryDecisionInput): Array<{ role: string; content: string }> {
+function buildMemoryJudgePrompt(input: MemoryDecisionInput): { role: string; content: string }[] {
   const contextMessages = getMemoryContextMessages(input);
   const recentText = contextMessages
     .filter((message) => message.role !== 'system' && message.content.trim())
@@ -169,12 +171,14 @@ function buildMemoryJudgePrompt(input: MemoryDecisionInput): Array<{ role: strin
 值得长期记忆的内容包括：
 - 稳定偏好、厌恶、边界、习惯、身份信息、重要日期。
 - 对用户未来有帮助的事件、计划、目标、压力源、关系约定。
-- 在关系中反复出现或情绪强度较高的细节。
+- 用户明确陈述且有来源的重要细节；重复或情绪强度不能自动证明稳定偏好。
 
 不要记录：
 - 普通寒暄、一次性的短情绪、无上下文玩笑。
 - 敏感或隐私过重但用户没有要求记住的内容。
 - 已经存在于长期记忆中的重复内容。
+- 将第三方故事、转发、引用或小说角色改成用户经历；将分享改成赞同；诊断、敏感身份或人格标签推断。
+- 未确认的相处方式推断只能进入理解候选，不能通过本记忆通道保存。
 
 当前记忆设置：
 - 自动总结聊天记录：${autoSummaryLabel}。
@@ -185,7 +189,7 @@ function buildMemoryJudgePrompt(input: MemoryDecisionInput): Array<{ role: strin
 ${memoryRule}
 
 JSON schema:
-{"action":"none"|"ask"|"save","content":"适合长期保存的一句话，主语用用户，不要写角色回复","tags":["偏好"|"重要日期"|"情绪事件"|"关系事件"|"计划安排"|"身份信息"],"importance":1-10,"question":"功能弹窗标题"}
+{"action":"none"|"ask"|"save","content":"适合长期保存的一句话，保留原文真实主语，区分用户、第三方、虚构人物，不要写角色回复","tags":["偏好"|"重要日期"|"情绪事件"|"关系事件"|"计划安排"|"身份信息"],"importance":1-10,"question":"功能弹窗标题"}
 
 如果 action 是 none，其他字段可以省略。`,
     },
@@ -253,13 +257,14 @@ async function evaluateWithLlm(input: MemoryDecisionInput): Promise<MemoryDecisi
   const apiKey = getApiKey(input.service);
   if (!baseUrl || !apiKey || !input.service.model.trim()) return null;
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
+      ...getDeepSeekRequestParams(input.service),
       model: input.service.model.trim(),
       messages: buildMemoryJudgePrompt(input),
       stream: false,
@@ -275,6 +280,11 @@ async function evaluateWithLlm(input: MemoryDecisionInput): Promise<MemoryDecisi
 }
 
 export async function evaluateMemoryDecisionAfterReply(input: MemoryDecisionInput): Promise<MemoryDecision> {
+  if (input.character.id === 'qingning') {
+    // Legacy extraction must not bypass the evidence + visible confirmation lifecycle.
+    if (!isLuyaExplicitMemoryText(input.userMessage.content)) return { action: 'none' };
+    return evaluateLocalFallback(input);
+  }
   try {
     const llmDecision = await evaluateWithLlm(input);
     if (llmDecision) return llmDecision;

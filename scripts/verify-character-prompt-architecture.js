@@ -66,6 +66,16 @@ function loadAiServiceForNode() {
     if (request === './characterPromptArchitectureService') {
       return loadCharacterPromptArchitectureService();
     }
+    if (request === './messageMedia') {
+      return { messageImageToProviderUrl: async (uri) => uri };
+    }
+    if (request === './requestTimeout') {
+      return {
+        createRequestScope: () => ({ signal: undefined, didTimeout: () => false, dispose: () => {} }),
+        fetchWithTimeout: (...args) => global.fetch(...args),
+        normalizeRequestError: (error) => error,
+      };
+    }
     if (request === '../types') return {};
     return require(request);
   });

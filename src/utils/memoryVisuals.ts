@@ -31,9 +31,9 @@ const DEFAULT_MEMORY_VISUALS: Record<string, MemoryVisualCard[]> = {
     {
       id: 'qingning-evening-snacks',
       characterId: 'qingning',
-      title: '她记得你晚饭随便糊弄',
-      subtitle: '20:00 · 便利店灯光',
-      content: '鹿芽把你说过的“今天有点累”收进了心里，连同那句没讲完的晚饭。下次打开，她会先问你有没有好好吃饭。',
+      title: '漫画示例 · 晚饭提醒',
+      subtitle: '预置画面 · 尚未发生的示例',
+      content: '这里展示漫画的画面样式，不代表你和鹿芽真实经历过这些事。确认的记忆会显示在这里。',
       imageUri: require('../../assets/memories/comics/qingning-comic-magazine.png'),
       comicPanels: [
         { id: 'title', title: '晚饭提醒', dialogue: '鹿芽的晚饭提醒', caption: '20:00，便利店灯光把房间照得很软。' },
@@ -43,7 +43,7 @@ const DEFAULT_MEMORY_VISUALS: Record<string, MemoryVisualCard[]> = {
         { id: 'snack', title: '递到面前', dialogue: '先吃一口，再陪你发呆。', caption: '记忆变成一份被认真准备的小夜宵。' },
       ],
       tags: ['晚饭', '被惦记', '元气补给'],
-      timestampLabel: '今天',
+      timestampLabel: '示例',
     },
   ],
   sakura: [
@@ -100,7 +100,7 @@ function visualFromMemory(character: Character, memory: MemoryFragment): MemoryV
     imageUri: memory.visualUri
       ? (typeof memory.visualUri === 'string' ? { uri: memory.visualUri } : memory.visualUri)
       : fallback.imageUri,
-    comicPanels: fallback.comicPanels,
+    comicPanels: [{ id: memory.id, title: '已保存的记忆', dialogue: memory.content, caption: memory.visualUri ? '来自这条记忆' : '背景为预置插画，画中情节不代表实际经历' }],
     tags: memory.tags.length > 0 ? memory.tags : fallback.tags,
     timestampLabel: '记忆',
   };
@@ -115,5 +115,5 @@ export function getMemoryVisualCards(character?: Character): MemoryVisualCard[] 
   if (memoryCards.length > 0) return memoryCards;
   const visualKey = resolveDefaultCharacterAssetKey(character) ?? character.id;
   const defaults = DEFAULT_MEMORY_VISUALS[visualKey] || DEFAULT_MEMORY_VISUALS.qingning;
-  return defaults;
+  return defaults.map((card) => ({ ...card, title: card.title.startsWith('漫画示例') ? card.title : `漫画示例 · ${card.title}`, timestampLabel: '示例', comicPanels: card.comicPanels.map((panel) => ({ ...panel, title: `示例 · ${panel.title}`, caption: `虚构示例，非共同经历。${panel.caption}` })) }));
 }
