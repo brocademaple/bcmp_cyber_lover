@@ -1,0 +1,11 @@
+
+ RUN  v3.2.7 /Users/eee/Desktop/code/bcmp_cyber_lover
+
+ ✓ tests/storyReadingProgress.test.ts (11 tests) 17ms
+ ✓ tests/storyScenes.test.ts (5 tests) 8ms
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  12:28:44
+   Duration  1.35s (transform 228ms, setup 0ms, collect 262ms, tests 24ms, environment 0ms, prepare 368ms)
+

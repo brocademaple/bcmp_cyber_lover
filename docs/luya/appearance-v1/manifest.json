@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-05",
+  "provider": "built-in image_gen",
+  "assets": [
+    {
+      "path": "docs/luya/appearance-v1/luya-six-looks-v1.png",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 1870797,
+      "sha256": "6097d857e6472ba542ef5e8510aae457e9c686d82d64332f0bddfa653fd09b76",
+      "hasAlpha": false,
+      "role": "review-sheet",
+      "readyForRuntime": false
+    },
+    {
+      "path": "docs/luya/appearance-v1/luya-six-hairstyles-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2488538,
+      "sha256": "06bd83f29d019d2c4564e891735babc7d7580242965d3882a83c2518c9f37b9e",
+      "hasAlpha": false,
+      "role": "review-sheet",
+      "readyForRuntime": false
+    }
+  ],
+  "originalAssetCount": 60,
+  "originalAssetsChanged": [],
+  "visualReview": [
+    "Six full outfits present with complete footwear and labels L01-L06",
+    "Six recognizable hairstyle silhouettes and labels H01-H06",
+    "Face, brown eyes, chestnut hair and deer clip compared with original references",
+    "Two review boards, not individual transparent runtime assets"
+  ]
+}

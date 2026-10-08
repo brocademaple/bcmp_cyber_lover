@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>心动伴侣 · 更新日志</title>
+    <meta name="description" content="心动伴侣项目更新日志与已完成的陪伴空间重做说明。" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="./index.html" aria-label="心动伴侣首页">
+          <span class="brand-mark">心</span>
+          <span>心动伴侣</span>
+        </a>
+        <nav class="nav">
+          <a href="./index.html#concept">概念图</a>
+          <a href="./index.html#flow">主路径</a>
+          <a href="./index.html#assets">角色资产库</a>
+          <a href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+        <button
+          id="themeToggle"
+          class="theme-switch"
+          type="button"
+          aria-label="切换站点视觉"
+          aria-live="polite"
+        >
+          <span class="theme-switch-dot" aria-hidden="true"></span>
+          <span class="theme-switch-label">都市清透</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="section changelog-hero reveal">
+        <p class="meta-line">release notes</p>
+        <h1>项目更新日志</h1>
+        <p class="lead">
+          记录功能迭代、体验优化与产品方向调整。这次已完成的重做把重点从功能入口展示，
+          收束到陪伴空间、聊天、记忆关系感和双视觉主题。
+        </p>
+      </section>
+
+      <section class="section reveal">
+        <div class="timeline">
+          <article class="release-card">
+            <span>v1.0.0 · Redesign</span>
+            <h2>陪伴空间与视觉主题重做</h2>
+            <p>
+              首页从角色轮播改为单角色陪伴空间，主路径聚焦选角、聊天和记忆关系感；
+              app 与展示站同步补齐「都市清透」和「甜美柔软」两套视觉主题。
+            </p>
+          </article>
+          <article class="release-card">
+            <span>v0.9.0 · Feature</span>
+            <h2>AI 社交体验增强</h2>
+            <p>新增轻量聊天体验和角色日记（日 / 周 / 月）自动沉淀，让长期陪伴更有连续感。</p>
+          </article>
+          <article class="release-card">
+            <span>v0.8.0 · Enhancement</span>
+            <h2>MVP 收敛与留存链路优化</h2>
+            <p>上线每日通知唤回与通知跳转聊天，隐藏非 MVP 入口，聚焦核心聊天留存路径。</p>
+          </article>
+          <article class="release-card">
+            <span>v0.7.0 · Architecture</span>
+            <h2>角色构建与记忆框架</h2>
+            <p>形成角色人设、档案、会话和本地持久化的统一结构。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>HeartBeat Companion</span>
+      <a href="./index.html">返回首页</a>
+    </footer>
+
+    <script src="./site.js"></script>
+  </body>
+</html>

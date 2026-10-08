@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-05",
+  "preview": "http://127.0.0.1:4187/",
+  "method": "Current safe Expo web export; browser UI interactions and screenshots. JPEG copies remove only blank backend padding outside the measured CSS viewport. Source artwork files are unchanged.",
+  "evidence": [
+    {
+      "file": "evidence/blue-dialogue-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "af36bf358ca4b8a0de0b8ee03f678e75608c805826cf81db0579eede02f3f250"
+    },
+    {
+      "file": "evidence/blue-dialogue-desktop.jpg",
+      "width": 1280,
+      "height": 900,
+      "sha256": "5c5df3ab599788f71312fcdeaa07d5cb2f14323eb24acdb1c7d80f421d69e331"
+    },
+    {
+      "file": "evidence/blue-small.jpg",
+      "width": 358,
+      "height": 569,
+      "sha256": "38f109177343abaca23cf07d5901277f838d73edb0f585d723e5e5262edeb1fa"
+    },
+    {
+      "file": "evidence/blue-long-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "cc0f26525478f08af50447b802da35e5f15702cf39ec9ce7c878b0ed2201b20e"
+    },
+    {
+      "file": "evidence/picturebook-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "14e8fab49ef39e2e3dfe5a40ce695f38be66769a92bf350e7c14aee54f535c10"
+    },
+    {
+      "file": "evidence/picturebook-dialogue-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "17c097fe952e36a53cf0c14e15f77a7ade9b0dc01231d532fc0332fe5edd304e"
+    },
+    {
+      "file": "evidence/unknown-year-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "86046ab750dddf67f4fc201b81937bfc6e07665b87bf3baa5a621396a2122bda"
+    },
+    {
+      "file": "evidence/long-ending-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "701998ab2bb6517936976b361bc3b2a23bb73b395d468293d65c8c44bba77086"
+    },
+    {
+      "file": "evidence/art-regression-mobile.jpg",
+      "width": 389,
+      "height": 845,
+      "sha256": "608af131c5f2c0e9bb8ac01192800a7215192708aad81c35be8782800d5c0694"
+    },
+    {
+      "file": "evidence/full-original-small.jpg",
+      "width": 358,
+      "height": 569,
+      "sha256": "9a8699f984e918dd20638fb8dd8ad27f129fe235b13f2fba711b4ca9a6db4f05"
+    }
+  ]
+}

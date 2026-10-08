@@ -2,36 +2,31 @@
   "expo": {
     "name": "心动伴侣",
     "slug": "heartbeat-companion",
-    "version": "1.0.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#7b3f5e"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bcmp.cyberlover",
       "infoPlist": {
-        "NSCameraUsageDescription": "用于视频通话功能",
-        "NSMicrophoneUsageDescription": "用于语音和视频通话功能"
+        "NSCameraUsageDescription": "用于视频通话功能"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#7b3f5e"
+        "backgroundColor": "#241126"
       },
       "package": "com.bcmp.cyberlover",
       "permissions": [
         "CAMERA",
-        "RECORD_AUDIO",
         "INTERNET",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -44,13 +39,27 @@
           "cameraPermission": "用于视频通话功能"
         }
       ],
+      "expo-notifications",
+      "expo-sqlite",
+      "expo-image",
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-status-bar",
       [
-        "expo-av",
+        "expo-splash-screen",
         {
-          "microphonePermission": "用于语音通话功能"
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#241126",
+          "enableFullScreenImage_legacy": true
         }
-      ],
-      "expo-notifications"
-    ]
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b7587128-89d1-4efe-b68e-65579b44149e"
+      }
+    },
+    "owner": "brocademaple"
   }
 }
