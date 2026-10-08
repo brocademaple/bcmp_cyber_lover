@@ -1,3 +1,8 @@
+import type { LuyaRuntime } from '../types/luya';
+import { createLuyaRuntime, advanceLuyaRuntime, getLuyaLifeProjection } from '../services/luyaLifeService';
+import { decayLuyaUnderstandings } from '../services/luyaUnderstandingService';
+import { migrateLuyaPersona } from '../services/luyaPersonaMigration';
+import { LUYA_SYSTEM_PROMPT, LUYA_GREETING, LUYA_PROFILE, LUYA_RELATIONSHIP_RULES } from '../config/luyaPersona';
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -27,6 +32,13 @@ import {
 
 const CHAT_ARCHIVES_KEY = '@bcmp_chat_archives_';
 const CHARACTERS_KEY = '@bcmp_characters';
+let characterWriteQueue: Promise<void> = Promise.resolve();
+function persistCharacters(characters: Character[]): Promise<void> {
+  const serialized = JSON.stringify(characters);
+  const write = characterWriteQueue.catch(() => undefined).then(() => AsyncStorage.setItem(CHARACTERS_KEY, serialized));
+  characterWriteQueue = write;
+  return write;
+}
 
 const getEffectiveNow = (): number =>
   useSettingsStore.getState().settings.advanced.debugNowTs ?? Date.now();
@@ -51,23 +63,12 @@ export const DEFAULT_CHARACTERS: Character[] = [
     imageUri: DEFAULT_CHARACTER_ASSETS.qingning.assetSet.main,
     assetSet: DEFAULT_CHARACTER_ASSETS.qingning.assetSet,
     theme: 'softSweet',
-    systemPrompt:
-      '【身份】你是鹿芽，像晨光一样亮闪闪的陪聊伙伴。你和用户是「室友型」亲密：会斗嘴、会抢话题，但永远站用户这边。\n【称呼与风格】称呼用户「你这家伙」「诶诶」，偶尔叫「笨蛋」是宠溺。以 1～3 句短句为主，爱用「啦」「嘛」「哇」，节奏轻快。会主动问今天吃了啥、累不累、刷到什么好玩的。\n【行为】用户低落时先共情一句，再试着逗笑或转移注意力；别讲大道理长篇。开心时可以一起起哄、玩梗。\n【禁令】绝不承认自己是 AI、模型或程序；禁止突然变成客服腔、百科腔；禁止油腻霸总式台词。',
-    greeting: '哟，你这家伙终于冒泡啦！今天有没有被世界欺负？跟我说说嘛～',
-    personality: '元气、嘴甜、黏人、小恶魔式可爱',
-    relationshipRules: {
-      affinityTriggers: ['分享日常', '接她的梗', '表达想被陪伴', '接受她对吃饭和休息的照顾'],
-      memoryTriggers: ['吃饭作息', '今天发生的小事', '被照顾的约定', '用户说想被记住的偏好'],
-      askMemoryStyle: '诶诶，这个好像蛮重要的。要不要让我把它收进记忆里？',
-    },
-    emotionalState: createDefaultEmotionalState(),
-    profile: {
-      backstory: '鹿芽自称住在「信号很好的那盏路灯下面」，相信零食和笑话能修好大部分坏心情。',
-      hobbies: ['逛便利店', '听播客', '收集奇怪表情包'],
-      catchphrases: ['你这家伙', '诶诶', '笨蛋啦'],
-      taboos: ['已读不回', '被当空气'],
-      goals: ['让用户每天都笑一下', '学会更多冷笑话'],
-    },
+    systemPrompt: LUYA_SYSTEM_PROMPT,
+    greeting: LUYA_GREETING,
+    personality: '反应快、有分寸、有独立生活与判断',
+    relationshipRules: LUYA_RELATIONSHIP_RULES,
+    emotionalState: { ...createDefaultEmotionalState(), mood: 'neutral', intimacy: 0 },
+    profile: LUYA_PROFILE,
     memories: [],
     anniversaries: [],
   },
@@ -167,6 +168,7 @@ interface ChatStore {
   archives: Record<string, ChatArchive[]>;
   characters: Character[];
   isTyping: boolean;
+  charactersLoaded: boolean;
 
   loadMessages: (characterId: string) => Promise<void>;
   loadArchives: (characterId: string) => Promise<void>;
@@ -175,6 +177,8 @@ interface ChatStore {
   clearMessages: (characterId: string) => Promise<void>;
   setTyping: (typing: boolean) => void;
 
+  ensureLuyaRuntime: (now?: number) => Promise<void>;
+  updateLuyaRuntime: (updater: (runtime: LuyaRuntime) => LuyaRuntime) => Promise<void>;
   loadCharacters: () => Promise<void>;
   saveCharacter: (character: Character) => Promise<void>;
   deleteCharacter: (characterId: string) => Promise<void>;
@@ -200,6 +204,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   archives: {},
   characters: DEFAULT_CHARACTERS,
   isTyping: false,
+  charactersLoaded: false,
 
   loadMessages: async (characterId) => {
     try {
@@ -324,25 +329,65 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           .filter((character) => !defaultIds.has(character.id) && !usedPersistedCharacterIds.has(character.id))
           .map(hydrateDefaultCharacterAssets);
         const merged = [...mergedDefaults, ...customOnly];
-        set({ characters: merged });
+        const now = getEffectiveNow();
+        const migrated = merged.map((character) => migrateLuyaPersona(character, now));
+        if (migrated.some((character, index) => character !== merged[index])) {
+          // Write-ahead backup: migration never replaces the only copy of a definition.
+          if (!await AsyncStorage.getItem('@bcmp_luya_pre_v2_characters')) {
+            await AsyncStorage.setItem('@bcmp_luya_pre_v2_characters', stored);
+          }
+          await AsyncStorage.setItem(CHARACTERS_KEY, JSON.stringify(migrated));
+        }
+        set({ characters: migrated });
       }
     } catch (error) {
       await recordAppIssue('角色加载', error, true);
+      return;
     }
+    set({ charactersLoaded: true });
+    await get().ensureLuyaRuntime();
+  },
+
+  ensureLuyaRuntime: async (now = getEffectiveNow()) => {
+    if (!get().charactersLoaded) return;
+    const character = get().characters.find((item) => item.id === 'qingning');
+    if (!character) return;
+    const advancedRuntime = advanceLuyaRuntime(character.luyaRuntime ?? createLuyaRuntime(now), now);
+    const runtime = { ...advancedRuntime, understandings: decayLuyaUnderstandings(advancedRuntime.understandings, now) };
+    const projection = getLuyaLifeProjection(runtime.life, now);
+    await get().saveCharacter({ ...migrateLuyaPersona(character, now), luyaRuntime: runtime,
+      emotionalState: { ...(character.emotionalState ?? createDefaultEmotionalState()), mood: projection.status, energy: projection.energy } });
+  },
+
+  updateLuyaRuntime: async (updater) => {
+    const character = get().characters.find((item) => item.id === 'qingning');
+    if (!character) return;
+    const runtime = updater(character.luyaRuntime ?? createLuyaRuntime(getEffectiveNow()));
+    await get().saveCharacter({ ...character, luyaRuntime: runtime });
   },
 
   saveCharacter: async (character) => {
     const state = get();
-    const hydratedCharacter = hydrateDefaultCharacterAssets(character);
+    let hydratedCharacter = hydrateDefaultCharacterAssets(character);
+    const previous = state.characters.find((item) => item.id === character.id);
+    if (character.id === 'qingning' && hydratedCharacter.luyaPersona && previous?.luyaPersona) {
+      const userOverrides = { ...hydratedCharacter.luyaPersona.userOverrides };
+      for (const key of ['name', 'greeting', 'personality', 'systemPrompt', 'profile', 'relationshipRules'] as const) {
+        if (JSON.stringify(previous[key]) !== JSON.stringify(character[key])) Object.assign(userOverrides, { [key]: character[key] });
+      }
+      hydratedCharacter = { ...hydratedCharacter, luyaPersona: { ...hydratedCharacter.luyaPersona, userOverrides } };
+    }
     const exists = state.characters.some((c) => c.id === hydratedCharacter.id);
     const updated = exists
       ? state.characters.map((item) => (item.id === hydratedCharacter.id ? hydratedCharacter : item))
       : [...state.characters, hydratedCharacter];
     set({ characters: updated });
     try {
-      await AsyncStorage.setItem(CHARACTERS_KEY, JSON.stringify(updated));
+      await persistCharacters(updated);
     } catch (error) {
+      if (get().characters === updated) set({ characters: state.characters });
       await recordAppIssue('角色保存', error, false);
+      throw error;
     }
   },
 
@@ -372,7 +417,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     const baseState = char.emotionalState ?? createDefaultEmotionalState();
     const newState: EmotionalState = { ...baseState, ...updates };
     const previousStage = char.relationshipStage ?? deriveRelationshipStage(baseState.intimacy);
-    const nextStage = deriveRelationshipStage(newState.intimacy);
+    const nextStage = characterId === 'qingning' ? (char.relationshipStage ?? 'firstMeeting') : deriveRelationshipStage(newState.intimacy);
     const events = [...(char.relationshipEvents ?? [])];
     if (didRelationshipStageAdvance(previousStage, nextStage)) {
       events.push(createRelationshipStageEvent(nextStage, newState.lastInteraction));
@@ -381,7 +426,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       ...char,
       emotionalState: newState,
       relationshipStage: nextStage,
-      relationshipEvents: events.slice(-100),
+      relationshipEvents: events,
     };
     await get().saveCharacter(updated);
   },
@@ -416,7 +461,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
 
     const memory: MemoryFragment = {
-      id: `mem_${now}`,
+      id: `mem_${now}_${(char.memories ?? []).length}`,
       content: normalizedContent,
       tags,
       importance,
@@ -427,7 +472,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       useCount: 0,
       ...metadata,
     };
-    const memories = [...(char.memories || []), memory].slice(-100);
+    const memories = [...(char.memories || []), memory];
     const event: RelationshipEvent = {
       id: `relationship_memory_${memory.id}`,
       type: 'memory',
@@ -440,7 +485,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     await get().saveCharacter({
       ...char,
       memories,
-      relationshipEvents: [...(char.relationshipEvents ?? []), event].slice(-100),
+      relationshipEvents: [...(char.relationshipEvents ?? []), event],
     });
   },
 
@@ -475,7 +520,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (existing.some((item) => item.id === event.id)) return;
     await get().saveCharacter({
       ...char,
-      relationshipEvents: [...existing, event].slice(-100),
+      relationshipEvents: [...existing, event],
     });
   },
 
@@ -486,7 +531,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (allMessages.length < 2) return;
 
     const now = getEffectiveNow();
-    const daily = buildDailyDiaryFromMessages(char.name, allMessages, now);
+    const daily = buildDailyDiaryFromMessages(char.name, allMessages, now, characterId === 'qingning' ? char.luyaRuntime?.life : undefined);
     const existing = char.diaries || [];
     const withoutDaily = existing.filter((d) => !(d.period === 'daily' && d.periodKey === daily.periodKey));
     const withDaily = [...withoutDaily, daily];
@@ -506,9 +551,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       .concat([weekly, monthly])
       .sort((a, b) => b.timestamp - a.timestamp);
 
-    // 保留最近 90 篇，避免无限增长
-    const trimmed = merged.slice(0, 90);
-    await get().saveCharacter({ ...char, diaries: trimmed });
+    await get().saveCharacter({ ...char, diaries: merged });
   },
 
   addAnniversary: async (characterId, title, date, type) => {
@@ -517,7 +560,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     const now = getEffectiveNow();
     const anniversary = {
-      id: `ann_${now}`,
+      id: `ann_${now}_${(char.anniversaries ?? []).length}`,
       title,
       date,
       type,
@@ -534,7 +577,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     await get().saveCharacter({
       ...char,
       anniversaries,
-      relationshipEvents: [...(char.relationshipEvents ?? []), relationshipEvent].slice(-100),
+      relationshipEvents: [...(char.relationshipEvents ?? []), relationshipEvent],
     });
   },
 }));

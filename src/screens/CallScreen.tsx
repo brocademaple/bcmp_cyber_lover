@@ -135,9 +135,9 @@ export default function CallScreen({ route, navigation }: Props) {
         }
 
         // 根据检测到的用户情绪更新角色情感状态
-        if (detectedEmotion === '难过' && character.emotionalState) {
+        if (characterId !== 'qingning' && detectedEmotion === '难过' && character.emotionalState) {
           await updateEmotionalState(characterId, { mood: 'sad' });
-        } else if (detectedEmotion === '开心' && character.emotionalState) {
+        } else if (characterId !== 'qingning' && detectedEmotion === '开心' && character.emotionalState) {
           await updateEmotionalState(characterId, {
             mood: 'happy',
             intimacy: Math.min(100, character.emotionalState.intimacy + 2)
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(92, 46, 70, 0.95)',
   },
   overlayTransparent: {

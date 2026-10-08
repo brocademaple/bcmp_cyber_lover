@@ -1,21 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import { Message } from '../types';
+import { CharacterImageSource, Message } from '../types';
 import { useThemeColors, useThemeId } from '../utils/theme';
 import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { getMoodStateLabel } from '../services/characterPromptArchitectureService';
 import { resolveMessageMediaUri } from '../services/messageMedia';
+import { LUYA_STATE_LABELS } from '../config/luyaPersona';
 
 interface Props {
   message: Message;
   characterAvatar: string;
   characterName: string;
+  characterId?: string;
+  characterPortrait?: CharacterImageSource;
 }
 
-export default function ChatBubble({ message, characterAvatar, characterName }: Props) {
+export default function ChatBubble({ message, characterAvatar, characterName, characterId, characterPortrait }: Props) {
   const C = useThemeColors();
   const themeId = useThemeId();
   const isUser = message.role === 'user';
@@ -25,12 +28,23 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
     { locale: zhCN }
   );
   const replyMoodLabel = !isUser && message.characterMood
-    ? getMoodStateLabel(message.characterMood)
+    ? characterId === 'qingning' ? LUYA_STATE_LABELS[message.characterMood] : getMoodStateLabel(message.characterMood)
     : null;
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
   const [imageFailed, setImageFailed] = useState(false);
+  const [portraitFailed, setPortraitFailed] = useState(false);
   useEffect(() => setImageFailed(false), [message.imageUri]);
+  useEffect(() => setPortraitFailed(false), [characterPortrait]);
+  const portrait = characterPortrait != null && !portraitFailed ? (
+    <Image
+      source={typeof characterPortrait === 'string' ? { uri: characterPortrait } : characterPortrait}
+      style={styles.portraitImage}
+      contentFit="cover"
+      accessibilityLabel={`${characterName}的头像`}
+      onError={() => setPortraitFailed(true)}
+    />
+  ) : <Text style={styles.avatarText}>{characterAvatar}</Text>;
   const assistantBubbleStyle = [
     styles.assistantBubble,
     isUrbanClear && styles.urbanAssistantBubble,
@@ -52,7 +66,7 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
     return (
       <View style={[styles.row, styles.assistantRow]}>
         <View style={[styles.avatarCircle, isUrbanClear && styles.urbanAvatar, isSoftSweet && styles.softAvatar, { backgroundColor: C.primaryLight }]}>
-          <Text style={styles.avatarText}>{characterAvatar}</Text>
+          {portrait}
         </View>
         <View style={[styles.bubble, styles.thinkingBubble, ...assistantBubbleStyle]}>
           <WaitingIndicator characterName={characterName} color={C.textSecondary} />
@@ -65,7 +79,7 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
     <View style={[styles.row, isUser ? styles.userRow : styles.assistantRow]}>
       {!isUser && (
         <View style={[styles.avatarCircle, isUrbanClear && styles.urbanAvatar, isSoftSweet && styles.softAvatar, { backgroundColor: C.primaryLight }]}>
-          <Text style={styles.avatarText}>{characterAvatar}</Text>
+          {portrait}
         </View>
       )}
 
@@ -105,6 +119,7 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
         <View
           style={[
             styles.messageMetaRow,
+            { backgroundColor: C.surface },
             isUser && styles.messageMetaRowUser,
             replyMoodLabel && styles.messageMetaRowWithMood,
           ]}
@@ -124,14 +139,12 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
               style={[
                 styles.replyMoodBadge,
                 {
-                  backgroundColor: C.surface,
-                  borderColor: C.primary,
-                  shadowColor: C.shadow,
+                  backgroundColor: 'transparent',
                 },
               ]}
             >
               <View style={[styles.replyMoodDot, { backgroundColor: C.primary }]} />
-              <Text style={[styles.replyMood, { color: C.text }]} numberOfLines={1}>
+              <Text style={[styles.replyMood, { color: C.textSecondary }]} numberOfLines={1}>
                 {replyMoodLabel}
               </Text>
             </View>
@@ -151,12 +164,10 @@ export default function ChatBubble({ message, characterAvatar, characterName }: 
 
 const WAITING_HINTS: Record<string, string[]> = {
   '鹿芽': [
-    '鹿芽正在飞快地打字中',
-    '鹿芽正一边喝饮料一边回你',
-    '鹿芽把手机捧近了一点',
-    '鹿芽正在笑着组织语言',
-    '鹿芽刚坐直，准备认真接住这句话',
-    '鹿芽翻了翻刚才的聊天，没让你等太久',
+    '鹿芽正在组织语言',
+    '鹿芽又看了一遍你刚才的话',
+    '鹿芽正在想从哪一处回应',
+    '鹿芽停了一下，像是在改口',
   ],
   '纪遥': [
     '纪遥正在慢慢斟酌措辞',
@@ -237,6 +248,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
     marginBottom: 18,
+    overflow: 'hidden',
+  },
+  portraitImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: {
     fontSize: 20,
@@ -355,38 +371,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 3,
     marginHorizontal: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 7,
   },
   messageMetaRowUser: {
+    alignSelf: 'flex-end',
     justifyContent: 'flex-end',
   },
   messageMetaRowWithMood: {
-    minWidth: 196,
-    justifyContent: 'space-between',
-    columnGap: 14,
+    flexWrap: 'wrap',
+    columnGap: 8,
   },
   replyMoodBadge: {
-    minHeight: 30,
+    minHeight: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 999,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     columnGap: 5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    elevation: 2,
   },
   replyMoodDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
   replyMood: {
-    fontFamily: NOTO_SERIF_SC.bold,
-    fontSize: 14,
-    lineHeight: 20,
+    fontFamily: NOTO_SANS_SC.regular,
+    fontSize: 11,
+    lineHeight: 16,
   },
   timestampRight: {
     textAlign: 'right',

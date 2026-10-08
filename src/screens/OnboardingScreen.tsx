@@ -9,6 +9,7 @@ import {
   Alert,
   Image,
   Linking,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +19,10 @@ import { DEFAULT_CHARACTERS } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { scheduleDailyNotification } from '../services/notificationService';
 import { testChatCompletion } from '../services/aiService';
+
+import { getVisibleCharacters } from '../utils/characterRelease';
+
+const ONBOARDING_CHARACTERS = getVisibleCharacters(DEFAULT_CHARACTERS, 'explore');
 
 export const ONBOARDING_KEY = '@bcmp_onboardingCompleted';
 
@@ -52,13 +57,15 @@ function getOnboardingSkin(theme?: string) {
 }
 
 export default function OnboardingScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  const singleCharacter = ONBOARDING_CHARACTERS.length === 1;
   const [step, setStep] = useState(0); // 0=选角色, 1=API Key, 2=完成
-  const [selectedCharacterId, setSelectedCharacterId] = useState(DEFAULT_CHARACTERS[0].id);
+  const [selectedCharacterId, setSelectedCharacterId] = useState(ONBOARDING_CHARACTERS[0].id);
   const [apiKey, setApiKey] = useState('');
   const [isTestingService, setIsTestingService] = useState(false);
   const { settings, updateService, saveSettings, updateLife, updateAdvanced, setSelectedCharacter } = useSettingsStore();
 
-  const selectedCharacter = DEFAULT_CHARACTERS.find((c) => c.id === selectedCharacterId)!;
+  const selectedCharacter = ONBOARDING_CHARACTERS.find((c) => c.id === selectedCharacterId)!;
   const skin = getOnboardingSkin(selectedCharacter.theme);
   const configuredApiKey = settings.service.apiKey.trim();
   const hasConfiguredApiKey = configuredApiKey.length > 0;
@@ -105,6 +112,11 @@ export default function OnboardingScreen({ navigation }: Props) {
     setStep(2);
   };
 
+  const handlePreview = async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    navigation.replace('Main');
+  };
+
   const handleComplete = async () => {
     // Schedule daily notification for selected character at 8pm
     await scheduleDailyNotification(selectedCharacterId, selectedCharacter.name, 20, 0);
@@ -142,17 +154,17 @@ export default function OnboardingScreen({ navigation }: Props) {
       {step === 0 && (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={[styles.heroPanel, { backgroundColor: skin.panel, borderColor: skin.border }]}>
-            <Text style={[styles.stepTitle, { color: skin.text }]}>选择你的专属伴侣</Text>
-            <Text style={[styles.stepSubtitle, { color: skin.muted }]}>TA 将每天陪伴你、关心你</Text>
+            <Text style={[styles.stepTitle, { color: skin.text }]}>认识鹿芽</Text>
+            <Text style={[styles.stepSubtitle, { color: skin.muted }]}>从今天的小事开始，慢慢熟悉彼此</Text>
           </View>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.characterRail}
-            contentContainerStyle={styles.characterList}
+            contentContainerStyle={[styles.characterList, singleCharacter && { flexGrow: 1, justifyContent: 'center' }]}
           >
-            {DEFAULT_CHARACTERS.map((char) => {
+            {ONBOARDING_CHARACTERS.map((char) => {
               const isSelected = char.id === selectedCharacterId;
               const charSkin = getOnboardingSkin(char.theme);
               return (
@@ -160,6 +172,7 @@ export default function OnboardingScreen({ navigation }: Props) {
                   key={char.id}
                   style={[
                     styles.characterCard,
+                    singleCharacter && { width: Math.min(320, width - 48) },
                     {
                       backgroundColor: isSelected ? charSkin.selectedBg : 'rgba(255,255,255,0.72)',
                       borderColor: isSelected ? charSkin.accent : charSkin.border,
@@ -170,13 +183,13 @@ export default function OnboardingScreen({ navigation }: Props) {
                   onPress={() => handleSelectCharacter(char.id)}
                   activeOpacity={0.85}
                 >
-                  <View style={[styles.characterImageWrap, { borderColor: charSkin.border }]}>
+                  <View style={[styles.characterImageWrap, { borderColor: charSkin.border }, singleCharacter && { width: '100%', height: 220 }]}>
                     {char.imageUri ? (
                       <Image
                         // imageUri is stored as a require() number in DEFAULT_CHARACTERS
                         source={char.imageUri as unknown as number}
-                        style={styles.characterImage}
-                        resizeMode="cover"
+                        style={[styles.characterImage, singleCharacter && { width: '100%', height: 220 }]}
+                        resizeMode={singleCharacter ? 'contain' : 'cover'}
                       />
                     ) : (
                       <Text style={styles.characterAvatar}>{char.avatar}</Text>
@@ -263,6 +276,9 @@ export default function OnboardingScreen({ navigation }: Props) {
                   : '验证连接，下一步 →'}
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" style={styles.backBtn} onPress={() => void handlePreview()}>
+            <Text style={[styles.backBtnText, { color: skin.accent }]}>先看看房间，稍后连接</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.backBtn} onPress={() => setStep(0)}>
             <Text style={[styles.backBtnText, { color: skin.muted }]}>← 返回</Text>
           </TouchableOpacity>
@@ -305,7 +321,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   artworkLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.92,
   },
   sweetBubbleArt: {

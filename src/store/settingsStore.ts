@@ -6,7 +6,7 @@ import { saveSecure, getSecure, deleteSecure } from '../services/secureStorage';
 const STORAGE_KEY = '@bcmp_settings';
 const API_KEY_SECURE = 'bcmp_api_key';
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
-const DEEPSEEK_DEFAULT_MODEL = 'deepseek-chat';
+const DEEPSEEK_DEFAULT_MODEL = 'deepseek-flash';
 
 declare const process: {
   env?: {
@@ -85,10 +85,10 @@ function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
 
   if (merged.service.provider === 'deepseek') {
     merged.service.baseUrl = PROVIDER_CONFIGS.deepseek.baseUrl;
-    if (!merged.service.model) {
+    if (!merged.service.model || merged.service.model === 'deepseek-chat') {
       merged.service.model = PROVIDER_CONFIGS.deepseek.defaultModel;
     }
-    if (!merged.service.visionModel) {
+    if (!merged.service.visionModel || merged.service.visionModel === 'deepseek-chat') {
       merged.service.visionModel = PROVIDER_CONFIGS.deepseek.defaultModel;
     }
   }

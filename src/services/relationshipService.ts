@@ -1,3 +1,4 @@
+import { LUYA_MOOD_GUIDES } from '../config/luyaPersona';
 import { Character, DebugEmotionExplanation, EmotionalState } from '../types';
 
 export type MemoryDecision =
@@ -40,16 +41,6 @@ const MEMORY_CANDIDATE_PATTERNS = [
 ];
 
 const AFFINITY_PATTERNS: Record<string, { patterns: RegExp[]; bonus: number }> = {
-  qingning: {
-    bonus: 2,
-    patterns: [
-      /今天/,
-      /吃饭|晚饭|午饭|早餐|零食/,
-      /哈哈|笑死|好玩|有趣/,
-      /陪我|想你|抱抱|需要你/,
-      /听你的|谢谢你|你真好/,
-    ],
-  },
   sakura: {
     bonus: 2,
     patterns: [
@@ -80,6 +71,11 @@ const MOOD_DEBUG_GUIDES: Record<EmotionalState['mood'], string> = {
 };
 
 export function getRelationshipPrompt(character: Character): string {
+  if (character.id === 'qingning') return `
+【关系和记忆边界】
+关系仅由有来源的共同事件、尊重边界、房间参与和修复支持，数值不授权、不升级身份。不因缺席扣亲密。
+用户表达喜欢不自动确定恋爱。用户拒绝昵称、身体动作或关系升级，持续尊重。
+明确事实与推断分开；未确认相处习惯由理解卡片核对，正文可以自然询问是否理解正确，但不虚报写入记忆。`;
   const rules = character.relationshipRules;
   if (!rules) return '';
 
@@ -91,6 +87,7 @@ export function getRelationshipPrompt(character: Character): string {
 }
 
 export function calculateAffinityDelta(character: Character, userText: string): number {
+  if (character.id === 'qingning') return 0;
   const config = AFFINITY_PATTERNS[character.id];
   if (!config) return 1;
   const matched = config.patterns.some((pattern) => pattern.test(userText));
@@ -110,15 +107,14 @@ export function nextEmotionalState(
     lastInteraction: now,
   };
 
-  const tired = /累|困|疲惫|睡不着|撑不住/.test(userText);
-  const sad = /难过|崩溃|委屈|焦虑|害怕/.test(userText);
-  const happy = /开心|哈哈|笑死|喜欢|谢谢|太好了/.test(userText);
+  // A user's report describes their situation, not the character's emotional state.
+  void userText;
 
   return {
     ...base,
     intimacy: Math.min(100, base.intimacy + delta),
-    energy: Math.max(0, Math.min(100, tired ? base.energy - 4 : base.energy)),
-    mood: sad ? 'sad' : tired ? 'tired' : happy ? 'happy' : base.mood,
+    energy: base.energy,
+    mood: base.mood,
     lastInteraction: now,
   };
 }
@@ -140,19 +136,8 @@ export function explainEmotionTransition(
     : [];
   const affinityDelta = calculateAffinityDelta(character, userText);
   const after = nextEmotionalState(before, affinityDelta, now, userText);
-  const tired = /累|困|疲惫|睡不着|撑不住/.test(userText);
-  const sad = /难过|崩溃|委屈|焦虑|害怕/.test(userText);
-  const happy = /开心|哈哈|笑死|喜欢|谢谢|太好了/.test(userText);
-  const moodReason = sad
-    ? '命中低落/焦虑词，mood -> sad。'
-    : tired
-      ? '命中疲惫词，mood -> tired。'
-      : happy
-        ? '命中开心/感谢词，mood -> happy。'
-        : '没有命中强情绪词，沿用原 mood。';
-  const energyReason = tired
-    ? '命中疲惫词，energy -4，并限制在 0-100。'
-    : '未命中疲惫词，energy 保持不变。';
+  const moodReason = '用户处境与角色感受分开；只凭用户文字不改变角色 mood。';
+  const energyReason = '角色精力由自己的生活事实决定，用户或第三方疲惫不扣角色精力。';
 
   return {
     inputText: userText,
@@ -163,8 +148,8 @@ export function explainEmotionTransition(
     moodReason,
     energyReason,
     stateInfluence: [
-      MOOD_DEBUG_GUIDES[after.mood],
-      after.intimacy >= 75
+      character.id === 'qingning' ? LUYA_MOOD_GUIDES[after.mood] : MOOD_DEBUG_GUIDES[after.mood],
+      character.id === 'qingning' ? '亲密数值不决定身份、昵称或身体接触许可。' : after.intimacy >= 75
         ? '亲密度较高：回复可以更自然地亲近一点。'
         : after.intimacy >= 45
           ? '亲密度中段：语气亲切，但仍保持边界。'
@@ -181,6 +166,7 @@ export function explainEmotionTransition(
 export function evaluateMemoryDecision(character: Character, userText: string): MemoryDecision {
   const normalized = userText.trim();
   if (!normalized) return { action: 'none' };
+  if (character.id === 'qingning' && !isLuyaExplicitMemoryText(normalized)) return { action: 'none' };
 
   const tags = inferMemoryTags(normalized);
   const content = cleanupMemoryText(normalized);
@@ -226,4 +212,17 @@ function buildMemoryQuestion(character: Character): string {
     return '发现一条可能值得长期记忆的内容';
   }
   return '这次对话里有一条可能值得长期记忆的内容';
+}
+
+/** Conservative admission gate for the old memory path. Inferred interaction styles use UserUnderstanding. */
+export function isLuyaExplicitMemoryText(text: string): boolean {
+  const normalized = text.trim();
+  if (/不要记|别记|不保留|不用记|别保存|不要保存/.test(normalized)) return false;
+  // Quoted, fictional, forwarded, and third-party accounts never become user traits.
+  if (/我朋友|我的朋友|朋友(?:说|又|很|今天)|同事|博主|小说|角色|转发|视频里|他说|她说|他们说|原文|引用|[“”「」«»]|(?:^|\n)>/.test(normalized)) {
+    return /^(?:请)?(?:帮我记住|记住这件事|记住这个|我想让你记住)[，,：:\s]/.test(normalized);
+  }
+  if (DIRECT_MEMORY_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
+  // Explicit preferences, dates and facts can be offered for confirmation, never inferred from repetitions.
+  return /(?:^|[，。！？\n])(?:我喜欢|我不喜欢|我讨厌|我的生日|我的名字|我住在|我学的是)/.test(normalized);
 }

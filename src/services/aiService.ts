@@ -1,3 +1,5 @@
+import { getDeepSeekRequestParams } from './deepseekRequest';
+import { buildLuyaResponsePlan } from './luyaResponsePlanningService';
 import {
   Message,
   ServiceConfig,
@@ -119,11 +121,12 @@ export { getCharacterStateLabel } from './characterPromptArchitectureService';
 
 const CORE_REPLY_RULES = `
 【回复规范】
-1. 每次回复不超过3句话
-2. 必须包含对用户当下状态的关心或共情
-3. 语气温柔自然，像一个真正在意对方的朋友
-4. 禁止使用"作为AI"、"我无法"等机械表述
-5. 不要在聊天正文里询问“要不要写进记忆”，也不要主动声称已经写入记忆；记忆写入会由系统在回复后通过独立控件处理`;
+1. 句长由内容决定，闲聊可短，复杂问题可完整展开，避免无必要长篇。
+2. 先回应本轮具体内容，不强制每次共情、照顾或提问；保持角色独立判断。
+3. 猜测标明不确定；分享、第三方故事与引用不等于用户事实。
+4. 不伪称完成提醒、日历、联系、购买等现实操作；如能力不足自然说明。
+5. 本轮明确要求覆盖长期习惯；用户拒绝建议、昵称或想象动作立即尊重。
+6. 记忆和长期理解通过独立控件确认，正文不宣称已经保存；相处方式可以自然询问是否理解正确。`;
 
 const DISABLED_MEMORY_CONFIG: MemoryConfig = {
   enabled: false,
@@ -137,6 +140,18 @@ const DISABLED_MEMORY_CONFIG: MemoryConfig = {
   memorySystemPrompt: '',
 };
 
+export function selectPromptMemories(character: Character, messages: Message[]) {
+  const active = (character.memories ?? []).filter(item => item.status !== 'superseded');
+  if (character.id !== 'qingning') return active;
+  const current = recentChronological(messages.filter(item => item.role === 'user'), 1)[0]?.content ?? '';
+  const grams = new Set(current.match(/[a-zA-Z]{3,}/g) ?? []);
+  for (let i = 0; i < current.length - 1; i++) if (/[\u4e00-\u9fff]{2}/.test(current.slice(i, i + 2))) grams.add(current.slice(i, i + 2));
+  return active.map(item => ({ item, score: [...grams].reduce((score, gram) => score + (item.content.includes(gram) ? 1 : 0), 0) }))
+    .filter(({ item, score }) => score > 0 || item.status === 'locked')
+    .sort((a, b) => a.score - b.score || a.item.importance - b.item.importance || a.item.timestamp - b.item.timestamp)
+    .map(({ item }) => item);
+}
+
 function buildSystemMessage(
   character: Character,
   memory: MemoryConfig,
@@ -146,15 +161,15 @@ function buildSystemMessage(
   const promptLayers = buildCharacterPromptLayers(character, { chatHistory, nowTs });
   let systemContent = renderCharacterPromptLayers(promptLayers);
 
-  const activeMemories = (character.memories ?? []).filter((item) => item.status !== 'superseded');
+  const activeMemories = selectPromptMemories(character, chatHistory);
   if (memory.enabled && activeMemories.length > 0) {
     const memoriesToProvide = memory.alwaysProvideFullMemory
       ? activeMemories
       : activeMemories.slice(-8);
     const memoryLines = memoriesToProvide
-      .map((item) => `- ${item.status === 'locked' ? '[用户锁定] ' : ''}${item.content}`)
+      .map((item) => `- ${item.status === 'locked' ? '[用户锁定] ' : item.sourceMessageId ? '[有来源历史记录] ' : '[旧记录待核实] '}${item.content}`)
       .join('\n');
-    systemContent += `\n\n【你们已经确认写入的记忆】\n${memoryLines}`;
+    systemContent += `\n\n【保留的历史记忆：事实与推断须区分】\n${memoryLines}`;
   }
 
   if (memory.enabled && memory.memorySystemPrompt.trim()) {
@@ -166,9 +181,14 @@ function buildSystemMessage(
   const timeContext = buildTimeContext(nowTs);
   systemContent += `\n\n当前时间：${timeContext.timeStr}`;
   systemContent += `\n当前时段：${timeContext.periodLabel}`;
-  systemContent += `\n时段语境：${timeContext.periodGuide}`;
+  systemContent += `\n时段语境：${character.id === 'qingning' ? '时段仅用于时间定位，不推断用户正在疲惫或需要照顾；鹿芽当前活动由生活事实层提供。' : timeContext.periodGuide}`;
 
+  if (character.id === 'qingning') systemContent += '\n历史记忆只作有来源的经历参考。旧记录不能冒充已确认相处习惯；人物标签与未核实推断不得用于改变默认回应。用户当下纠正、已撤销习惯和最新确认版本优先，不能用旧记忆恢复已拒绝的昵称、动作或推断。';
   systemContent += CORE_REPLY_RULES;
+  if (character.id === 'qingning') {
+    const plan = buildLuyaResponsePlan(character, chatHistory);
+    systemContent += `\n\n【本轮执行约束：优先于默认风格和旧对话补写】\n${plan.steps.map((step, index) => `${index + 1}. ${step}`).join('\n')}`;
+  }
 
   return systemContent;
 }
@@ -301,10 +321,10 @@ export function buildPromptDebugSnapshot({
   const finalSystemPrompt = buildSystemMessage(character, memory, allHistory, effectiveNowTs);
   const apiMessages = buildMessages(character, allHistory, memory, advanced, imageUri, effectiveNowTs);
   const promptLayers = buildCharacterPromptLayers(character, { chatHistory: allHistory, nowTs: effectiveNowTs });
-  const activeMemories = (character.memories ?? []).filter((item) => item.status !== 'superseded');
+  const activeMemories = selectPromptMemories(character, allHistory);
   const memoryLines = memory.enabled && activeMemories.length
     ? (memory.alwaysProvideFullMemory ? activeMemories : activeMemories.slice(-8))
-      .map((item) => `- ${item.status === 'locked' ? '[用户锁定] ' : ''}${item.content}`)
+      .map((item) => `- ${item.status === 'locked' ? '[用户锁定] ' : item.sourceMessageId ? '[有来源历史记录] ' : '[旧记录待核实] '}${item.content}`)
       .join('\n')
     : '当前没有注入长期记忆，或记忆功能未开启。';
   const relationshipPrompt = getRelationshipPrompt(character).trim() || '该角色没有单独配置关系成长规则。';
@@ -353,7 +373,7 @@ export function buildDailyGreetingDebugSnapshot(
   const timeContext = buildTimeContext(effectiveNowTs);
   const promptLayers = buildCharacterPromptLayers(character, { chatHistory: [], nowTs: effectiveNowTs });
   const systemPrompt = buildSystemMessage(character, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
-  const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，体现出你在意用户今天的状态，不超过3句话，并符合这个时段的语境。`;
+  const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，只引用已有生活事实或中性邀请，不要求回复、不推断用户处境，长度自然，并符合这个时段的语境。`;
   const messages = advanced.compatibilityMode
     ? [{ role: 'user', content: `[系统提示: ${systemPrompt}]\n\n${userPrompt}` }]
     : [
@@ -493,10 +513,11 @@ export async function sendMessage(
     stream: shouldStream,
     temperature: 0.9,
     max_tokens: 1024,
+    ...getDeepSeekRequestParams(config, advanced.deepThinking),
     ...advanced.customRequestParams,
   };
 
-  if (advanced.deepThinking) {
+  if (advanced.deepThinking && config.provider !== 'deepseek') {
     (requestBody as Record<string, unknown>)['enable_thinking'] = true;
   }
 
@@ -614,6 +635,7 @@ export async function testChatCompletion(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
+        ...getDeepSeekRequestParams(config),
         model: model.trim(),
         messages: [
           { role: 'system', content: '你是连接测试助手，只回复一句简短中文。' },
@@ -687,6 +709,7 @@ export async function generateMoodEntryGreeting(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
+        ...getDeepSeekRequestParams(config),
         model: config.model,
         messages,
         stream: false,
@@ -719,7 +742,7 @@ export async function generateDailyGreeting(
   const timeContext = buildTimeContext(effectiveNowTs);
   const systemPrompt = buildSystemMessage(character, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
 
-  const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，体现出你在意用户今天的状态，不超过3句话，并符合这个时段的语境。`;
+  const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，只引用已有生活事实或中性邀请，不要求回复、不推断用户处境，长度自然，并符合这个时段的语境。`;
 
   const messages: { role: string; content: string }[] = [];
   if (!advanced.compatibilityMode) {
@@ -737,6 +760,7 @@ export async function generateDailyGreeting(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
+        ...getDeepSeekRequestParams(config),
         model: config.model,
         messages,
         stream: false,
@@ -771,6 +795,7 @@ export async function analyzeFrame(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
+      ...getDeepSeekRequestParams(config),
       model: config.visionModel,
       messages: [
         {
@@ -816,6 +841,7 @@ export async function analyzeFrameWithEmotion(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
+      ...getDeepSeekRequestParams(config),
       model: config.visionModel,
       messages: [
         {

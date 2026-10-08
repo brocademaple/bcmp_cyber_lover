@@ -64,10 +64,20 @@ if (!indexHtml.includes('<base href="./"')) {
 
 write(indexPath, indexHtml);
 
+// Exported navigation icons are runtime assets, not installable dependencies.
+// Keep them publishable without committing a node_modules directory.
+const dependencyAssetsDir = path.join(outputDir, 'assets', 'node_modules');
+if (fs.existsSync(dependencyAssetsDir)) {
+  fs.renameSync(dependencyAssetsDir, path.join(outputDir, 'assets', 'vendor'));
+}
+
 for (const jsFile of walkFiles(outputDir, (file) => file.endsWith('.js'))) {
   const patched = read(jsFile)
     .replaceAll('uri:"/assets/', 'uri:"./assets/')
     .replaceAll("uri:'/assets/", "uri:'./assets/")
+    .replaceAll('assets/node_modules/', 'assets/vendor/')
+    .replaceAll('"/_expo/', '"./_expo/')
+    .replaceAll("'/_expo/", "'./_expo/")
     .replaceAll('import.meta.env?import.meta.env.MODE:void 0', 'undefined');
   write(jsFile, patched);
 }

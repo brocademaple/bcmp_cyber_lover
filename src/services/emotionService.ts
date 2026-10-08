@@ -1,5 +1,4 @@
 import { EmotionalState, Message } from '../types';
-import { recentChronological } from '../utils/chatHistory';
 
 export function calculateEmotionChange(
   currentState: EmotionalState,
@@ -8,20 +7,9 @@ export function calculateEmotionChange(
 ): Partial<EmotionalState> {
   const updates: Partial<EmotionalState> = {};
 
-  // 时间影响：超过24小时未互动，亲密度下降
+  // Absence and message counts do not establish relationship evidence or character emotion.
+  void messages;
   const hoursSince = timeSinceLastInteraction / (1000 * 60 * 60);
-  if (hoursSince > 24) {
-    updates.intimacy = Math.max(0, currentState.intimacy - Math.floor(hoursSince / 24) * 2);
-    updates.mood = 'sad';
-  }
-
-  // 互动频率影响：频繁互动增加亲密度
-  const recentMessages = recentChronological(messages, 10);
-  const userMessages = recentMessages.filter(m => m.role === 'user').length;
-  if (userMessages >= 5) {
-    updates.intimacy = Math.min(100, currentState.intimacy + 1);
-    updates.mood = 'happy';
-  }
 
   // 能量恢复
   if (hoursSince > 8) {

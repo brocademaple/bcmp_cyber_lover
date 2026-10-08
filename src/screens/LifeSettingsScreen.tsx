@@ -1,5 +1,5 @@
-import React from 'react';
-import { Alert, ScrollView, Text, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ScrollView, Text, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LifeConfig, RootStackParamList } from '../types';
@@ -8,6 +8,8 @@ import { useChatStore } from '../store/chatStore';
 import { cancelDailyNotification, scheduleDailyNotification } from '../services/notificationService';
 import { SettingsRow, SettingsSection } from '../components/SettingsRow';
 import { useThemeColors, useThemeId } from '../utils/theme';
+
+import { getPresentedCharacter } from '../utils/characterRelease';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LifeSettings'>;
 
@@ -23,44 +25,69 @@ export default function LifeSettingsScreen({ navigation }: Props) {
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
   const { settings, updateLife, saveSettings } = useSettingsStore();
-  const getCharacter = useChatStore((state) => state.getCharacter);
   const life = settings.life;
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
+  const [saveNotice, setSaveNotice] = useState('修改会自动保存。');
+  const [saveError, setSaveError] = useState(false);
 
   const syncDailyNotification = async (nextLife: LifeConfig) => {
-    if (!nextLife.enabled) {
+    if (!nextLife.enabled || !nextLife.allowBackgroundMessages || !nextLife.allowProactiveMessages) {
       await cancelDailyNotification();
-      return;
+      return '提醒已关闭。';
     }
 
-    const selectedCharacterId = useSettingsStore.getState().settings.selectedCharacterId;
-    const character = getCharacter(selectedCharacterId);
-    await scheduleDailyNotification(
+    const currentSettings = useSettingsStore.getState().settings;
+    const character = getPresentedCharacter(useChatStore.getState().characters, currentSettings.selectedCharacterId, currentSettings.appMode);
+    if (!character) return '当前角色未就绪，可稍后重试通知同步。';
+    const selectedCharacterId = character.id;
+    const result = await scheduleDailyNotification(
       selectedCharacterId,
       character?.name ?? '心动伴侣',
       nextLife.notificationHour,
       0
     );
+    return result === 'scheduled' ? '系统提醒已同步。' : result === 'permission_denied'
+      ? '系统通知未获允许，请在 iPhone 设置中允许通知后重试。'
+      : '浏览器仅保存提醒偏好，系统通知请在 iPhone 上确认。';
   };
 
   const applyLifeUpdate = async (updates: Partial<LifeConfig>) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setSaveError(false);
+    setSaveNotice('正在保存…');
     const nextLife = { ...useSettingsStore.getState().settings.life, ...updates };
     updateLife(updates);
 
     try {
-      if (updates.enabled !== undefined || updates.notificationHour !== undefined) {
-        await syncDailyNotification(nextLife);
+      const saved = await saveSettings();
+      if (!saved) throw new Error('设置未保存');
+      let notificationNotice = '';
+      if (updates.enabled !== undefined || updates.notificationHour !== undefined || updates.allowBackgroundMessages !== undefined || updates.allowProactiveMessages !== undefined) {
+        try {
+          notificationNotice = await syncDailyNotification(nextLife);
+        } catch {
+          setSaveError(true);
+          notificationNotice = '系统通知未同步，偏好已保留，请重试。';
+        }
       }
-    } catch (error) {
-      console.error('Failed to sync reminder settings', error);
-      Alert.alert('提醒设置未同步', '本地设置已更新，但系统通知同步失败。请稍后再试。');
+      setSaveNotice(`设置已保存。${notificationNotice}`);
+    } catch {
+      setSaveError(true);
+      setSaveNotice('保存未完成，当前选择仍在本页，请重试。');
     } finally {
-      await useSettingsStore.getState().saveSettings();
+      savingRef.current = false;
+      setSaving(false);
     }
   };
 
   const handleSave = async () => {
-    await saveSettings();
-    navigation.goBack();
+    if (savingRef.current) return;
+    const saved = await saveSettings();
+    if (saved) navigation.goBack();
+    else { setSaveError(true); setSaveNotice('保存未完成，请重试。'); }
   };
 
   return (
@@ -93,16 +120,22 @@ export default function LifeSettingsScreen({ navigation }: Props) {
           ]}
         >
           <Text style={[styles.summaryTitle, { color: C.text }]}>
-            {life.enabled ? '她会保留一点主动性' : '她会安静等你回来'}
+            {life.enabled ? '她会保留一点主动性' : '由你决定什么时候再聊'}
           </Text>
           <Text style={[styles.summaryText, { color: C.textSecondary }]}>
             当前提醒时间：{formatHour(life.notificationHour)}。主动问候{life.allowProactiveMessages ? '已开启' : '已关闭'}。
           </Text>
+          <Text accessibilityLiveRegion="polite" style={[styles.summaryText, { color: saveError ? C.danger : C.textSecondary }]}>{saveNotice}</Text>
+          {saveError && <TouchableOpacity accessibilityRole="button" accessibilityLabel="重试保存陪伴提醒" disabled={saving} onPress={() => void applyLifeUpdate({ enabled: life.enabled })} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Text style={{ color: C.primary, fontSize: 15 }}>重试保存与同步</Text>
+          </TouchableOpacity>}
         </View>
 
+        <View pointerEvents={saving ? 'none' : 'auto'} style={{ opacity: saving ? 0.6 : 1 }}>
         <SettingsSection title="陪伴节奏">
           <SettingsRow
             label="启用陪伴提醒"
+            disabled={saving}
             description="关闭后，她不会主动发起提醒。"
             value={life.enabled}
             onToggle={(v) => {
@@ -111,6 +144,7 @@ export default function LifeSettingsScreen({ navigation }: Props) {
           />
           <SettingsRow
             label="允许主动问候"
+            disabled={saving}
             description="她会在适合的时候给你一句轻提醒。"
             value={life.allowProactiveMessages}
             onToggle={(v) => {
@@ -119,6 +153,7 @@ export default function LifeSettingsScreen({ navigation }: Props) {
           />
           <SettingsRow
             label="后台轻提醒"
+            disabled={saving}
             description="离开聊天后，也可以保留温和提醒。"
             value={life.allowBackgroundMessages}
             onToggle={(v) => {
@@ -137,6 +172,10 @@ export default function LifeSettingsScreen({ navigation }: Props) {
               return (
                 <TouchableOpacity
                   key={hour}
+                  accessibilityRole="button"
+                  accessibilityLabel={`每天 ${formatHour(hour)} 提醒`}
+                  accessibilityState={{ selected, disabled: saving }}
+                  disabled={saving}
                   style={[
                     styles.timeChip,
                     isUrbanClear && styles.urbanTimeChip,
@@ -159,6 +198,7 @@ export default function LifeSettingsScreen({ navigation }: Props) {
             })}
           </View>
         </View>
+        </View>
 
         <TouchableOpacity
           style={[
@@ -168,8 +208,11 @@ export default function LifeSettingsScreen({ navigation }: Props) {
             { backgroundColor: C.primary, shadowColor: C.shadow },
           ]}
           onPress={handleSave}
+          disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel="完成陪伴提醒设置"
         >
-          <Text style={styles.saveBtnText}>保存陪伴设置</Text>
+          <Text style={styles.saveBtnText}>{saving ? '正在保存…' : '完成'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

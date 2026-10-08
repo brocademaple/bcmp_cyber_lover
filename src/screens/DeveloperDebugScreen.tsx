@@ -289,6 +289,8 @@ export default function DeveloperDebugScreen() {
           </Text>
         </View>
 
+        {selectedCharacter.luyaPersona && <Card title="鹿芽迁移前定义与用户覆盖"><CodeBlock content={JSON.stringify(selectedCharacter.luyaPersona, null, 2)} /></Card>}
+        {selectedCharacter.luyaRuntime && <Card title="鹿芽生活、房间与关系来源"><CodeBlock content={JSON.stringify(selectedCharacter.luyaRuntime, null, 2)} /></Card>}
         <View style={styles.characterRow}>
           {characters.map((character) => {
             const active = character.id === selectedCharacter.id;

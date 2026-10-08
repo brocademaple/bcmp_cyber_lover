@@ -1,3 +1,6 @@
+import { getDeepSeekRequestParams } from './deepseekRequest';
+import { LUYA_STATE_LABELS } from '../config/luyaPersona';
+import { collectLuyaStateEvidence } from './luyaStateEvidenceService';
 import { AdvancedConfig, Character, EmotionalState, Message, ServiceConfig } from '../types';
 import { PROVIDER_CONFIGS } from '../store/settingsStore';
 import { recentChronological } from '../utils/chatHistory';
@@ -75,14 +78,7 @@ const MOOD_META: Record<Mood, { homeLabel: string; bandLabel: string; fallbackSc
 };
 
 const CHARACTER_MOOD_LABELS: Record<string, Partial<Record<Mood, string>>> = {
-  qingning: {
-    neutral: '自然待机 · 甜甜待机',
-    happy: '开心营业 · 亮晶晶上扬',
-    sad: '安静陪着 · 声音放软',
-    tired: '低电量关心 · 零食毯子模式',
-    excited: '靠近一下 · 凑近屏幕',
-    angry: '坐着等你 · 嘴上哼哼',
-  },
+  qingning: LUYA_STATE_LABELS,
   sakura: {
     neutral: '自然待机 · 书页停在这里',
     happy: '开心营业 · 雨后微亮',
@@ -141,12 +137,6 @@ const MOOD_SIGNALS: Record<Mood, MoodSignal> = {
 };
 
 const CHARACTER_SIGNAL_PATTERNS: Record<string, Partial<Record<Mood, RegExp[]>>> = {
-  qingning: {
-    happy: [/零食开趴|甜甜|诶诶|笨蛋啦|分你一杯|双倍快乐/],
-    tired: [/芋泥|毯子|热可可|休息|慢点喝|别硬撑|零食毯子/],
-    excited: [/凑近|一起嘛|贴贴|黏着你|扑过来/],
-    angry: [/哼|嘴上|笨蛋|等你哄/],
-  },
   sakura: {
     neutral: [/书页|旧书店|慢慢讲|雨声/],
     happy: [/雨后|笑意|窗边|微亮/],
@@ -313,6 +303,7 @@ async function evaluateWithLlm(input: MoodJudgementInput): Promise<LlmCandidate 
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
+      ...getDeepSeekRequestParams(input.service),
       model,
       messages: buildMoodJudgePrompt(input),
       stream: false,
@@ -542,6 +533,18 @@ function evaluateLocal(input: MoodJudgementInput, llmCandidate: LlmCandidate | n
 }
 
 export async function evaluateMoodFromConversation(input: MoodJudgementInput): Promise<MoodJudgementResult> {
+  if (input.character.id === 'qingning') {
+    const current = input.character.emotionalState?.mood ?? 'neutral';
+    const evidence = collectLuyaStateEvidence(recentChronological(input.messages, 12));
+    const selfReports = evidence.filter(item => item.actor === 'luya' && item.mood);
+    const latest = selfReports[selfReports.length - 1];
+    const consistent = latest && selfReports.slice(-2).length === 2 && selfReports.slice(-2).every(item => item.mood === latest.mood);
+    const target = consistent ? latest.mood! : current;
+    return buildResult(input.character, current, target, MOOD_META[target].fallbackScore,
+      consistent ? '鹿芽有连续、明确的自身感受表达。' : '缺少鹿芽持续的自身状态证据，维持生活状态；用户与第三方处境不投影为角色心情。',
+      consistent ? 0.75 : 0.5,
+      evidence.slice(-3).map(item => `${item.actor} / ${item.kind} / ${item.sourceMessageIds.join(',')}: ${item.summary}`));
+  }
   let llmCandidate: LlmCandidate | null = null;
   try {
     llmCandidate = await evaluateWithLlm(input);

@@ -2,6 +2,8 @@
 
 一个以长期陪伴、稳定人设和本地记忆为核心的 AI 关系产品。
 
+当前对外体验先展示鹿芽；纪遥、凛夜及已有自定义角色保留在开发者模式，聊天、记忆和素材不删除。进入设置切换开发者模式即可继续调试。[PDF 经验与实施验收](./docs/alice-pdf-practical-playbook.zh.md)。
+
 <p align="center">
   <a href="https://brocademaple.github.io/bcmp_cyber_lover/">
     <img src="./docs/assets/cyberlover-home-hero-preview.webp" alt="心动伴侣 Cyberlover 鹿芽记忆墙首图" width="960" />
@@ -11,8 +13,8 @@
 <p align="center">
   <a href="https://brocademaple.github.io/bcmp_cyber_lover/"><img alt="GitHub Pages" src="https://img.shields.io/badge/GitHub%20Pages-在线展示-ff8ebd?style=for-the-badge&logo=github"></a>
   <a href="https://github.com/brocademaple/bcmp_cyber_lover"><img alt="Repository" src="https://img.shields.io/badge/Repo-bcmp__cyber__lover-3b2233?style=for-the-badge&logo=github"></a>
-  <img alt="Expo" src="https://img.shields.io/badge/Expo-54-5a3b4c?style=for-the-badge&logo=expo">
-  <img alt="React Native" src="https://img.shields.io/badge/React%20Native-0.81-f19ab8?style=for-the-badge&logo=react">
+  <img alt="Expo" src="https://img.shields.io/badge/Expo-57-5a3b4c?style=for-the-badge&logo=expo">
+  <img alt="React Native" src="https://img.shields.io/badge/React%20Native-0.86-f19ab8?style=for-the-badge&logo=react">
 </p>
 
 ## 现在的版本：V1.5
@@ -75,6 +77,14 @@ npx expo start
 npx expo start --android
 ```
 
+iPhone 真机预览（项目使用 Expo SDK 57）：
+
+```bash
+npx expo start --go --lan --port 8081
+```
+
+iPhone 和 Mac 连接同一 Wi-Fi，在 Expo Go 登录与电脑相同的 Expo 账号，再用系统相机扫描二维码。保留开发服务器运行；连接不通时可改用 `--tunnel`。桌面「鹿芽-iPhone体验.command」可快速启动。升级后直接重新扫码，不需要卸载应用或清除聊天数据。
+
 接入模型：
 
 1. 打开 app 的“设置 / 服务提供商”
@@ -90,7 +100,7 @@ npm run verify:deepseek-config
 npx expo start
 ```
 
-未保存过本机密钥时，应用会默认选择 DeepSeek、`deepseek-chat` 和 `https://api.deepseek.com/v1`；保存过服务配置后，以本机安全存储里的设置为准。
+未保存过本机密钥时，应用会默认选择 DeepSeek、`deepseek-flash` 和 `https://api.deepseek.com/v1`；保存过服务配置后，以本机安全存储里的设置为准。
 
 ## GitHub Pages 首图
 

@@ -1,4 +1,6 @@
 import { CharacterDiary, Message } from '../types';
+import type { LuyaLifeState } from '../types/luya';
+import { getLuyaLifeProjection, luyaDateKey } from './luyaLifeService';
 import { oldestFirst, recentChronological } from '../utils/chatHistory';
 
 function pad2(n: number): string {
@@ -31,9 +33,10 @@ export function getWeeklyKey(ts: number): string {
   return `${monday.getFullYear()}-W${pad2(week)}`;
 }
 
-export function buildDailyDiaryFromMessages(characterName: string, messages: Message[], now = Date.now()): CharacterDiary {
-  const todayKey = getDailyKey(now);
-  const todayMsgs = oldestFirst(messages.filter((m) => getDailyKey(m.timestamp) === todayKey));
+export function buildDailyDiaryFromMessages(characterName: string, messages: Message[], now = Date.now(), luyaLife?: LuyaLifeState): CharacterDiary {
+  const dateKey = luyaLife ? luyaDateKey : getDailyKey;
+  const todayKey = dateKey(now);
+  const todayMsgs = oldestFirst(messages.filter((m) => dateKey(m.timestamp) === todayKey && m.timestamp <= now));
   const userMsgs = recentChronological(todayMsgs.filter((m) => m.role === 'user'), 8);
   const aiMsgs = recentChronological(todayMsgs.filter((m) => m.role === 'assistant'), 4);
 
@@ -61,7 +64,7 @@ export function buildDailyDiaryFromMessages(characterName: string, messages: Mes
     period: 'daily',
     periodKey: todayKey,
     title: `${characterName}的日记 · ${todayKey}`,
-    content: lines.join('\n'),
+    content: [...(luyaLife ? ['我自己的生活（角色日程记录）：', ...getLuyaLifeProjection(luyaLife, now).facts.map(f => `- ${f}`), '对话记录：'] : []), ...lines].join('\n'),
     timestamp: now,
   };
 }

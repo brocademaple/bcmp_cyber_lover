@@ -48,7 +48,7 @@ export default function ThemeArtworkLayer({ variant, collapsed = false }: Props)
 
 const styles = StyleSheet.create({
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 3,
   },
   collapsedLayer: {

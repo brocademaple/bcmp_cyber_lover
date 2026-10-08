@@ -50,6 +50,7 @@ function isPortableStorageKey(key: string): boolean {
   return (
     key === SETTINGS_KEY ||
     key === CHARACTERS_KEY ||
+    key === '@bcmp_luya_pre_v2_characters' ||
     key === '@bcmp_onboardingCompleted' ||
     key.startsWith('@bcmp_chat_archives_') ||
     key.startsWith('@bcmp_character_revisions_v1_')

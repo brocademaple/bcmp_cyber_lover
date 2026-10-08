@@ -60,6 +60,9 @@
   ],
   "visualAssetRoots": [
     "assets/characters",
+    "assets/luya-art-v1",
+    "assets/luya-art-v2",
+    "assets/luya-ip-v1",
     "assets/memories",
     "assets/style",
     "docs/assets/characters",

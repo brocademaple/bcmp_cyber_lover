@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { LUYA_ART } from '../utils/luyaArt';
+import { getCharacterAvatarImage, getCharacterMainImage as getDisplayMainImage } from '../utils/characterDisplayImages';
+import ResilientImage from '../components/ResilientImage';
+import ExperienceSheet from '../components/ExperienceSheet';
+import { LUYA_RELATIONSHIP_LABELS } from '../services/luyaRelationshipService';
+import { recordAppIssue } from '../services/appDiagnostics';
+import { getLuyaLifeProjection } from '../services/luyaLifeService';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,12 +21,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RootStackParamList, Character, AppTheme, EmotionalState } from '../types';
 import { hydrateDefaultCharacterAssets, useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { resolveDefaultCharacterAssetKey } from '../utils/characterAssets';
+import { getDefaultCharacterAssetSet, resolveDefaultCharacterAssetKey } from '../utils/characterAssets';
+import { getVisibleCharacters } from '../utils/characterRelease';
 import { NOTO_SERIF_SC } from '../utils/appFonts';
 import { useThemeColors, useThemeId } from '../utils/theme';
 
@@ -39,12 +47,12 @@ const STATUS_OPTIONS: {
   frameIndex: number;
   mark: string;
 }[] = [
-  { id: 'main', label: '自然待机', detail: '回到她平时陪你的样子。', mood: 'neutral', frameIndex: 0, mark: '✦' },
-  { id: 'happy', label: '开心营业', detail: '让她用更明亮的状态迎接你。', mood: 'happy', frameIndex: 1, mark: '♡' },
+  { id: 'main', label: '自然日常', detail: '她有自己的生活，也愿意与你交流。', mood: 'neutral', frameIndex: 0, mark: '✦' },
+  { id: 'happy', label: '兴致不错', detail: '她自己的好心情。', mood: 'happy', frameIndex: 1, mark: '♡' },
   { id: 'soft', label: '安静陪着', detail: '少说一点，留一盏灯陪你。', mood: 'sad', frameIndex: 2, mark: '…' },
-  { id: 'low-energy', label: '低电量关心', detail: '适合累了、想被轻轻照顾的时候。', mood: 'tired', frameIndex: 3, mark: '☾' },
-  { id: 'near', label: '靠近一下', detail: '让她更主动地回应你的靠近。', mood: 'excited', frameIndex: 4, mark: '↗' },
-  { id: 'waiting', label: '坐着等你', detail: '她不催你，只在原地等你回来。', mood: 'angry', frameIndex: 5, mark: '⌛' },
+  { id: 'low-energy', label: '低电量', detail: '她需要收拢注意力，允许安静共处。', mood: 'tired', frameIndex: 3, mark: '☾' },
+  { id: 'near', label: '有些兴奋', detail: '想法活跃，不代表身体接触许可。', mood: 'excited', frameIndex: 4, mark: '↗' },
+  { id: 'waiting', label: '有些在意', detail: '放慢表达，把分歧说具体。', mood: 'angry', frameIndex: 5, mark: '⌛' },
 ];
 
 function getCharacterImageSource(imageUri: Character['imageUri']): ImageSourcePropType | undefined {
@@ -60,7 +68,7 @@ function getBundledFallbackImage(character?: Character): Character['imageUri'] |
 
 function getCharacterMainImage(character: Character): Character['imageUri'] {
   const hydrated = hydrateDefaultCharacterAssets(character);
-  return hydrated.assetSet?.main ?? hydrated.imageUri;
+  return getDisplayMainImage(hydrated);
 }
 
 function getCharacterIdleFrames(character?: Character): NonNullable<Character['imageUri']>[] {
@@ -84,7 +92,7 @@ function getCharacterStatusFrame(character?: Character, moodOverride?: Mood): Ch
 
 function getCharacterHeadshot(character: Character): Character['imageUri'] {
   const hydrated = hydrateDefaultCharacterAssets(character);
-  return hydrated.assetSet?.headshot ?? hydrated.assetSet?.avatar ?? getCharacterMainImage(hydrated);
+  return getCharacterAvatarImage(hydrated);
 }
 
 function getNextRenderableCharacterImage(
@@ -130,14 +138,12 @@ function isDarkColor(color: string) {
 
 const CHARACTER_STATUS_LINES: Record<string, StatusLineSet> = {
   qingning: {
-    neutral: [
-      '房间里有一点甜，她把今天的小事都留着。',
-    ],
-    happy: ['她笑得亮晶晶的，像刚把好消息藏进袖口。'],
-    sad: ['她把声音放软了一点，想先陪你慢慢缓过来。'],
-    tired: ['她把零食和毯子都备好，只催你先歇一下。'],
-    excited: ['她已经凑近屏幕，等你把今天的新鲜事讲完。'],
-    angry: ['她嘴上哼了一声，还是把你的位置留得好好的。'],
+    neutral: ['她在做自己的事，也可以一起聊聊。'],
+    happy: ['她今天兴致不错，话里带着轻快。'],
+    sad: ['她今天更安静，没有勉强把情绪说轻松。'],
+    tired: ['她正在收拢注意力，适合各做各的。'],
+    excited: ['她有些兴奋，想法比平常更活跃。'],
+    angry: ['她有些在意，暂时把话放慢了。'],
   },
   sakura: {
     neutral: [
@@ -176,6 +182,10 @@ const FALLBACK_STATUS_LINES: Record<Mood, string[]> = {
 
 function getCharacterStatusLine(character?: Character, mood: Mood = DEFAULT_HOME_MOOD, variantIndex = 0) {
   if (!character) return '今天也在等你回来。';
+  if (character.id === 'qingning' && character.luyaRuntime) {
+    const now = useSettingsStore.getState().settings.advanced.debugNowTs ?? Date.now();
+    return getLuyaLifeProjection(character.luyaRuntime.life, now).currentActivity;
+  }
   const characterLineKey = resolveDefaultCharacterAssetKey(character) ?? character.id;
   const customLines = CHARACTER_STATUS_LINES[characterLineKey];
   const moodLines = customLines?.[mood] ?? customLines?.neutral ?? FALLBACK_STATUS_LINES[mood] ?? FALLBACK_STATUS_LINES.neutral;
@@ -237,19 +247,29 @@ function CreateCard({ onPress, cardWidth }: { onPress: () => void; cardWidth: nu
 
 export default function HomeScreen({ navigation }: Props) {
   const C = useThemeColors();
+  const isFocused = useIsFocused();
   const themeId = useThemeId();
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
   const { width: winWidth, height: winHeight } = useWindowDimensions();
   const isLandscape = winWidth > winHeight;
 
-  const { characters, loadCharacters, updateEmotionalState } = useChatStore();
+  const { characters: allCharacters, loadCharacters, updateEmotionalState, ensureLuyaRuntime } = useChatStore();
   const { updateAdvanced, saveSettings, settings, setSelectedCharacter } = useSettingsStore();
+  const isAdmin = settings.appMode === 'admin';
+  const characters = useMemo(() => getVisibleCharacters(allCharacters, settings.appMode), [allCharacters, settings.appMode]);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [statusSavedNotice, setStatusSavedNotice] = useState<string | null>(null);
+  const statusSaveInFlight = useRef(false);
   const [statusModalCharacterId, setStatusModalCharacterId] = useState<string | null>(null);
   const [portraitIndex, setPortraitIndex] = useState(0);
   const [homeDisplayMood, setHomeDisplayMood] = useState<Mood>(DEFAULT_HOME_MOOD);
+  const [homeArtMode, setHomeArtMode] = useState<'life' | 'classic'>('life');
+  const [failedLifeArt, setFailedLifeArt] = useState<Record<string, boolean>>({});
+  const [, setLifeClockTick] = useState(0);
   const [statusLineSeed, setStatusLineSeed] = useState(0);
   const [optimisticStatus, setOptimisticStatus] = useState<{ characterId: string; mood: Mood } | null>(null);
   const [lastMoodEntry, setLastMoodEntry] = useState<{ characterId: string; mood: Mood; changedAt: number } | null>(null);
@@ -259,12 +279,18 @@ export default function HomeScreen({ navigation }: Props) {
   const imageRetryTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const idleImageOpacity = useRef(new Animated.Value(1)).current;
 
+  // Refresh the visual projection only; browsing art never writes character state.
+  useEffect(() => {
+    const timer = setInterval(() => setLifeClockTick(tick => tick + 1), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   // 横屏时卡片宽度：约 3 张可见，留出左右箭头空间
   const cardWidthLandscape = Math.min(winWidth * 0.28, 220);
   const carouselPadding = 48;
 
   useEffect(() => {
-    void loadCharacters();
+    void loadCharacters().catch(error => recordAppIssue('人物初始化', error, true));
   }, [loadCharacters]);
 
   useEffect(() => {
@@ -279,6 +305,10 @@ export default function HomeScreen({ navigation }: Props) {
       setPortraitIndex(selectedIndex);
     }
   }, [characters, portraitIndex, settings.selectedCharacterId]);
+
+  useFocusEffect(useCallback(() => {
+    void ensureLuyaRuntime(settings.advanced.debugNowTs ?? Date.now()).catch(error => recordAppIssue('生活状态恢复', error, true));
+  }, [ensureLuyaRuntime, settings.advanced.debugNowTs]));
 
   const handleOpenChat = (character: Character) => {
     persistSelectedCharacter(character.id);
@@ -330,39 +360,45 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const openStatusModal = (character: Character) => {
+    setStatusError(null);
     setStatusModalCharacterId(character.id);
     setShowStatusModal(true);
   };
 
   const closeStatusModal = () => {
+    if (statusSaveInFlight.current) return;
     setShowStatusModal(false);
     setStatusModalCharacterId(null);
   };
 
   const handleSelectStatus = async (mood: Mood) => {
     const targetCharacter = hydratedStatusModalCharacter ?? currentCharacter;
-    if (!targetCharacter) return;
+    if (!targetCharacter || statusSaveInFlight.current) return;
     const targetIndex = characters.findIndex((character) => character.id === targetCharacter.id);
-
-    idleImageOpacity.stopAnimation(() => {
-      idleImageOpacity.setValue(1);
-    });
-    if (targetIndex >= 0 && targetIndex !== portraitIndex) {
-      setPortraitIndex(targetIndex);
+    statusSaveInFlight.current = true;
+    setStatusSaving(true);
+    setStatusError(null);
+    try {
+      // Preserve the existing mood/interaction semantics, without changing art preference.
+      const changedAt = Date.now();
+      await updateEmotionalState(targetCharacter.id, { mood, lastInteraction: changedAt });
+      idleImageOpacity.stopAnimation(() => idleImageOpacity.setValue(1));
+      if (targetIndex >= 0 && targetIndex !== portraitIndex) setPortraitIndex(targetIndex);
+      persistSelectedCharacter(targetCharacter.id);
+      setOptimisticStatus({ characterId: targetCharacter.id, mood });
+      setHomeDisplayMood(mood);
+      setStatusLineSeed(0);
+      setLastMoodEntry({ characterId: targetCharacter.id, mood, changedAt });
+      setStatusSavedNotice(`这次聊聊：${getStatusOption(mood).label}`);
+      setShowStatusModal(false);
+      setStatusModalCharacterId(null);
+    } catch (error) {
+      setStatusError('这次聊天状态未能设置，请再试一次。原有状态和聊天记录会保留。');
+      void recordAppIssue('首页状态保存', error, true);
+    } finally {
+      statusSaveInFlight.current = false;
+      setStatusSaving(false);
     }
-    persistSelectedCharacter(targetCharacter.id);
-    setOptimisticStatus({ characterId: targetCharacter.id, mood });
-    setHomeDisplayMood(mood);
-    setStatusLineSeed(0);
-    closeStatusModal();
-
-    const changedAt = Date.now();
-    setLastMoodEntry({ characterId: targetCharacter.id, mood, changedAt });
-
-    await updateEmotionalState(targetCharacter.id, {
-      mood,
-      lastInteraction: changedAt,
-    });
   };
 
   const cardStep = cardWidthLandscape + CARD_SPACING;
@@ -452,7 +488,43 @@ export default function HomeScreen({ navigation }: Props) {
     ? getNextRenderableCharacterImage(currentCharacter, activeIdentityImage ?? bundledFallbackImage)
     : activeIdentityImage ?? bundledFallbackImage;
   const showHomeFallbackMark = Boolean(currentCharacter && failedImageKeys[activeImageKey]);
-  const showIdentityImage = Boolean(activeIdentitySource && !failedImageKeys[activeIdentityKey]);
+  const showIdentityImage = Boolean(activeIdentitySource);
+  const showLuyaHome = currentCharacter?.id === 'qingning' && !isAdmin;
+  const isWideLuyaHome = winWidth >= 920 || isLandscape;
+  const lifeNow = settings.advanced.debugNowTs ?? Date.now();
+  const luyaProjection = currentCharacter?.luyaRuntime
+    ? getLuyaLifeProjection(currentCharacter.luyaRuntime.life, lifeNow)
+    : undefined;
+  const lifeSlot = currentCharacter?.luyaRuntime && lifeNow >= currentCharacter.luyaRuntime.updatedAt
+    ? luyaProjection?.plan.slots.find(slot => slot.status === 'ongoing')
+    : undefined;
+  const isAtHome = lifeSlot?.locationType === 'home' || lifeSlot?.locationType === 'online_room';
+  const lifeSceneKey: 'focus' | 'reading' | 'rest' | undefined = !isAtHome
+    ? undefined
+    : lifeSlot?.activityType === 'project' || lifeSlot?.activityType === 'internship_prep'
+      ? 'focus'
+      : lifeSlot?.activityType === 'study'
+        ? 'reading'
+        : lifeSlot?.activityType === 'rest' ? 'rest' : undefined;
+  const showLifeScene = homeArtMode === 'life' && lifeSceneKey !== undefined && !failedLifeArt[lifeSceneKey];
+  const lifeSceneSource = showLifeScene && lifeSceneKey ? LUYA_ART[lifeSceneKey] : undefined;
+  const lifeSceneLabel = showLifeScene
+    ? lifeSceneKey === 'focus' ? '做一点自己的事' : lifeSceneKey === 'reading' ? '翻一会儿书' : '把节奏放慢'
+    : '此刻的鹿芽';
+  const defaultHomeAssets = currentCharacter ? getDefaultCharacterAssetSet(currentCharacter) : undefined;
+  const classicFallbackSources = [bundledFallbackImage, defaultHomeAssets?.main]
+    .map(getCharacterImageSource).filter(Boolean) as ImageSourcePropType[];
+  const avatarFallbackSources = [currentCharacter?.assetSet?.avatar, defaultHomeAssets?.headshot, defaultHomeAssets?.avatar]
+    .map(getCharacterImageSource).filter(Boolean) as ImageSourcePropType[];
+  const displayedArtSource = lifeSceneSource ?? getCharacterImageSource(activeIdleFrame ?? bundledFallbackImage);
+  const artFallbackExplanation = homeArtMode === 'life' && !showLifeScene
+    ? lifeSceneKey && failedLifeArt[lifeSceneKey]
+      ? '生活画面暂未加载，已展示经典立绘'
+      : '此刻暂无对应生活画面，先看看她的经典立绘'
+    : undefined;
+  const homeSceneWidth = Math.min(winWidth - 24, 1100);
+
+
 
   const clearImageFailed = useCallback((key: string) => {
     const timer = imageRetryTimers.current[key];
@@ -495,6 +567,8 @@ export default function HomeScreen({ navigation }: Props) {
     setStatusLineSeed(0);
     setOptimisticStatus(null);
     setLastMoodEntry(null);
+    setFailedLifeArt({});
+    setStatusSavedNotice(null);
     setShowStatusModal(false);
     setStatusModalCharacterId(null);
     idleImageOpacity.setValue(1);
@@ -534,8 +608,107 @@ export default function HomeScreen({ navigation }: Props) {
         backgroundColor={C.background}
       />
 
+      {showLuyaHome && currentCharacter && (
+        <View style={styles.luyaHomeStage}>
+          <View style={[styles.luyaScene, { width: homeSceneWidth, backgroundColor: C.inputBg }]}>
+            {/* The background extends landscape art; the clear foreground preserves the complete composition. */}
+            {displayedArtSource && (
+              <ResilientImage source={displayedArtSource} fallbackSources={classicFallbackSources}
+                retryKey={Number(isFocused)} style={styles.luyaSceneBackdrop} resizeMode="cover" blurRadius={24}
+                accessible={false} accessibilityElementsHidden importantForAccessibility="no" />
+            )}
+            <View style={[styles.luyaSceneArtArea, isWideLuyaHome && styles.luyaSceneArtAreaWide]}>
+              <ResilientImage key={`home-art-${homeArtMode}-${lifeSceneKey ?? 'portrait'}-${activeDisplayMood}`}
+                source={displayedArtSource} fallbackSources={classicFallbackSources}
+                retryKey={Number(isFocused)} style={styles.luyaArtImage} resizeMode="contain"
+                accessibilityLabel={showLifeScene ? `鹿芽生活插画：${lifeSceneLabel}` : `鹿芽经典立绘：${getMoodLabel(currentCharacter, activeDisplayMood)}`}
+                onError={() => { if (showLifeScene && lifeSceneKey) setFailedLifeArt(current => ({ ...current, [lifeSceneKey]: true })); }} />
+            </View>
+            <View style={styles.luyaFloatingHeader}>
+              <TouchableOpacity onPress={() => handleOpenProfile(currentCharacter)} activeOpacity={0.8}
+                accessibilityRole="button" accessibilityLabel="查看鹿芽档案"
+                style={[styles.luyaHomeIdentity, { backgroundColor: C.surface, borderColor: C.border }]}>
+                <ResilientImage source={getCharacterImageSource(activeIdentityImage)} fallbackSources={avatarFallbackSources}
+                  retryKey={Number(isFocused)} style={styles.luyaHomeAvatar} resizeMode="cover" accessibilityLabel="鹿芽头像" />
+                <View>
+                  <Text style={[styles.luyaHomeName, { color: C.text }]}>{currentCharacter.name}</Text>
+                  <Text style={[styles.luyaHomeRelationship, { color: C.textSecondary }]}>{LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor']}</Text>
+                </View>
+                <Text style={[styles.luyaIdentityArrow, { color: C.textSecondary }]}>›</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.luyaSettingsButton, { backgroundColor: C.surface, borderColor: C.border }]}
+                onPress={() => navigation.navigate('Settings')} accessibilityRole="button" accessibilityLabel="打开设置">
+                <Text style={[styles.glassIconText, { color: C.text }]}>⚙</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.luyaModeToolbar, isWideLuyaHome && styles.luyaModeToolbarWide]}>
+              <View style={[styles.luyaArtSwitch, { backgroundColor: C.surface, borderColor: C.border }]}>
+                {(['life', 'classic'] as const).map(mode => {
+                  const selected = mode === 'life' ? showLifeScene : !showLifeScene;
+                  return (
+                    <TouchableOpacity key={mode} accessibilityRole="button"
+                      accessibilityLabel={mode === 'life' ? '展示当前生活画面' : '展示经典立绘'}
+                      accessibilityState={{ selected }}
+                      onPress={() => { setHomeArtMode(mode); if (mode === 'life') setFailedLifeArt({}); }}
+                      style={[styles.luyaArtSwitchOption, selected && { backgroundColor: C.primaryLight + '35' }]}>
+                      <Text style={[styles.luyaArtSwitchText, { color: selected ? C.text : C.textSecondary }]}>{mode === 'life' ? '生活画面' : '经典立绘'}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {artFallbackExplanation && <Text style={[styles.luyaArtExplanation, { color: C.textSecondary, backgroundColor: C.surface }]}>{artFallbackExplanation}</Text>}
+            </View>
+            <View style={[styles.luyaFloatingDock, isWideLuyaHome && styles.luyaFloatingDockWide,
+              { backgroundColor: C.surface, borderColor: C.border }]}>
+              <View style={styles.luyaNowHeading}>
+                <View style={styles.luyaActivityCopy}>
+                  <Text style={[styles.luyaArtCaption, { color: C.textSecondary }]}>{lifeSceneLabel}</Text>
+                  <Text style={[styles.luyaActivityText, { color: C.text }]} numberOfLines={2}>{luyaProjection?.currentActivity ?? '她有自己的生活，也愿意与你交流。'}</Text>
+                </View>
+                <TouchableOpacity style={[styles.luyaMoodButton, { backgroundColor: C.inputBg, borderColor: C.border }]}
+                  accessibilityRole="button" accessibilityLabel={`当前状态：${getStatusOption(activeDisplayMood).label}，调整状态`}
+                  onPress={() => openStatusModal(currentCharacter)} activeOpacity={0.8}>
+                  <Text style={[styles.luyaMoodLabel, { color: C.textSecondary }]}>当前状态</Text>
+                  <Text style={[styles.luyaMoodButtonText, { color: C.text }]}>{getStatusOption(activeDisplayMood).label} · 调整⌄</Text>
+                </TouchableOpacity>
+              </View>
+              {statusSavedNotice && <Text accessibilityLiveRegion="polite" style={[styles.luyaSavedNotice, { color: C.textSecondary }]}>{statusSavedNotice}</Text>}
+              <TouchableOpacity style={[styles.luyaChatButton, { backgroundColor: C.primary }]}
+                onPress={() => handleOpenChat(currentCharacter)} accessibilityRole="button" accessibilityLabel="和鹿芽聊聊" activeOpacity={0.86}>
+                <Text style={styles.luyaChatButtonText}>和她聊聊</Text><Text style={styles.luyaChatButtonArrow}>↗</Text>
+              </TouchableOpacity>
+              <View style={styles.luyaHomeLinks}>
+                <TouchableOpacity style={[styles.luyaHomeLink, { backgroundColor: C.inputBg, borderColor: C.border }]}
+                  onPress={() => navigation.navigate('LuyaRoom')} accessibilityRole="button" activeOpacity={0.78}>
+                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>⌂  共同房间</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.luyaHomeLink, { backgroundColor: C.inputBg, borderColor: C.border }]}
+                  onPress={() => navigation.navigate('LuyaUnderstanding')} accessibilityRole="button" activeOpacity={0.78}>
+                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>♡  怎样理解我</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.luyaSecondaryLinks}>
+                <TouchableOpacity onPress={() => handleOpenMemory(currentCharacter)} accessibilityRole="button" activeOpacity={0.78}
+                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
+                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>▧</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>故事与漫画</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleOpenProfile(currentCharacter)} accessibilityRole="button" activeOpacity={0.78}
+                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
+                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>♧</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>人物档案</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { persistSelectedCharacter(currentCharacter.id); navigation.navigate('LifeSettings'); }}
+                  accessibilityRole="button" activeOpacity={0.78}
+                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
+                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>◷</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>提醒</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* 竖屏：单角色大图 + 名字 + 性格词 + 左右箭头 */}
-      {!isLandscape && (
+      {!showLuyaHome && !isLandscape && (
         <View style={[styles.spaceContainer, { backgroundColor: C.background }]}>
           {currentCharacter && (
             <Text
@@ -625,7 +798,7 @@ export default function HomeScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
+          {characters.length > 1 && <TouchableOpacity
             style={[
               styles.spaceArrowBtn,
               isUrbanClear && styles.urbanArrowBtn,
@@ -635,9 +808,9 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => selectPortraitIndex(portraitIndex - 1)}
           >
             <Text style={[styles.spaceArrowText, { color: C.text }]}>‹</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
-          <TouchableOpacity
+          {characters.length > 1 && <TouchableOpacity
             style={[
               styles.spaceArrowBtn,
               isUrbanClear && styles.urbanArrowBtn,
@@ -647,7 +820,7 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => selectPortraitIndex(portraitIndex + 1)}
           >
             <Text style={[styles.spaceArrowText, { color: C.text }]}>›</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
           <View style={styles.spaceDock}>
             <View
@@ -669,7 +842,7 @@ export default function HomeScreen({ navigation }: Props) {
                     style={[styles.statusSelector, { borderColor: C.border, backgroundColor: C.inputBg }]}
                   >
                     <Text style={[styles.statusValue, { color: C.text }]} numberOfLines={1}>
-                      {getMoodLabel(currentCharacter, activeDisplayMood)} · {intimacyValue}%
+                      {currentCharacter.id === 'qingning' && !isAdmin ? LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor'] : `${getMoodLabel(currentCharacter, activeDisplayMood)} · ${intimacyValue}%`}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -681,7 +854,7 @@ export default function HomeScreen({ navigation }: Props) {
 
               {currentCharacter && (
                 <>
-                  <View style={styles.progressTrack}>
+                  {(isAdmin || currentCharacter.id !== 'qingning') && <View style={styles.progressTrack}>
                     <View style={[styles.progressRail, { backgroundColor: C.border }]}>
                       <View style={[styles.progressFill, { width: `${intimacyPercent}%`, backgroundColor: C.primary }]} />
                     </View>
@@ -700,8 +873,10 @@ export default function HomeScreen({ navigation }: Props) {
                     >
                       ♡
                     </Text>
-                  </View>
+                  </View>}
                   <View style={styles.contextActions}>
+                    {currentCharacter.id === 'qingning' && <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>共同房间</Text></TouchableOpacity>}
+                    {currentCharacter.id === 'qingning' && <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaUnderstanding')}><Text style={[styles.contextActionText, { color: C.primary }]}>怎样理解我</Text></TouchableOpacity>}
                     <TouchableOpacity
                       style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]}
                       onPress={() => handleOpenProfile(currentCharacter)}
@@ -714,7 +889,7 @@ export default function HomeScreen({ navigation }: Props) {
                       onPress={() => handleOpenMemory(currentCharacter)}
                       activeOpacity={0.76}
                     >
-                      <Text style={[styles.contextActionText, { color: C.primary }]}>记忆漫画</Text>
+                      <Text style={[styles.contextActionText, { color: C.primary }]}>故事与漫画</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]}
@@ -764,9 +939,22 @@ export default function HomeScreen({ navigation }: Props) {
       )}
 
       {/* 横屏：横向轮播（人设图 + 名字 + 性格词）+ 左右箭头 + 末尾创建新角色 */}
-      {isLandscape && (
+      {!showLuyaHome && isLandscape && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
+          <Text style={[styles.spaceBrand, { color: C.text }]}>心动伴侣</Text>
+          <TouchableOpacity
+            style={[styles.glassIconBtn, { backgroundColor: C.surface, borderColor: C.border }]}
+            onPress={() => navigation.navigate('Settings')}
+            accessibilityRole="button"
+            accessibilityLabel="打开设置"
+          >
+            <Text style={[styles.glassIconText, { color: C.text }]}>⚙</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!showLuyaHome && isLandscape && (
         <View style={styles.carouselContainer}>
-          <TouchableOpacity style={[styles.arrowBtnLandscape, { left: 12 }]} onPress={scrollToPrev}>
+          <TouchableOpacity disabled={characters.length < 2} style={[styles.arrowBtnLandscape, { left: 12, opacity: characters.length > 1 ? 1 : 0 }]} onPress={scrollToPrev}>
             <Text style={[styles.arrowText, { color: C.text }]}>‹</Text>
           </TouchableOpacity>
 
@@ -777,6 +965,7 @@ export default function HomeScreen({ navigation }: Props) {
             contentContainerStyle={[
               styles.carousel,
               { paddingHorizontal: carouselPadding },
+              characters.length === 1 && !isAdmin && { flexGrow: 1, justifyContent: 'center' },
             ]}
             snapToInterval={cardWidthLandscape + CARD_SPACING}
             decelerationRate="fast"
@@ -794,12 +983,22 @@ export default function HomeScreen({ navigation }: Props) {
                 />
               </View>
             ))}
-            <CreateCard cardWidth={cardWidthLandscape} onPress={() => navigation.navigate('CharacterEditor', {})} />
+            {isAdmin && <CreateCard cardWidth={cardWidthLandscape} onPress={() => navigation.navigate('CharacterEditor', {})} />}
           </ScrollView>
 
-          <TouchableOpacity style={[styles.arrowBtnLandscape, { right: 12 }]} onPress={scrollToNext}>
+          <TouchableOpacity disabled={characters.length < 2} style={[styles.arrowBtnLandscape, { right: 12, opacity: characters.length > 1 ? 1 : 0 }]} onPress={scrollToNext}>
             <Text style={[styles.arrowText, { color: C.text }]}>›</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {!showLuyaHome && isLandscape && currentCharacter?.id === 'qingning' && (
+        <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 18, gap: 10 }}>
+          <Text style={{ color: C.textSecondary, textAlign: 'center' }}>{LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor']} · {luyaProjection?.currentActivity ?? '慢慢认识彼此'}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
+            <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>共同房间</Text></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaUnderstanding')}><Text style={[styles.contextActionText, { color: C.primary }]}>怎样理解我</Text></TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -823,64 +1022,85 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
       </Modal>
 
-      <Modal visible={showStatusModal} transparent animationType="fade" onRequestClose={closeStatusModal}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeStatusModal}>
-          <View style={[styles.statusModalContent, { backgroundColor: C.surface, borderColor: C.border }]}>
-            <Text style={[styles.modalTitle, { color: C.text }]}>切换她现在的状态</Text>
-            <Text style={[styles.statusModalLead, { color: C.textSecondary }]}>
-              这个状态会同步到她的心情，并切换首页人物图。
-            </Text>
-            {hydratedStatusModalCharacter && STATUS_OPTIONS.map((option) => {
-              const frames = getCharacterIdleFrames(hydratedStatusModalCharacter);
-              const preview = frames[option.frameIndex] ?? frames[0];
-              const modalActiveMood =
-                hydratedStatusModalCharacter.id === currentCharacter?.id
-                  ? activeDisplayMood
-                  : modalOptimisticMood ?? DEFAULT_HOME_MOOD;
-              const modalActiveOption = getStatusOption(modalActiveMood);
-              const active = option.mood === modalActiveOption.mood;
-              return (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.statusOption,
-                    { borderColor: active ? C.primary : C.border, backgroundColor: active ? C.primaryLight + '24' : C.inputBg },
-                  ]}
-                  onPress={() => handleSelectStatus(option.mood)}
-                  activeOpacity={0.84}
-                >
-                  {preview ? (
-                    <Image source={getCharacterImageSource(preview)} style={styles.statusPreview} resizeMode="cover" />
-                  ) : (
-                    <Text style={[styles.statusOptionMark, { color: C.primary }]}>{option.mark}</Text>
-                  )}
-                  <View style={styles.statusOptionCopy}>
-                    <Text style={[styles.statusOptionTitle, { color: C.text }]}>{option.label}</Text>
-                    <Text style={[styles.statusOptionDetail, { color: C.textSecondary }]} numberOfLines={1}>
-                      {option.detail}
-                    </Text>
-                  </View>
-                  <Text style={[styles.statusOptionCheck, { color: active ? C.primary : C.textSecondary }]}>
-                    {active ? '✓' : option.mark}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      <ExperienceSheet visible={showStatusModal} title="调整这次聊聊的状态" onClose={closeStatusModal}
+        subtitle="选择会记录这次互动。5 分钟内进入聊天会带入该状态；重新打开时，鹿芽的状态会按生活日程恢复。画面模式和历史消息保持原样。">
+        {statusError && <Text accessibilityLiveRegion="polite" style={[styles.statusSaveFeedback, { color: C.text }]}>{statusError}</Text>}
+        {statusSaving && <Text accessibilityLiveRegion="polite" style={[styles.statusSaveFeedback, { color: C.textSecondary }]}>正在设置这次聊天状态…</Text>}
+        {hydratedStatusModalCharacter && STATUS_OPTIONS.map((option) => {
+          const frames = getCharacterIdleFrames(hydratedStatusModalCharacter);
+          const preview = frames[option.frameIndex] ?? frames[0];
+          const modalActiveMood = hydratedStatusModalCharacter.id === currentCharacter?.id
+            ? activeDisplayMood : modalOptimisticMood ?? hydratedStatusModalCharacter.emotionalState?.mood ?? DEFAULT_HOME_MOOD;
+          const active = option.mood === getStatusOption(modalActiveMood).mood;
+          return (
+            <TouchableOpacity key={option.id} style={[styles.statusOption,
+              { borderColor: active ? C.primary : C.border, backgroundColor: active ? C.primaryLight + '24' : C.inputBg, opacity: statusSaving ? 0.6 : 1 }]}
+              accessibilityRole="button" accessibilityLabel={`设置这次聊天状态：${option.label}`} accessibilityState={{ selected: active, disabled: statusSaving }}
+              disabled={statusSaving} onPress={() => { void handleSelectStatus(option.mood); }} activeOpacity={0.84}>
+              <ResilientImage source={getCharacterImageSource(preview)} fallbackSources={classicFallbackSources} style={styles.statusPreview} resizeMode="contain" />
+              <View style={styles.statusOptionCopy}>
+                <Text style={[styles.statusOptionTitle, { color: C.text }]}>{option.label}</Text>
+                <Text style={[styles.statusOptionDetail, { color: C.textSecondary }]}>{option.detail}</Text>
+              </View>
+              <Text style={[styles.statusOptionCheck, { color: active ? C.primary : C.textSecondary }]}>{active ? '✓' : option.mark}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ExperienceSheet>
+
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  luyaHomeStage: { flex: 1, alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
+  luyaScene: { flex: 1, maxWidth: 1100, borderRadius: 28, overflow: 'hidden', position: 'relative' },
+  luyaSceneBackdrop: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', opacity: 0.3 },
+  luyaSceneArtArea: { position: 'absolute', top: 112, bottom: 264, left: 4, right: 4 },
+  luyaSceneArtAreaWide: { top: 124, bottom: 16, left: 0, right: '40%' },
+  luyaArtImage: { width: '100%', height: '100%' },
+  luyaFloatingHeader: { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  luyaHomeIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth },
+  luyaHomeAvatar: { width: 44, height: 44, borderRadius: 22 },
+  luyaHomeName: { fontFamily: NOTO_SERIF_SC.bold, fontSize: 20, lineHeight: 27 },
+  luyaHomeRelationship: { fontSize: 12, lineHeight: 18 },
+  luyaIdentityArrow: { fontSize: 24, paddingLeft: 8 },
+  luyaSettingsButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 18, borderWidth: StyleSheet.hairlineWidth },
+  luyaModeToolbar: { position: 'absolute', top: 82, left: 14, right: 14, gap: 6, alignItems: 'flex-start' },
+  luyaModeToolbarWide: { top: 14, left: '27%', right: '42%' },
+  luyaArtSwitch: { flexDirection: 'row', borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, padding: 3 },
+  luyaArtSwitchOption: { minHeight: 44, paddingHorizontal: 14, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  luyaArtSwitchText: { fontSize: 13, fontWeight: '600' },
+  luyaArtExplanation: { fontSize: 12, lineHeight: 18, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  luyaFloatingDock: { position: 'absolute', bottom: 12, left: 12, right: 12, padding: 12, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, gap: 8 },
+  luyaFloatingDockWide: { left: '61%', right: 20, bottom: 14, padding: 12, gap: 8 },
+  luyaNowHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  luyaActivityCopy: { flex: 1, gap: 3 },
+  luyaArtCaption: { fontSize: 12, lineHeight: 18 },
+  luyaActivityText: { fontFamily: NOTO_SERIF_SC.regular, fontSize: 13, lineHeight: 20 },
+  luyaMoodButton: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, minHeight: 48, justifyContent: 'center', gap: 2 },
+  luyaMoodLabel: { fontSize: 11, lineHeight: 15 },
+  luyaMoodButtonText: { fontSize: 12, lineHeight: 18, fontWeight: '600' },
+  luyaSavedNotice: { fontSize: 12, lineHeight: 18 },
+  luyaChatButton: { minHeight: 50, borderRadius: 16, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  luyaChatButtonText: { color: '#fff', fontFamily: NOTO_SERIF_SC.bold, fontSize: 16 },
+  luyaChatButtonArrow: { color: '#fff', fontSize: 23 },
+  luyaHomeLinks: { flexDirection: 'row', gap: 8 },
+  luyaHomeLink: { flex: 1, minWidth: 0, paddingVertical: 8, paddingHorizontal: 10, minHeight: 44, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
+  luyaHomeLinkTitle: { fontSize: 13, fontWeight: '600', flexShrink: 1 },
+  luyaHomeLinkArrow: { fontSize: 20 },
+  luyaSecondaryLinks: { flexDirection: 'row', gap: 6 },
+  luyaSecondaryLink: { flex: 1, minWidth: 0, minHeight: 52, paddingVertical: 6, paddingHorizontal: 4, borderWidth: StyleSheet.hairlineWidth, borderRadius: 13, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  luyaSecondaryMark: { fontSize: 17, lineHeight: 19 },
+  luyaSecondaryLinkText: { fontSize: 12, lineHeight: 17, fontWeight: '500' },
+  statusSaveFeedback: { fontSize: 14, lineHeight: 22, paddingVertical: 8 },
   container: { flex: 1 },
   spaceContainer: {
     flex: 1,
     overflow: 'hidden',
   },
   spaceSingleImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
     zIndex: 3,
@@ -895,7 +1115,7 @@ const styles = StyleSheet.create({
     fontSize: 96,
   },
   spaceShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 4,
   },
   spaceTopBar: {
@@ -947,7 +1167,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.72)',
   },
   identityAvatarImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: 34,
     height: 34,
     borderRadius: 17,

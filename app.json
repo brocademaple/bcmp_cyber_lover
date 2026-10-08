@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#241126"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bcmp.cyberlover",
@@ -29,7 +24,9 @@
         "INTERNET",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -43,7 +40,26 @@
         }
       ],
       "expo-notifications",
-      "expo-sqlite"
-    ]
+      "expo-sqlite",
+      "expo-image",
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#241126",
+          "enableFullScreenImage_legacy": true
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b7587128-89d1-4efe-b68e-65579b44149e"
+      }
+    },
+    "owner": "brocademaple"
   }
 }

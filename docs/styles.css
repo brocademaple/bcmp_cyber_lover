@@ -962,3 +962,6 @@ html[data-theme="softSweet"] .concept-frame {
     display: grid;
   }
 }
+
+/* Single-character public showcase; the complete asset library stays bundled. */
+.asset-grid.asset-grid-single { grid-template-columns: minmax(0, 1fr); }

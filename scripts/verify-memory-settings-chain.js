@@ -71,10 +71,11 @@ function message(id, role, content, timestamp) {
 
 function createCharacter(memoryCount = 10) {
   return {
-    id: 'qingning',
-    name: '鹿芽',
+    // Generic memory settings use LLM extraction. Luya has a separate confirmed-evidence path.
+    id: 'custom_memory_settings_fixture',
+    name: '记忆设置测试角色',
     avatar: '🦌',
-    systemPrompt: '你是鹿芽。',
+    systemPrompt: '你是记忆设置测试角色。',
     greeting: '嗨。',
     personality: '元气',
     memories: Array.from({ length: memoryCount }, (_, index) => ({
@@ -174,6 +175,15 @@ async function main() {
   const servicePath = path.join(projectRoot, 'src/services/memoryDecisionService.ts');
   const { evaluateMemoryDecisionAfterReply } = loadTsModule(servicePath);
   const checks = [];
+
+  const luyaCharacter = { ...createCharacter(), id: 'qingning', name: '鹿芽' };
+  const luyaFetch = installMockFetch();
+  try {
+    const implicit = await evaluateMemoryDecisionAfterReply(createInput({ character: luyaCharacter, userMessage: message('luya_share', 'user', '今天路上看到一块旧招牌', 2000), memory: createMemory({ autoSummarize: true, autoSummarizeTrigger: 'during' }), service: { provider: 'custom', baseUrl: 'https://mock.local/v1', apiKey: 'debug-key', model: 'mock-model' } }));
+    const explicit = await evaluateMemoryDecisionAfterReply(createInput({ character: luyaCharacter, userMessage: message('luya_direct', 'user', '帮我记住，我喜欢抹茶拿铁', 2000) }));
+    checks.push(['鹿芽的普通分享不会绕过可见确认生成记忆', implicit.action === 'none' && luyaFetch.requests.length === 0]);
+    checks.push(['鹿芽仍能处理用户明确要求记住的事实', explicit.action === 'save']);
+  } finally { luyaFetch.restore(); }
 
   const noAutoCandidate = await evaluateMemoryDecisionAfterReply(createInput());
   checks.push(['自动总结关闭时，普通候选不会弹窗', noAutoCandidate.action === 'none']);

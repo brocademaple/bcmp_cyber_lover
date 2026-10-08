@@ -25,7 +25,13 @@ function loadTsModule(filePath, requireStub) {
   const module = { exports };
   const wrapped = Module.wrap(compiled);
   const script = new vm.Script(wrapped, { filename: filePath });
-  script.runInThisContext()(exports, requireStub, module, filePath, path.dirname(filePath));
+  const localRequire = (request) => {
+    const dependency = path.resolve(path.dirname(filePath), `${request}.ts`);
+    // Resolve new pure Luya modules through the same TypeScript loader.
+    if (request.startsWith('.') && /(?:luya|Luya|chatHistory|deepseekRequest)/.test(request) && fs.existsSync(dependency)) return loadTsModule(dependency, requireStub);
+    return requireStub(request);
+  };
+  script.runInThisContext()(exports, localRequire, module, filePath, path.dirname(filePath));
   return module.exports;
 }
 

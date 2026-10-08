@@ -1,3 +1,7 @@
+import { resolveLuyaRoomFromDialogue } from '../services/luyaRoomService';
+import { applyLuyaUserTurn } from '../services/luyaRelationshipService';
+import { processLuyaUnderstandingTurn, observeLuyaSharing, getUnderstandingCards, decideUnderstanding } from '../services/luyaUnderstandingService';
+import LuyaUnderstandingCard from '../components/LuyaUnderstandingCard';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -9,8 +13,7 @@ import {
   Platform,
   StatusBar,
   useColorScheme,
-  Image,
-  ImageBackground,
+  ImageSourcePropType,
   InteractionManager,
   ScrollView,
 } from 'react-native';
@@ -26,6 +29,10 @@ import {
   DebugRequestItem,
 } from '../types';
 import { useChatStore } from '../store/chatStore';
+import ResilientImage from '../components/ResilientImage';
+import { getDefaultCharacterAssetSet } from '../utils/characterAssets';
+import { getCharacterAvatarImage, getCharacterMainImage } from '../utils/characterDisplayImages';
+import { useIsFocused } from '@react-navigation/native';
 import { useSettingsStore } from '../store/settingsStore';
 import { useDebugStore } from '../store/debugStore';
 import {
@@ -67,9 +74,9 @@ function genId() {
   return `msg_${++msgIdCounter}`;
 }
 
-function getImageSource(source?: Character['imageUri']) {
+function getImageSource(source?: Character['imageUri']): ImageSourcePropType | null {
   if (source == null) return null;
-  return typeof source === 'number' ? source : { uri: source };
+  return typeof source === 'string' ? { uri: source } : source;
 }
 
 const QUICK_REPLIES = [
@@ -123,6 +130,7 @@ function buildDisplayMessages(chatMessages: Message[], moodEntryMessage: Message
 export default function ChatScreen({ route, navigation }: Props) {
   const { characterId, autoGreet, moodEntry } = route.params;
   const C = useThemeColors();
+  const isFocused = useIsFocused();
   const themeId = useThemeId();
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
@@ -308,6 +316,21 @@ export default function ChatScreen({ route, navigation }: Props) {
         if (!next) continue;
 
         const latestSettings = settingsRef.current;
+        if (next.characterId === 'qingning') {
+          try {
+          await useChatStore.getState().ensureLuyaRuntime(latestSettings.advanced.debugNowTs ?? Date.now());
+          await useChatStore.getState().updateLuyaRuntime((runtime) => ({
+            ...applyLuyaUserTurn(runtime, next.userMsg, useChatStore.getState().messages[next.characterId] ?? []),
+            understandings: processLuyaUnderstandingTurn(runtime.understandings, next.userMsg),
+            understandingObservations: observeLuyaSharing(runtime.understandingObservations, next.userMsg),
+          }));
+          } catch (error) {
+            await recordAppIssue('回复前状态保存', error, false);
+            await updateMessage(next.characterId, next.userMsg.id, { status: 'failed', errorMessage: '状态未能保存，请重试。' });
+            setDeliveryIssue({ messageId: next.userMsg.id, text: next.userMsg.content, imageUri: next.userMsg.imageUri });
+            continue;
+          }
+        }
         const latestCharacter = useChatStore.getState().getCharacter(next.characterId) ?? characterRef.current;
         if (!latestCharacter) continue;
 
@@ -361,6 +384,9 @@ export default function ChatScreen({ route, navigation }: Props) {
         let affinityDelta = 0;
 
         try {
+          if (latestCharacter.luyaRuntime && (latestSettings.advanced.debugNowTs ?? Date.now()) < latestCharacter.luyaRuntime.updatedAt) {
+            throw new Error('模拟时间早于已保存的生活记录，请在设置恢复到记录时间之后再发送；历史数据未改动。');
+          }
           const requestController = new AbortController();
           activeRequestControllerRef.current = requestController;
           const debugSnapshot = buildPromptDebugSnapshot({
@@ -409,6 +435,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           );
           setDeliveryIssue(null);
 
+          try {
+          if (next.characterId === 'qingning') await useChatStore.getState().updateLuyaRuntime((runtime) => ({
+            ...resolveLuyaRoomFromDialogue(runtime, next.userMsg, aiMsg),
+            understandings: processLuyaUnderstandingTurn(runtime.understandings, next.userMsg, aiMsg),
+          }));
           const now = latestSettings.advanced.debugNowTs ?? Date.now();
           affinityDelta = calculateAffinityDelta(latestCharacter, next.userMsg.content);
           emotionBefore = latestCharacter.emotionalState;
@@ -476,6 +507,9 @@ export default function ChatScreen({ route, navigation }: Props) {
             memoryDecisionDetail: formatMemoryDecisionDetail(memoryDecision),
             assistantText: aiMsg.content,
           });
+          } catch (postError) {
+            await recordAppIssue('回复后状态整理', postError, false);
+          }
         } catch (err: unknown) {
           const errorMsg = err instanceof Error ? err.message : '服务暂时没有连接好';
           if (!isMountedRef.current && activeRequestControllerRef.current?.signal.aborted) {
@@ -539,6 +573,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   // Auto-send AI daily greeting when opened from notification
   useEffect(() => {
     if (!autoGreet || !character || autoGreetSentRef.current) return;
+    if (!settingsRef.current.life.enabled || !settingsRef.current.life.allowProactiveMessages || character.luyaRuntime?.boundaries.quietUntilNextUserTurn) return;
     if (!settingsRef.current.service.apiKey) return;
     autoGreetSentRef.current = true;
 
@@ -551,8 +586,10 @@ export default function ChatScreen({ route, navigation }: Props) {
       setStreamingContent('');
 
       try {
+        if (characterId === 'qingning') await useChatStore.getState().ensureLuyaRuntime(getEffectiveNow());
+        const liveCharacter = useChatStore.getState().getCharacter(characterId) ?? character;
         const greeting = await generateDailyGreeting(
-          character,
+          liveCharacter,
           latestSettings.service,
           latestSettings.advanced,
           getEffectiveNow()
@@ -810,14 +847,14 @@ export default function ChatScreen({ route, navigation }: Props) {
     );
   }
 
-  const backgroundImage = character.assetSet?.main ?? character.imageUri;
-  const identityImage = character.assetSet?.headshot ?? character.assetSet?.avatar ?? backgroundImage;
-  const backgroundSource =
-    backgroundImage != null
-      ? typeof backgroundImage === 'number'
-        ? backgroundImage
-        : { uri: backgroundImage }
-      : null;
+  const backgroundImage = getCharacterMainImage(character);
+  const identityImage = getCharacterAvatarImage(character);
+  const backgroundSource = getImageSource(backgroundImage);
+  const defaultAssets = getDefaultCharacterAssetSet(character);
+  const identityFallbacks = [defaultAssets?.headshot, defaultAssets?.avatar, defaultAssets?.main]
+    .map(getImageSource).filter((source): source is ImageSourcePropType => source !== null);
+  const backgroundFallbacks = [defaultAssets?.main].map(getImageSource)
+    .filter((source): source is ImageSourcePropType => source !== null);
 
   const backgroundOverlayColors: [string, string, string] = [
     C.chatBackgroundOverlay,
@@ -825,7 +862,6 @@ export default function ChatScreen({ route, navigation }: Props) {
     isUrbanClear || isSoftSweet ? C.background + 'EE' : C.chatBackgroundOverlay,
   ];
   const identityTop = insets.top + 8;
-  const messageListTop = identityTop + 92;
 
   const content = (
     <>
@@ -835,7 +871,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={[styles.chatHeader, { top: identityTop }]}>
+        <View style={[styles.chatHeader, { paddingTop: identityTop, backgroundColor: C.background }]}>
           <TouchableOpacity
             style={[
               styles.chatHeaderButton,
@@ -857,17 +893,21 @@ export default function ChatScreen({ route, navigation }: Props) {
               isUrbanClear && styles.urbanChatIdentityBar,
               isSoftSweet && styles.softChatIdentityBar,
               {
-                backgroundColor: isSoftSweet ? C.surface + 'F4' : C.surface + 'EE',
+                backgroundColor: C.surface,
                 borderColor: C.border,
                 shadowColor: C.shadow,
               },
             ]}
             accessibilityLabel={`${character.name}当前状态：${getCharacterStateLabel(character)}`}
           >
-            {getImageSource(identityImage) ? (
-              <Image
+              <ResilientImage
                 key={`chat-identity-${character.id}`}
-                source={getImageSource(identityImage)!}
+                source={getImageSource(identityImage) ?? undefined}
+                fallbackSources={identityFallbacks}
+                retryKey={String(isFocused)}
+                accessibilityLabel={`${character.name}的头像`}
+                fallbackLabel="头像未加载"
+                retryLabel="重试"
                 style={[
                   styles.chatIdentityAvatar,
                   isUrbanClear && styles.urbanIdentityAvatar,
@@ -875,18 +915,6 @@ export default function ChatScreen({ route, navigation }: Props) {
                 ]}
                 resizeMode="cover"
               />
-            ) : (
-              <View
-                style={[
-                  styles.chatIdentityAvatarFallback,
-                  isUrbanClear && styles.urbanIdentityAvatar,
-                  isSoftSweet && styles.softIdentityAvatar,
-                  { backgroundColor: C.primaryLight },
-                ]}
-              >
-                <Text style={styles.chatIdentityEmoji}>{character.avatar}</Text>
-              </View>
-            )}
             <View style={styles.chatIdentityCopy}>
               <Text style={[styles.chatIdentityName, { color: C.text }]} numberOfLines={1}>
                 {character.name}
@@ -914,7 +942,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               accessibilityLabel="校准当前会话状态"
             >
               <Text style={[styles.chatMoodIcon, { color: C.primary }]}>
-                {isMoodJudging ? '…' : '♡'}
+                {isMoodJudging ? '校准中' : '状态'}
               </Text>
             </TouchableOpacity>
 
@@ -929,12 +957,28 @@ export default function ChatScreen({ route, navigation }: Props) {
               onPress={() => navigation.navigate('CharacterSettings', { characterId, initialPage: 'archive' })}
               activeOpacity={0.78}
               accessibilityRole="button"
-              accessibilityLabel="打开角色档案和聊天记录"
+              accessibilityLabel="打开聊天留档"
             >
-              <Text style={[styles.chatSettingsIcon, { color: C.text }]}>☰</Text>
+              <Text style={[styles.chatSettingsIcon, { color: C.text }]}>留档</Text>
             </TouchableOpacity>
           </View>
         </View>
+
+        {route.params.roomContext && (
+          <View style={[styles.roomContext, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.roomContextText, { color: C.text }]}>
+              关于「{route.params.roomContext.itemName}」的{route.params.roomContext.action === 'move' ? '移动' : '收起'}，先聊过再一起决定。
+            </Text>
+            <View style={styles.roomContextActions}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="开始输入商量内容" onPress={() => inputRef.current?.focus()} style={styles.roomContextAction}>
+                <Text style={{ color: C.primary, fontSize: 13 }}>开始商量</Text>
+              </TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="关闭房间商量提示" onPress={() => navigation.setParams({ roomContext: undefined })} style={styles.roomContextAction}>
+                <Text style={{ color: C.textSecondary, fontSize: 13 }}>关闭提示</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <FlatList
           ref={flatListRef}
@@ -945,9 +989,12 @@ export default function ChatScreen({ route, navigation }: Props) {
               message={item}
               characterAvatar={character.avatar}
               characterName={character.name}
+              characterId={character.id}
+              characterPortrait={identityImage}
             />
           )}
-          contentContainerStyle={[styles.messageList, { paddingTop: messageListTop }]}
+          style={styles.flex}
+          contentContainerStyle={styles.messageList}
         />
 
         {deliveryIssue && (
@@ -987,6 +1034,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {characterId === 'qingning' && character?.luyaRuntime && getUnderstandingCards(character.luyaRuntime.understandings).slice(0, 1).map((item) => <LuyaUnderstandingCard key={item.id} item={item} onDetails={() => navigation.navigate('LuyaUnderstanding')} onDecision={(id, decision, editedText) => useChatStore.getState().updateLuyaRuntime((runtime) => ({ ...runtime, understandings: decideUnderstanding(runtime.understandings, id, decision, settingsRef.current.advanced.debugNowTs ?? Date.now(), editedText) }))} />)}
         {memoryNotice && (
           <View
             style={[
@@ -1168,18 +1216,15 @@ export default function ChatScreen({ route, navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       {backgroundSource ? (
-        <ImageBackground
-          source={backgroundSource}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        >
+        <View style={styles.backgroundImage}>
+          <ResilientImage source={backgroundSource} fallbackSources={backgroundFallbacks} retryKey={String(isFocused)} style={StyleSheet.absoluteFill} resizeMode="cover" accessible={false} />
           <LinearGradient
             colors={backgroundOverlayColors}
             locations={[0, 0.46, 1]}
             style={styles.backgroundOverlay}
           />
           {content}
-        </ImageBackground>
+        </View>
       ) : (
         content
       )}
@@ -1188,21 +1233,24 @@ export default function ChatScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  roomContext: { marginHorizontal: 16, marginBottom: 8, padding: 12, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth },
+  roomContextText: { fontSize: 13, lineHeight: 20 },
+  roomContextActions: { flexDirection: 'row', gap: 16 },
+  roomContextAction: { minHeight: 44, justifyContent: 'center' },
   container: { flex: 1 },
   flex: { flex: 1 },
   contentChrome: {
     zIndex: 10,
   },
   backgroundImage: { flex: 1 },
-  backgroundOverlay: StyleSheet.absoluteFillObject,
+  backgroundOverlay: StyleSheet.absoluteFill,
   messageList: {
-    paddingTop: 122,
+    paddingTop: 12,
     paddingBottom: 12,
   },
   chatHeader: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
     zIndex: 20,
     minHeight: 68,
     flexDirection: 'row',
@@ -1248,13 +1296,14 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   chatSettingsIcon: {
-    fontSize: 25,
-    lineHeight: 30,
+    fontFamily: NOTO_SANS_SC.medium,
+    fontSize: 13,
+    lineHeight: 20,
   },
   chatMoodIcon: {
     fontFamily: NOTO_SERIF_SC.bold,
-    fontSize: 28,
-    lineHeight: 30,
+    fontSize: 13,
+    lineHeight: 20,
     marginTop: -1,
   },
   chatIdentityBar: {

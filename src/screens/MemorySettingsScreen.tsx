@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  Image,
-  ImageBackground,
+  ImageSourcePropType,
   Modal,
   ScrollView,
   StyleSheet,
@@ -18,20 +17,29 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MemoryFragment, RootStackParamList } from '../types';
 import { useSettingsStore } from '../store/settingsStore';
 import { useChatStore } from '../store/chatStore';
+import ResilientImage from '../components/ResilientImage';
+import { getDefaultCharacterAssetSet, resolveDefaultCharacterAssetKey } from '../utils/characterAssets';
+import { useIsFocused } from '@react-navigation/native';
 import { SettingsRow, SettingsSection } from '../components/SettingsRow';
 import { useThemeColors } from '../utils/theme';
 import { getMemoryVisualCards, MemoryVisualCard } from '../utils/memoryVisuals';
+
+import { getPresentedCharacter } from '../utils/characterRelease';
+import CharacterStoryLibrary from '../components/CharacterStoryLibrary';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MemorySettings'>;
 
 export default function MemorySettingsScreen({ navigation, route }: Props) {
   const C = useThemeColors();
+  const isFocused = useIsFocused();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { settings, updateMemory, saveSettings } = useSettingsStore();
   const { characters, loadCharacters, updateMemory: updateCharacterMemory, deleteMemory } = useChatStore();
   const memory = settings.memory;
   const targetCharacterId = route.params?.characterId ?? settings.selectedCharacterId;
-  const character = characters.find((char) => char.id === targetCharacterId) ?? characters[0];
+  const character = getPresentedCharacter(characters, targetCharacterId, settings.appMode);
+  const isLuya = resolveDefaultCharacterAssetKey(character) === 'qingning';
+  const [libraryTab, setLibraryTab] = useState<'stories' | 'memories' | 'art'>('stories');
   const cards = useMemo(() => getMemoryVisualCards(character), [character]);
   const comicWidth = windowWidth;
   const comicHeight = Math.min(windowHeight - 118, comicWidth * 1.66);
@@ -41,6 +49,8 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
   const [memoryDraft, setMemoryDraft] = useState('');
   const canShowControls = settings.appMode === 'admin';
   const readerImage = selectedCard?.readerImageUri ?? selectedCard?.imageUri;
+  const fallbackScene = getDefaultCharacterAssetSet(character)?.memoryScene;
+  const fallbackSources: ImageSourcePropType[] = fallbackScene == null ? [] : [typeof fallbackScene === 'string' ? { uri: fallbackScene } : fallbackScene];
   const memories = (character?.memories ?? []).slice().sort((a, b) => b.timestamp - a.timestamp);
 
   useEffect(() => {
@@ -55,17 +65,29 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
+        {isLuya && <View style={styles.libraryTabs}>
+          {([{ id: 'stories', label: '人物故事' }, { id: 'memories', label: '共同记忆' }, { id: 'art', label: '设定图集' }] as const).map(tab => <TouchableOpacity
+            key={tab.id} accessibilityRole="button" accessibilityLabel={tab.label} accessibilityState={{ selected: libraryTab === tab.id }}
+            onPress={() => setLibraryTab(tab.id)} style={[styles.libraryTab, { backgroundColor: libraryTab === tab.id ? C.primary : C.surface, borderColor: C.border }]}>
+            <Text style={[styles.libraryTabText, { color: libraryTab === tab.id ? '#fff' : C.text }]}>{tab.label}</Text>
+          </TouchableOpacity>)}
+        </View>}
+        {isLuya && libraryTab !== 'memories' && <CharacterStoryLibrary section={libraryTab === 'art' ? 'art' : 'stories'} />}
+        {(!isLuya || libraryTab === 'memories') && <>
+        {isLuya && <Text style={[styles.memorySectionIntro, { color: C.textSecondary }]}>这里保留聊天中确认的长期记忆。预置漫画会标为示例，人物故事不会写入你的记忆。</Text>}
         <View style={styles.comicStack}>
           {cards.map((card) => (
             <TouchableOpacity
               key={card.id}
+              accessibilityRole="button"
+              accessibilityLabel={`全屏阅读${card.title}`}
               style={[styles.memoryCard, { width: comicWidth, height: comicHeight }]}
               activeOpacity={0.88}
               onPress={() => {
                 setSelectedCard(card);
               }}
             >
-              <Image source={card.imageUri} style={styles.memoryImage} resizeMode="contain" />
+              <ResilientImage source={card.imageUri} fallbackSources={fallbackSources} retryKey={String(isFocused)} style={styles.memoryImage} resizeMode="contain" accessibilityLabel={card.title} fallbackNotice="原图暂不可用，显示备用插画" />
               <View style={styles.memoryTopOverlay}>
                 <Text style={styles.memoryTime}>{card.timestampLabel}</Text>
                 <Text style={styles.memoryCharacter}>{character?.name ?? '记忆漫画'}</Text>
@@ -102,7 +124,7 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
                 <View style={styles.memoryActions}>
                   <TouchableOpacity
                     style={[styles.memoryAction, { borderColor: C.border }]}
-                    onPress={() => updateCharacterMemory(character.id, item.id, { status: item.status === 'locked' ? 'active' : 'locked' })}
+                    onPress={() => character && updateCharacterMemory(character.id, item.id, { status: item.status === 'locked' ? 'active' : 'locked' })}
                   >
                     <Text style={[styles.memoryActionText, { color: C.primary }]}>{item.status === 'locked' ? '解除锁定' : '锁定'}</Text>
                   </TouchableOpacity>
@@ -119,7 +141,7 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
                     style={[styles.memoryAction, { borderColor: C.border }]}
                     onPress={() => Alert.alert('删除记忆', '删除后角色不会再引用这条记忆。聊天原文不会被删除。', [
                       { text: '取消', style: 'cancel' },
-                      { text: '删除', style: 'destructive', onPress: () => deleteMemory(character.id, item.id) },
+                      { text: '删除', style: 'destructive', onPress: () => character && deleteMemory(character.id, item.id) },
                     ])}
                   >
                     <Text style={[styles.memoryActionText, { color: '#C85757' }]}>删除</Text>
@@ -233,6 +255,7 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           </>
         )}
+        </>}
       </ScrollView>
 
       <Modal visible={!!selectedCard} animationType="fade" presentationStyle="fullScreen" onRequestClose={() => setSelectedCard(null)}>
@@ -240,20 +263,20 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
           <StatusBar barStyle="light-content" backgroundColor="#04040A" />
           {selectedCard && readerImage && (
             <View style={[styles.readerStage, { width: windowWidth, minHeight: windowHeight }]}>
-              <ImageBackground
+              <ResilientImage
                 source={readerImage}
-                style={StyleSheet.absoluteFill}
-                imageStyle={styles.readerBackdropImage}
+                fallbackSources={fallbackSources}
+                style={[StyleSheet.absoluteFill, styles.readerBackdropImage]}
                 blurRadius={22}
                 resizeMode="cover"
-              >
-                <View style={styles.readerBackdropTint} />
-              </ImageBackground>
+                accessible={false}
+              />
+              <View style={styles.readerBackdropTint} />
 
-              <Image source={readerImage} style={styles.readerFullComic} resizeMode="contain" />
+              <ResilientImage source={readerImage} fallbackSources={[selectedCard.imageUri, ...fallbackSources]} style={styles.readerFullComic} resizeMode="contain" accessibilityLabel={selectedCard.title} fallbackNotice="原图暂不可用，显示备用插画" />
               <View pointerEvents="none" style={styles.readerEdgeFade} />
 
-              <TouchableOpacity style={styles.readerBackButton} onPress={() => setSelectedCard(null)} activeOpacity={0.82}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="关闭全屏漫画" style={styles.readerBackButton} onPress={() => setSelectedCard(null)} activeOpacity={0.82}>
                 <Text style={styles.readerBackText}>‹</Text>
               </TouchableOpacity>
             </View>
@@ -298,6 +321,10 @@ export default function MemorySettingsScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { paddingTop: 4, paddingBottom: 28 },
+  libraryTabs: { flexDirection: 'row', gap: 8, marginHorizontal: 20, marginTop: 12, maxWidth: 1120, width: 'auto', alignSelf: 'center' },
+  libraryTab: { minHeight: 46, paddingHorizontal: 16, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
+  libraryTabText: { fontSize: 14, lineHeight: 22, fontWeight: '600' },
+  memorySectionIntro: { marginHorizontal: 20, marginTop: 18, marginBottom: 18, fontSize: 13, lineHeight: 21, maxWidth: 900 },
   comicStack: {
     gap: 18,
     alignItems: 'center',
@@ -431,7 +458,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.06 }],
   },
   readerBackdropTint: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(11,7,8,0.42)',
   },
   readerFullComic: {
@@ -444,7 +471,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   readerEdgeFade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 14,
     borderColor: 'rgba(255,246,236,0.22)',
   },
