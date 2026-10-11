@@ -31,8 +31,8 @@ const defaultSettings: AppSettings = {
   appMode: 'explore',
   service: getDeepSeekServiceDefaults(),
   life: {
-    enabled: true,
-    allowProactiveMessages: true,
+    enabled: false,
+    allowProactiveMessages: false,
     allowBackgroundMessages: true,
     proactiveIntervalMinutes: 30,
     backgroundToastEnabled: false,
@@ -49,7 +49,7 @@ const defaultSettings: AppSettings = {
     specificTimeRangeHours: 24,
     autoSummarize: false,
     autoSummarizeTrigger: 'on_exit',
-    memorySystemPrompt: '你是一个有记忆的AI伴侣，请根据以往的聊天记录理解用户的喜好和习惯。',
+    memorySystemPrompt: '你是一个有记忆的沉静向导，请根据以往的聊天记录理解用户的喜好和习惯。',
   },
   advanced: {
     compatibilityMode: false,
@@ -57,7 +57,7 @@ const defaultSettings: AppSettings = {
     customRequestParams: {},
     darkMode: 'light',
     sendDelayMs: 0,
-    theme: 'urbanClear',
+    theme: 'pink',
     themeMode: 'manual',
   },
   selectedCharacterId: 'qingning',
@@ -68,7 +68,7 @@ function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
     ...defaultSettings,
     ...parsed,
     service: { ...defaultSettings.service, ...parsed.service },
-    life: { ...defaultSettings.life, ...parsed.life },
+    life: { ...defaultSettings.life, ...parsed.life, enabled: false, allowProactiveMessages: false },
     memory: { ...defaultSettings.memory, ...parsed.memory },
     advanced: { ...defaultSettings.advanced, ...parsed.advanced },
   };
@@ -132,14 +132,14 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       if (stored) {
         const parsed = JSON.parse(stored);
         if (apiKey) {
-          parsed.service.apiKey = apiKey;
+          parsed.service = { ...parsed.service, apiKey };
         }
         if (parsed.appMode !== 'admin' && parsed.appMode !== 'explore') {
           parsed.appMode = defaultSettings.appMode;
         }
         set({ settings: applyEnvDeepSeekFallback(mergeSettings(parsed), apiKey), isLoaded: true });
       } else {
-        set({ settings: applyEnvDeepSeekFallback(defaultSettings, apiKey), isLoaded: true });
+        set({ settings: applyEnvDeepSeekFallback(mergeSettings({ service: { ...defaultSettings.service, apiKey: apiKey || defaultSettings.service.apiKey } }), apiKey), isLoaded: true });
       }
     } catch {
       set({ isLoaded: true });
@@ -159,7 +159,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     set((state) => ({
       settings: {
         ...state.settings,
-        life: { ...state.settings.life, ...updates },
+        life: { ...state.settings.life, ...updates, enabled: false, allowProactiveMessages: false },
       },
     }));
   },
@@ -208,6 +208,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       const currentSettings = settingsOverride ?? get().settings;
       const normalizedSettings: AppSettings = {
         ...currentSettings,
+        life: { ...currentSettings.life, enabled: false, allowProactiveMessages: false },
         service: {
           ...currentSettings.service,
           apiKey: currentSettings.service.apiKey.trim(),

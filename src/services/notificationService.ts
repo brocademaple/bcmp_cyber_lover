@@ -2,6 +2,9 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+// Product policy: legacy routes and stale notification taps cannot enable reminders.
+export const REMINDERS_ENABLED = false;
+
 const NOTIFICATION_ID_KEY = '@bcmp_daily_notification_id';
 
 // Pre-written notification texts per character (shown in notification before AI generates greeting)
@@ -36,6 +39,7 @@ export function getNotificationText(characterId: string): string {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  if (!REMINDERS_ENABLED) return false;
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   if (existingStatus === 'granted') return true;
 
@@ -49,7 +53,7 @@ export async function scheduleDailyNotification(
   hour: number = 20,
   minute: number = 0
 ): Promise<'scheduled' | 'permission_denied' | 'unavailable'> {
-  if (Platform.OS === 'web') return 'unavailable';
+  if (!REMINDERS_ENABLED || Platform.OS === 'web') return 'unavailable';
   // Cancel existing scheduled notification
   await cancelDailyNotification();
 
@@ -91,11 +95,11 @@ export async function cancelDailyNotification(): Promise<void> {
 export function setupNotificationHandler(): void {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
+      shouldShowAlert: false,
+      shouldPlaySound: false,
       shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
+      shouldShowBanner: false,
+      shouldShowList: false,
     }),
   });
 }

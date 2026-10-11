@@ -17,7 +17,7 @@ import { LUYA_ART } from '../utils/luyaArt';
 const stages: LuyaInternshipStage[] = ['preparing', 'exploring_roles', 'applying', 'interviewing', 'offer_decision', 'pre_onboarding', 'onboarded'];
 const PRESETS: { kind: RoomOrnamentKind; name: string }[] = [{ kind: 'plant', name: '一盆绿植' }, { kind: 'books', name: '我的书与笔记' }, { kind: 'lamp', name: '小阅读灯' }, { kind: 'frame', name: '小相框' }];
 type Sheet = 'decorate' | 'add' | 'items' | 'item' | 'records' | 'sources' | null;
-type Navigation = { goBack: () => void; navigate: (name: 'Chat', params: { characterId: string; roomContext?: { itemName: string; action: 'move' | 'remove' } }) => void };
+type Navigation = { goBack: () => void; navigate: { (name: 'Chat', params: { characterId: string; roomContext?: { itemName: string; action: 'move' | 'remove' } }): void; (name: 'MemorySettings'): void } };
 export default function LuyaRoomScreen({ navigation }: { navigation: Navigation }) {
   const C = useThemeColors();
   const character = useChatStore(s => s.characters.find(c => c.id === 'qingning'));
@@ -128,7 +128,7 @@ export default function LuyaRoomScreen({ navigation }: { navigation: Navigation 
     <LinearGradient pointerEvents="none" colors={['rgba(25,30,24,0.68)', 'transparent']} style={styles.topShade} />
     <SafeAreaView pointerEvents="box-none" style={styles.overlay}>
       <View style={styles.header}><TouchableOpacity accessibilityRole="button" accessibilityLabel="返回首页" onPress={navigation.goBack} style={styles.back}><Text style={styles.backText}>‹</Text></TouchableOpacity><View style={styles.headerText}><Text style={styles.roomTitle}>共同房间</Text><Text style={styles.roomSubtitle}>{LUYA_RELATIONSHIP_LABELS[runtime.relationship.stage]} · 线上空间</Text></View><View style={styles.dayBadge}><Text style={styles.dayText}>{sheet === 'decorate' ? '布置预览' : runtime.room.light === 'warm' ? '暖灯亮着' : '明亮主灯'}</Text></View></View>
-      <View style={styles.bottom}><LinearGradient pointerEvents="none" colors={['transparent', 'rgba(28,34,28,0.82)']} style={StyleSheet.absoluteFill} /><Text numberOfLines={2} style={styles.lifeText}>{life.currentActivity}</Text><View style={styles.actions}>
+      <View style={styles.bottom}><LinearGradient pointerEvents="none" colors={['transparent', 'rgba(28,34,28,0.82)']} style={StyleSheet.absoluteFill} /><Text numberOfLines={2} style={styles.lifeText}>{life.currentActivity}</Text><TouchableOpacity accessibilityRole="button" accessibilityLabel="故事与漫画" onPress={() => navigation.navigate('MemorySettings')} style={[styles.sceneAction, { flex: undefined, height: 46, backgroundColor: C.surface, borderColor: C.accent }]}><Text style={[styles.actionText, { color: C.text }]}>▧  故事与漫画  ›</Text></TouchableOpacity><View style={styles.actions}>
         {([{ icon: '◒', label: '布置', press: () => { setDecoration({ wallColor: runtime.room.wallColor, light: runtime.room.light }); open('decorate'); } }, { icon: '＋', label: '添加', press: () => { setMemorial(false); setSelectedShared(undefined); open('add'); } }, { icon: '◇', label: '纪念物', press: () => { setMemorial(true); open('add'); } }, { icon: '≡', label: '记录', press: () => open('records') }]).map(action => <TouchableOpacity key={action.label} accessibilityRole="button" accessibilityLabel={action.label} onPress={action.press} style={styles.sceneAction}><Text style={styles.actionIcon}>{action.icon}</Text><Text style={styles.actionText}>{action.label}</Text></TouchableOpacity>)}
       </View></View>
     </SafeAreaView>

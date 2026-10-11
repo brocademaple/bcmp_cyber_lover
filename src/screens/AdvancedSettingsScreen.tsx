@@ -9,22 +9,6 @@ import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdvancedSettings'>;
 
-const DARK_MODE_OPTIONS = [
-  { value: 'auto', label: '跟随系统' },
-  { value: 'light', label: '浅色' },
-  { value: 'dark', label: '深色' },
-] as const;
-
-const THEME_OPTIONS = [
-  { value: 'urbanClear', label: '都市清透' },
-  { value: 'softSweet', label: '甜美柔软' },
-  { value: 'pink', label: '鹿芽粉' },
-  { value: 'blue', label: '纪遥蓝' },
-  { value: 'yellow', label: '暖黄色' },
-  { value: 'purple', label: '梦紫色' },
-  { value: 'midnight', label: '凛夜深色' },
-] as const;
-
 const DELAY_OPTIONS = [0, 300, 800, 1200];
 
 export default function AdvancedSettingsScreen({ navigation }: Props) {
@@ -43,7 +27,7 @@ export default function AdvancedSettingsScreen({ navigation }: Props) {
         <View style={styles.hero}>
           <Text style={[styles.pageTitle, { color: C.text }]}>内部参数</Text>
           <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
-            这些选项只用于连接兼容和外观校准，日常体验不需要频繁调整。
+            这些选项只用于连接兼容和发送节奏，日常体验不需要频繁调整。
           </Text>
         </View>
 
@@ -61,63 +45,6 @@ export default function AdvancedSettingsScreen({ navigation }: Props) {
             onToggle={(v) => updateAdvanced({ deepThinking: v })}
           />
         </SettingsSection>
-
-        <View style={[styles.panel, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <Text style={[styles.panelTitle, { color: C.text }]}>外观</Text>
-          <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>深色模式</Text>
-          <View style={styles.segmentControl}>
-            {DARK_MODE_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.segmentBtn,
-                  { borderColor: C.border },
-                  adv.darkMode === opt.value && { backgroundColor: C.primary, borderColor: C.primary },
-                ]}
-                onPress={() => updateAdvanced({ darkMode: opt.value })}
-              >
-                <Text
-                  style={[
-                    styles.segmentBtnText,
-                    { color: adv.darkMode === opt.value ? '#fff' : C.textSecondary },
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <SettingsRow
-            label="跟随角色主题色"
-            description="关闭后可固定为都市清透或甜美柔软等视觉皮肤。"
-            value={adv.themeMode === 'character'}
-            onToggle={(v) => updateAdvanced({ themeMode: v ? 'character' : 'manual' })}
-          />
-
-          {adv.themeMode === 'manual' && (
-            <>
-              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>手动主题</Text>
-              <View style={styles.themeGrid}>
-                {THEME_OPTIONS.map((opt) => (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[
-                      styles.themeBtn,
-                      { borderColor: C.border, backgroundColor: C.inputBg },
-                      adv.theme === opt.value && { backgroundColor: C.primary, borderColor: C.primary },
-                    ]}
-                    onPress={() => updateAdvanced({ theme: opt.value })}
-                  >
-                    <Text style={[styles.segmentBtnText, { color: adv.theme === opt.value ? '#fff' : C.textSecondary }]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-        </View>
 
         <View style={[styles.panel, { backgroundColor: C.surface, borderColor: C.border }]}>
           <Text style={[styles.panelTitle, { color: C.text }]}>发送节奏</Text>

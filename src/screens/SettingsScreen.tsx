@@ -2,34 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppMode, AppTheme, RootStackParamList } from '../types';
+import { AppMode, RootStackParamList } from '../types';
 import { useThemeColors } from '../utils/theme';
 import { useSettingsStore } from '../store/settingsStore';
 import { format } from 'date-fns';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-const VISUAL_THEME_OPTIONS: {
-  value: AppTheme;
-  label: string;
-  accent: string;
-}[] = [
-  {
-    value: 'urbanClear',
-    label: '都市清透',
-    accent: '#d8bd86',
-  },
-  {
-    value: 'softSweet',
-    label: '甜美柔软',
-    accent: '#f4a8c4',
-  },
-  { value: 'pink', label: '粉色甜心', accent: '#ff6b9d' },
-  { value: 'blue', label: '蓝色清新', accent: '#5dade2' },
-  { value: 'yellow', label: '黄色阳光', accent: '#f9ca24' },
-  { value: 'purple', label: '紫色梦幻', accent: '#a29bfe' },
-  { value: 'midnight', label: '午夜深色', accent: '#7d6df6' },
-];
 
 interface MenuItemProps {
   icon: string;
@@ -65,8 +44,7 @@ function MenuItem({ icon, label, description, onPress, color, value }: MenuItemP
 
 export default function SettingsScreen({ navigation }: Props) {
   const C = useThemeColors();
-  const { settings, setAppMode, setDebugNowTs, updateAdvanced, saveSettings } = useSettingsStore();
-  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const { settings, setAppMode, setDebugNowTs, saveSettings } = useSettingsStore();
   const [developerEntryOpen, setDeveloperEntryOpen] = useState(false);
   const isAdmin = settings.appMode === 'admin';
   const debugNow = settings.advanced.debugNowTs;
@@ -100,19 +78,6 @@ export default function SettingsScreen({ navigation }: Props) {
     await saveSettings(nextSettings);
   };
 
-  const activeThemeOption =
-    VISUAL_THEME_OPTIONS.find((option) => option.value === settings.advanced.theme) ?? VISUAL_THEME_OPTIONS[0];
-
-  const handleVisualThemeChange = async (theme: AppTheme) => {
-    const nextSettings = {
-      ...useSettingsStore.getState().settings,
-      advanced: { ...useSettingsStore.getState().settings.advanced, theme, themeMode: 'manual' as const },
-    };
-    updateAdvanced({ theme, themeMode: 'manual' });
-    await saveSettings(nextSettings);
-    setThemePickerOpen(false);
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
@@ -127,99 +92,35 @@ export default function SettingsScreen({ navigation }: Props) {
             <Text style={[styles.backIcon, { color: C.text }]}>‹</Text>
           </TouchableOpacity>
           <Text style={[styles.topTitle, { color: C.text }]}>设置</Text>
-          <TouchableOpacity
-            style={[styles.themeTrigger, { backgroundColor: C.surface, borderColor: C.border }]}
-            onPress={() => setThemePickerOpen((open) => !open)}
-            activeOpacity={0.78}
-            accessibilityRole="button"
-            accessibilityLabel={`切换主题色，当前为${activeThemeOption.label}`}
-          >
-            <View style={[styles.themeTriggerDot, { backgroundColor: activeThemeOption.accent }]} />
-          </TouchableOpacity>
         </View>
-
-        {themePickerOpen && (
-          <View style={[styles.themePicker, { backgroundColor: C.surface, borderColor: C.border, shadowColor: C.shadow }]}>
-            {VISUAL_THEME_OPTIONS.map((option) => {
-              const active = settings.advanced.themeMode === 'manual' && settings.advanced.theme === option.value;
-              return (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.themeDotButton,
-                    { borderColor: active ? C.text : 'transparent' },
-                  ]}
-                  onPress={() => handleVisualThemeChange(option.value)}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`切换到${option.label}`}
-                >
-                  <View style={[styles.themeDot, { backgroundColor: option.accent }]} />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
 
         <View style={styles.intro}>
           <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
-            回复、记忆、提醒和连接服务都在这里。
+            连接服务、理解偏好和数据恢复都在这里。
           </Text>
         </View>
 
         <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>陪伴体验</Text>
-          <MenuItem
-            icon="⌁"
-            label="连接服务"
-            description="API 密钥、模型和连接测试"
-            onPress={() => navigation.navigate('ServiceSettings')}
-            value={connectionLabel}
-            color={connected ? undefined : C.primary}
-          />
-          <MenuItem
-            icon="▣"
-            label="故事与漫画"
-            description="人物故事、设定图集与共同记忆"
-            onPress={() => navigation.navigate('MemorySettings')}
-          />
-          <MenuItem icon="⌂" label="共同房间" description="公共区、私人角落与有来源的纪念物" onPress={() => navigation.navigate('LuyaRoom')} />
+          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>鹿芽与对话</Text>
+          <MenuItem icon="⌁" label="连接服务" description="API 密钥、模型和连接测试"
+            onPress={() => navigation.navigate('ServiceSettings')} value={connectionLabel} color={connected ? undefined : C.primary} />
           <MenuItem icon="◎" label="鹿芽怎样理解我" description="确认、修改或撤销相处习惯" onPress={() => navigation.navigate('LuyaUnderstanding')} />
-          {isAdmin && (
-            <MenuItem
-              icon="✦"
-              label="角色创作工作台"
-              description="创建、预览、体检与回退角色设定"
-              onPress={() => navigation.navigate('CharacterEditor', {})}
-            />
-          )}
-          <MenuItem
-            icon="↺"
-            label="数据与恢复"
-            description="本地备份、恢复和异常诊断"
-            onPress={() => navigation.navigate('DataManagement')}
-          />
-          <MenuItem
-            icon="♡"
-            label="陪伴提醒"
-            description="每日提醒、主动问候和安静陪伴"
-            onPress={() => navigation.navigate('LifeSettings')}
-            value={settings.life.enabled ? '开启' : '关闭'}
-          />
-          {isAdmin && (
-            <MenuItem
-              icon="⚙"
-              label="内部参数"
-              description="兼容模式、主题、发送延迟"
-              onPress={() => navigation.navigate('AdvancedSettings')}
-            />
-          )}
+        </View>
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>记忆与瓶子</Text>
+          <MenuItem icon="↺" label="数据与恢复" description="选择导出内容、恢复本地备份" onPress={() => navigation.navigate('DataManagement')} />
+        </View>
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: C.textSecondary }]}>关于</Text>
+          <Text style={[styles.menuLabel, { color: C.text }]}>饮之 · 1.5.0</Text>
         </View>
 
         {isAdmin && (
           <>
             <View style={styles.group}>
               <Text style={[styles.groupLabel, { color: C.textSecondary }]}>开发者工具</Text>
+              <MenuItem icon="✦" label="角色创作工作台" description="创建、预览、体检与回退角色设定" onPress={() => navigation.navigate('CharacterEditor', {})} />
+              <MenuItem icon="⚙" label="内部参数" description="兼容模式、发送延迟" onPress={() => navigation.navigate('AdvancedSettings')} />
               <MenuItem
                 icon="AI"
                 label="AI 调试台"
@@ -297,7 +198,7 @@ export default function SettingsScreen({ navigation }: Props) {
         </View>}
 
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="高级入口，长按展开" onLongPress={() => setDeveloperEntryOpen(true)} delayLongPress={1200} style={styles.versionTap}>
-          <Text style={[styles.versionText, { color: C.textSecondary }]}>HeartBeat Companion · 鹿芽 v2 · 长按查看高级入口</Text>
+          <Text style={[styles.versionText, { color: C.textSecondary }]}>饮之 · 1.5.0 · 长按查看高级入口</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -335,47 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '900',
-  },
-  themeTrigger: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeTriggerDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  themePicker: {
-    alignSelf: 'flex-end',
-    marginTop: -4,
-    marginBottom: 14,
-    borderRadius: 24,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 10,
-    paddingVertical: 9,
-    flexDirection: 'row',
-    gap: 6,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 3,
-  },
-  themeDotButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
   },
   intro: {
     marginBottom: 12,
@@ -456,49 +316,6 @@ const styles = StyleSheet.create({
   modeDesc: {
     fontSize: 12,
     marginTop: 2,
-  },
-  visualThemeGrid: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  visualThemeCard: {
-    flex: 1,
-    minHeight: 132,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 24,
-    padding: 14,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 18,
-    elevation: 2,
-  },
-  visualThemeTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  visualThemeSwatch: {
-    width: 34,
-    height: 18,
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 8,
-    borderBottomRightRadius: 14,
-    borderBottomLeftRadius: 8,
-  },
-  visualThemeCheck: {
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  visualThemeTitle: {
-    fontSize: 16,
-    lineHeight: 21,
-    fontWeight: '900',
-    marginBottom: 6,
-  },
-  visualThemeDesc: {
-    fontSize: 12,
-    lineHeight: 18,
   },
   modeFooter: {
     marginTop: 8,

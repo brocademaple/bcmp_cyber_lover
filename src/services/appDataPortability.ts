@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Character, Message } from '../types';
+import type { UserUnderstanding } from '../types/luyaUnderstanding';
+import type { LuyaLifeEvent, LuyaRelationshipEvidence } from '../types/luya';
+import { Character, Message, RelationshipEvent } from '../types';
 import { clearChatMessages, loadChatMessages, saveChatMessages } from './chatPersistence';
 import {
   collectPortableMedia,
@@ -19,6 +21,48 @@ const SETTINGS_KEY = '@bcmp_settings';
 const CHAT_RECORD_PREFIX = '@bcmp_chat_db_v1_';
 const LEGACY_CHAT_PREFIX = '@bcmp_messages_';
 
+export type DataExportMode = 'full' | 'confirmed';
+export interface ConfirmedCharacterContent {
+  characterId: string;
+  understandings: UserUnderstanding[];
+  lifeEvents: LuyaLifeEvent[];
+  sharedEvents: LuyaRelationshipEvidence[];
+  relationshipEvents: RelationshipEvent[];
+}
+
+function isNotDeleted(value: object): boolean {
+  const record = value as Record<string, unknown>;
+  return !record.deleted && record.deletedAt == null;
+}
+function isConfirmedEvent(value: object): boolean {
+  const record = value as Record<string, unknown>;
+  return isNotDeleted(value) && (record.source === 'confirmed_story_event' || record.confirmed === true);
+}
+export function selectConfirmedContent(characters: Character[]): ConfirmedCharacterContent[] {
+  return characters.map(character => ({
+    characterId: character.id,
+    understandings: (character.luyaRuntime?.understandings ?? []).filter(card => card.status === 'confirmed' && isNotDeleted(card)),
+    lifeEvents: (character.luyaRuntime?.life.events ?? []).filter(isConfirmedEvent),
+    sharedEvents: (character.luyaRuntime?.relationship.evidence ?? []).filter(event => event.kind === 'shared_event' && isConfirmedEvent(event)),
+    relationshipEvents: (character.relationshipEvents ?? []).filter(isConfirmedEvent),
+  })).filter(content => content.understandings.length + content.lifeEvents.length + content.sharedEvents.length + content.relationshipEvents.length > 0);
+}
+
+// Redact credential fields even in older settings or custom request headers.
+function redactCredentials(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactCredentials);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(Object.entries(value)
+    .filter(([key]) => !/^(?:api[_-]?key|authorization|x-api-key|access[_-]?token|secret|password)$/i.test(key))
+    .map(([key, item]) => [key, redactCredentials(item)]));
+}
+function sanitizePortableStorage(storage: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(storage).map(([key, raw]) => {
+    try { return [key, JSON.stringify(redactCredentials(JSON.parse(raw)))]; }
+    catch { throw new Error('无法读取备份数据，原数据保持不变'); }
+  }));
+}
+
 export interface AppDataBundle {
   kind: 'heartbeat-companion-backup';
   schemaVersion: number;
@@ -29,12 +73,16 @@ export interface AppDataBundle {
   messagesByCharacter: Record<string, Message[]>;
   mediaFiles?: Record<string, PortableMediaFile>;
   checksum?: string;
+  exportMode?: DataExportMode;
+  confirmedContent?: ConfirmedCharacterContent[];
 }
 export interface DataExportResult {
   uri: string;
   characterCount: number;
   messageCount: number;
   exportedAt: number;
+  mode?: DataExportMode;
+  confirmedCount?: number;
 }
 
 function getExportDirectory(): string {
@@ -163,6 +211,23 @@ export function validateAppDataBundle(value: unknown): AppDataBundle {
       }
     }
   }
+  if (bundle.exportMode != null && bundle.exportMode !== 'full' && bundle.exportMode !== 'confirmed') {
+    throw new Error('未知导出模式');
+  }
+  if (bundle.exportMode === 'confirmed') {
+    if (Object.keys(bundle.storage).length || bundle.characters.length || Object.keys(bundle.messagesByCharacter).length || Object.keys(bundle.mediaFiles ?? {}).length) {
+      throw new Error('确认内容备份不能包含聊天或完整档案');
+    }
+    if (!Array.isArray(bundle.confirmedContent) || !bundle.confirmedContent.every(content =>
+      isRecord(content) && typeof content.characterId === 'string' &&
+      Array.isArray(content.understandings) && content.understandings.every(card => isRecord(card) && typeof card.id === 'string' && card.status === 'confirmed' && isNotDeleted(card)) &&
+      Array.isArray(content.lifeEvents) && content.lifeEvents.every(event => isRecord(event) && typeof event.id === 'string' && isConfirmedEvent(event)) &&
+      Array.isArray(content.sharedEvents) && content.sharedEvents.every(event => isRecord(event) && typeof event.id === 'string' && event.kind === 'shared_event' && isConfirmedEvent(event)) &&
+      Array.isArray(content.relationshipEvents) && content.relationshipEvents.every(event => isRecord(event) && typeof event.id === 'string' && isConfirmedEvent(event))
+    )) throw new Error('确认内容备份包含未确认或无效记录');
+  } else if (bundle.confirmedContent != null) {
+    throw new Error('确认内容缺少导出模式');
+  }
   const validated = bundle as AppDataBundle;
   if (validated.schemaVersion === EXPORT_SCHEMA_VERSION) {
     if (!validated.checksum || validated.checksum !== calculateAppDataBundleChecksum(validated)) {
@@ -174,7 +239,8 @@ export function validateAppDataBundle(value: unknown): AppDataBundle {
 
 export async function exportAppData(
   reason: 'manual' | 'pre-restore' = 'manual',
-  now = Date.now()
+  now = Date.now(),
+  mode: DataExportMode = 'full'
 ): Promise<DataExportResult> {
   const directory = getExportDirectory();
   await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
@@ -182,15 +248,17 @@ export async function exportAppData(
   const allKeys = await AsyncStorage.getAllKeys();
   const portableKeys = allKeys.filter(isPortableStorageKey);
   const pairs = await AsyncStorage.multiGet(portableKeys);
-  const storage = Object.fromEntries(
+  const rawStorage = Object.fromEntries(
     pairs.filter((pair): pair is [string, string] => typeof pair[1] === 'string')
   );
-  const characters = parseCharacters(storage[CHARACTERS_KEY] ?? null);
+  const characters = parseCharacters(rawStorage[CHARACTERS_KEY] ?? null);
+  const storage = mode === 'full' ? sanitizePortableStorage(rawStorage) : {};
+  const confirmedContent = mode === 'confirmed' ? redactCredentials(selectConfirmedContent(characters)) as ConfirmedCharacterContent[] : undefined;
   const characterIds = uniqueCharacterIds(allKeys, characters);
   const messagesByCharacter: Record<string, Message[]> = {};
   const mediaFiles: Record<string, PortableMediaFile> = {};
 
-  for (const characterId of characterIds) {
+  for (const characterId of mode === 'full' ? characterIds : []) {
     const messages = await loadChatMessages(characterId);
     if (messages.length > 0) {
       const portable = await collectPortableMedia(messages);
@@ -208,12 +276,14 @@ export async function exportAppData(
     appVersion: '1.5.0',
     exportedAt: now,
     storage,
-    characters,
+    characters: mode === 'full' ? redactCredentials(characters) as Character[] : [],
     messagesByCharacter,
+    exportMode: mode,
+    ...(confirmedContent ? { confirmedContent } : {}),
     mediaFiles,
   };
   const bundle: AppDataBundle = { ...payload, checksum: bundleChecksum(payload) };
-  const uri = `${directory}heartbeat-companion-${reason}-${fileStamp(now)}.json`;
+  const uri = `${directory}yinzhi-${reason}-${mode}-${fileStamp(now)}.json`;
   const temporaryUri = `${uri}.tmp`;
   await FileSystem.writeAsStringAsync(temporaryUri, JSON.stringify(bundle, null, 2));
   await FileSystem.moveAsync({ from: temporaryUri, to: uri });
@@ -221,7 +291,9 @@ export async function exportAppData(
 
   return {
     uri,
-    characterCount: characters.length,
+    characterCount: mode === 'full' ? characters.length : confirmedContent?.length ?? 0,
+    mode,
+    confirmedCount: confirmedContent?.reduce((sum, item) => sum + item.understandings.length + item.lifeEvents.length + item.sharedEvents.length + item.relationshipEvents.length, 0),
     messageCount: Object.values(messagesByCharacter).reduce((sum, messages) => sum + messages.length, 0),
     exportedAt: now,
   };
@@ -279,6 +351,35 @@ export async function restoreAppDataExport(uri: string): Promise<DataExportResul
   return restoreAppDataExportInternal(uri, true);
 }
 
+function appendMissing<T extends { id: string }>(existing: T[], incoming: T[]): T[] {
+  const ids = new Set(existing.map(item => item.id));
+  return [...existing, ...incoming.filter(item => {
+    if (ids.has(item.id)) return false;
+    ids.add(item.id);
+    return true;
+  })];
+}
+export function mergeConfirmedContent(characters: Character[], content: ConfirmedCharacterContent[]): Character[] {
+  return characters.map(character => {
+    const incoming = content.find(item => item.characterId === character.id);
+    if (!incoming) return character;
+    const runtime = character.luyaRuntime;
+    if (!runtime && incoming.understandings.length + incoming.lifeEvents.length + incoming.sharedEvents.length > 0) {
+      throw new Error('请先打开鹿芽的房间，再恢复确认内容。原数据保持不变。');
+    }
+    return {
+      ...character,
+      relationshipEvents: appendMissing(character.relationshipEvents ?? [], incoming.relationshipEvents),
+      ...(runtime ? { luyaRuntime: {
+        ...runtime,
+        understandings: appendMissing(runtime.understandings, incoming.understandings),
+        life: { ...runtime.life, events: appendMissing(runtime.life.events, incoming.lifeEvents) },
+        relationship: { ...runtime.relationship, evidence: appendMissing(runtime.relationship.evidence, incoming.sharedEvents) },
+      } } : {}),
+    };
+  });
+}
+
 async function restoreAppDataExportInternal(
   uri: string,
   createSafetyBackup: boolean
@@ -293,7 +394,16 @@ async function restoreAppDataExportInternal(
     ? (await exportAppData('pre-restore')).uri
     : uri;
 
-  const safePairs = Object.entries(bundle.storage).filter(([key]) => isPortableStorageKey(key));
+  const restoredStorage = sanitizePortableStorage(bundle.storage);
+  if (bundle.exportMode === 'confirmed') {
+    const current = parseCharacters(await AsyncStorage.getItem(CHARACTERS_KEY));
+    const content = bundle.confirmedContent ?? [];
+    if (content.some(item => !current.some(character => character.id === item.characterId))) {
+      throw new Error('找不到确认内容对应的角色。请先恢复完整备份；原数据保持不变。');
+    }
+    restoredStorage[CHARACTERS_KEY] = JSON.stringify(mergeConfirmedContent(current, content));
+  }
+  const safePairs = Object.entries(restoredStorage).filter(([key]) => isPortableStorageKey(key));
   const safeKeys = safePairs.map(([key]) => key);
   const previousPairs = await AsyncStorage.multiGet(safeKeys);
   const previousMessages: Record<string, Message[]> = {};
@@ -329,7 +439,9 @@ async function restoreAppDataExportInternal(
 
   return {
     uri,
-    characterCount: bundle.characters.length,
+    characterCount: bundle.exportMode === 'confirmed' ? bundle.confirmedContent?.length ?? 0 : bundle.characters.length,
+    mode: bundle.exportMode ?? 'full',
+    confirmedCount: bundle.confirmedContent?.reduce((sum, item) => sum + item.understandings.length + item.lifeEvents.length + item.sharedEvents.length + item.relationshipEvents.length, 0),
     messageCount: Object.values(bundle.messagesByCharacter).reduce((sum, messages) => sum + messages.length, 0),
     exportedAt: bundle.exportedAt,
   };

@@ -17,7 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { DEFAULT_CHARACTERS } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { scheduleDailyNotification } from '../services/notificationService';
+import { PinkTheme } from '../utils/colors';
 import { testChatCompletion } from '../services/aiService';
 
 import { getVisibleCharacters } from '../utils/characterRelease';
@@ -28,31 +28,17 @@ export const ONBOARDING_KEY = '@bcmp_onboardingCompleted';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
-function getOnboardingSkin(theme?: string) {
-  if (theme === 'urbanClear' || theme === 'midnight') {
-    return {
-      mode: 'urban' as const,
-      accent: '#c6a160',
-      accentSoft: '#f1e6d1',
-      bg: '#f9f5ee',
-      panel: 'rgba(255,255,255,0.78)',
-      border: '#dfcfb3',
-      text: '#4d4740',
-      muted: '#9a8f82',
-      selectedBg: 'rgba(255,255,255,0.72)',
-    };
-  }
-
+function getOnboardingSkin() {
   return {
     mode: 'sweet' as const,
-    accent: '#ef8fb3',
-    accentSoft: '#ffe4ee',
-    bg: '#fff4f8',
+    accent: PinkTheme.primary,
+    accentSoft: PinkTheme.accentLight,
+    bg: PinkTheme.background,
     panel: 'rgba(255,253,252,0.82)',
-    border: '#f3c9d7',
-    text: '#553246',
-    muted: '#b98299',
-    selectedBg: 'rgba(255,232,241,0.8)',
+    border: PinkTheme.border,
+    text: PinkTheme.text,
+    muted: PinkTheme.textSecondary,
+    selectedBg: PinkTheme.inputBg,
   };
 }
 
@@ -66,7 +52,7 @@ export default function OnboardingScreen({ navigation }: Props) {
   const { settings, updateService, saveSettings, updateLife, updateAdvanced, setSelectedCharacter } = useSettingsStore();
 
   const selectedCharacter = ONBOARDING_CHARACTERS.find((c) => c.id === selectedCharacterId)!;
-  const skin = getOnboardingSkin(selectedCharacter.theme);
+  const skin = getOnboardingSkin();
   const configuredApiKey = settings.service.apiKey.trim();
   const hasConfiguredApiKey = configuredApiKey.length > 0;
 
@@ -88,7 +74,7 @@ export default function OnboardingScreen({ navigation }: Props) {
     const nextSettings = {
       ...currentSettings,
       service: { ...currentSettings.service, apiKey: effectiveApiKey },
-      advanced: { ...currentSettings.advanced, theme: selectedCharacter.theme ?? 'urbanClear', themeMode: 'manual' as const },
+      advanced: { ...currentSettings.advanced, theme: 'pink' as const, themeMode: 'manual' as const },
       selectedCharacterId,
     };
     setIsTestingService(true);
@@ -102,7 +88,7 @@ export default function OnboardingScreen({ navigation }: Props) {
       return;
     }
     updateService({ apiKey: effectiveApiKey });
-    updateAdvanced({ theme: selectedCharacter.theme ?? 'urbanClear', themeMode: 'manual' });
+    updateAdvanced({ theme: 'pink' as const, themeMode: 'manual' });
     setSelectedCharacter(selectedCharacterId);
     const saved = await saveSettings(nextSettings);
     if (!saved) {
@@ -118,14 +104,12 @@ export default function OnboardingScreen({ navigation }: Props) {
   };
 
   const handleComplete = async () => {
-    // Schedule daily notification for selected character at 8pm
-    await scheduleDailyNotification(selectedCharacterId, selectedCharacter.name, 20, 0);
     const currentSettings = useSettingsStore.getState().settings;
     const nextSettings = {
       ...currentSettings,
-      life: { ...currentSettings.life, notificationHour: 20 },
+      life: { ...currentSettings.life, enabled: false, allowProactiveMessages: false },
     };
-    updateLife({ notificationHour: 20 });
+    updateLife({ enabled: false, allowProactiveMessages: false });
     await saveSettings(nextSettings);
     await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
     navigation.replace('Main');
@@ -134,7 +118,7 @@ export default function OnboardingScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: skin.bg }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: skin.accent }]}>心动伴侣</Text>
+        <Text style={[styles.headerTitle, { color: skin.accent }]}>饮之</Text>
         <View style={styles.stepIndicator}>
           {[0, 1, 2].map((i) => (
             <View
@@ -166,7 +150,7 @@ export default function OnboardingScreen({ navigation }: Props) {
           >
             {ONBOARDING_CHARACTERS.map((char) => {
               const isSelected = char.id === selectedCharacterId;
-              const charSkin = getOnboardingSkin(char.theme);
+              const charSkin = getOnboardingSkin();
               return (
                 <TouchableOpacity
                   key={char.id}
@@ -177,7 +161,6 @@ export default function OnboardingScreen({ navigation }: Props) {
                       backgroundColor: isSelected ? charSkin.selectedBg : 'rgba(255,255,255,0.72)',
                       borderColor: isSelected ? charSkin.accent : charSkin.border,
                     },
-                    charSkin.mode === 'urban' && styles.urbanCharacterCard,
                     charSkin.mode === 'sweet' && styles.sweetCharacterCard,
                   ]}
                   onPress={() => handleSelectCharacter(char.id)}
@@ -304,9 +287,9 @@ export default function OnboardingScreen({ navigation }: Props) {
             <View style={[styles.completeGreetingBubble, { borderColor: skin.border, backgroundColor: 'rgba(255,255,255,0.78)' }]}>
               <Text style={[styles.completeGreeting, { color: skin.text }]}>{selectedCharacter.greeting}</Text>
             </View>
-            <Text style={[styles.completeTip, { color: skin.muted }]}>每天晚上 8 点，{selectedCharacter.name} 会主动来找你 🌙</Text>
+            <Text style={[styles.completeTip, { color: skin.muted }]}>按自己的节奏回来就好，不会主动打扰你。</Text>
             <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: skin.accent }]} onPress={handleComplete}>
-              <Text style={styles.primaryBtnText}>开始聊天 💖</Text>
+              <Text style={styles.primaryBtnText}>开始聊聊</Text>
             </TouchableOpacity>
           </View>
         </View>

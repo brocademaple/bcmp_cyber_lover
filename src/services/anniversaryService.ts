@@ -13,9 +13,9 @@ export function checkAnniversaries(anniversaries: Anniversary[]): Anniversary[] 
 
 export function getAnniversaryMessage(anniversary: Anniversary, characterName: string): string {
   const messages = {
-    birthday: `${characterName}：今天是${anniversary.title}呢！祝你生日快乐，老公~🎂`,
-    anniversary: `${characterName}：今天是${anniversary.title}，我一直记得哦~💕`,
-    custom: `${characterName}：今天是${anniversary.title}的日子呢~`,
+    birthday: `${characterName}：今天是${anniversary.title}呢。生日快乐。`,
+    anniversary: `${characterName}：今天是${anniversary.title}，我记得。`,
+    custom: `${characterName}：今天是${anniversary.title}的日子。`,
   };
   return messages[anniversary.type];
 }

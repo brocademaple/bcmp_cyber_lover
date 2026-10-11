@@ -173,7 +173,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
 
             <View style={styles.heroCopy}>
               <Text style={[styles.name, { color: C.text }]}>{character.name}</Text>
-              <Text style={[styles.meta, { color: C.primary }]}>{moodLabel} · {character.id === 'qingning' ? LUYA_RELATIONSHIP_LABELS[character.luyaRuntime?.relationship.stage ?? 'visitor'] : `亲密度 ${intimacyValue}%`}</Text>
+              <Text style={[styles.meta, { color: C.primary }]}>{moodLabel} · {character.id === 'qingning' ? LUYA_RELATIONSHIP_LABELS[character.luyaRuntime?.relationship.stage ?? 'visitor'] : `了解程度 ${intimacyValue}%`}</Text>
             </View>
 
             {isAdmin && (
@@ -188,7 +188,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
 
           {(isAdmin || character.id !== 'qingning') && <View style={styles.metrics}>
             <MetricPill label="心情" value={moodValue} color="#F76F98" />
-            <MetricPill label="亲密" value={intimacyValue} color={C.primary} />
+            <MetricPill label="了解" value={intimacyValue} color={C.primary} />
             <MetricPill label="活力" value={energyValue} color="#7FC9D8" />
           </View>}
         </View>
@@ -223,7 +223,7 @@ export default function CharacterSettingsScreen({ route, navigation }: Props) {
             <View key={page.key} style={[styles.page, { width: pageWidth }]}>
               <View style={[styles.pageCard, { width: cardWidth, backgroundColor: C.surface + 'F2', borderColor: C.border }]}>
                 {page.key === 'profile' && <ProfilePage character={character} />}
-                {page.key === 'memory' && <MemoryPage character={character} onOpenMemory={() => navigation.navigate('MemorySettings', { characterId })} />}
+                {page.key === 'memory' && <MemoryPage character={character} />}
                 {page.key === 'timeline' && <TimelinePage character={character} />}
                 {page.key === 'archive' && <ArchivePage archives={characterArchives} messages={characterMessages} />}
                 {page.key === 'anniversary' && <AnniversaryPage character={character} />}
@@ -270,7 +270,7 @@ function ProfilePage({ character }: { character: Character }) {
   );
 }
 
-function MemoryPage({ character, onOpenMemory }: { character: Character; onOpenMemory: () => void }) {
+function MemoryPage({ character }: { character: Character }) {
   const C = useThemeColors();
   const memories = (character.memories ?? []).slice().reverse().slice(0, 3);
   return (
@@ -296,9 +296,7 @@ function MemoryPage({ character, onOpenMemory }: { character: Character; onOpenM
         )}
       </View>
 
-      <TouchableOpacity style={[styles.primaryButton, { backgroundColor: C.primary }]} onPress={onOpenMemory}>
-        <Text style={styles.primaryButtonText}>打开记忆漫画</Text>
-      </TouchableOpacity>
+
     </>
   );
 }

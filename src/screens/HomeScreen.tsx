@@ -13,7 +13,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Modal,
   Image,
   useWindowDimensions,
   ImageSourcePropType,
@@ -23,7 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { RootStackParamList, Character, AppTheme, EmotionalState } from '../types';
+import { RootStackParamList, Character, EmotionalState } from '../types';
 import { hydrateDefaultCharacterAssets, useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { getDefaultCharacterAssetSet, resolveDefaultCharacterAssetKey } from '../utils/characterAssets';
@@ -48,7 +47,7 @@ const STATUS_OPTIONS: {
   mark: string;
 }[] = [
   { id: 'main', label: '自然日常', detail: '她有自己的生活，也愿意与你交流。', mood: 'neutral', frameIndex: 0, mark: '✦' },
-  { id: 'happy', label: '兴致不错', detail: '她自己的好心情。', mood: 'happy', frameIndex: 1, mark: '♡' },
+  { id: 'happy', label: '兴致不错', detail: '她自己的好心情。', mood: 'happy', frameIndex: 1, mark: '◎' },
   { id: 'soft', label: '安静陪着', detail: '少说一点，留一盏灯陪你。', mood: 'sad', frameIndex: 2, mark: '…' },
   { id: 'low-energy', label: '低电量', detail: '她需要收拢注意力，允许安静共处。', mood: 'tired', frameIndex: 3, mark: '☾' },
   { id: 'near', label: '有些兴奋', detail: '想法活跃，不代表身体接触许可。', mood: 'excited', frameIndex: 4, mark: '↗' },
@@ -255,10 +254,9 @@ export default function HomeScreen({ navigation }: Props) {
   const isLandscape = winWidth > winHeight;
 
   const { characters: allCharacters, loadCharacters, updateEmotionalState, ensureLuyaRuntime } = useChatStore();
-  const { updateAdvanced, saveSettings, settings, setSelectedCharacter } = useSettingsStore();
+  const { saveSettings, settings, setSelectedCharacter } = useSettingsStore();
   const isAdmin = settings.appMode === 'admin';
   const characters = useMemo(() => getVisibleCharacters(allCharacters, settings.appMode), [allCharacters, settings.appMode]);
-  const [showThemeModal, setShowThemeModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusSaving, setStatusSaving] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -330,11 +328,6 @@ export default function HomeScreen({ navigation }: Props) {
     navigation.navigate('Chat', moodEntry ? { characterId: character.id, moodEntry } : { characterId: character.id });
   };
 
-  const handleOpenMemory = (character: Character) => {
-    persistSelectedCharacter(character.id);
-    navigation.navigate('MemorySettings');
-  };
-
   const handleOpenProfile = (character: Character) => {
     persistSelectedCharacter(character.id);
     navigation.navigate('CharacterSettings', { characterId: character.id });
@@ -348,16 +341,6 @@ export default function HomeScreen({ navigation }: Props) {
     };
     void saveSettings(nextSettings);
   }, [saveSettings, setSelectedCharacter]);
-
-  const handleSelectTheme = async (theme: AppTheme) => {
-    const nextSettings = {
-      ...useSettingsStore.getState().settings,
-      advanced: { ...useSettingsStore.getState().settings.advanced, theme, themeMode: 'manual' as const },
-    };
-    updateAdvanced({ theme, themeMode: 'manual' });
-    await saveSettings(nextSettings);
-    setShowThemeModal(false);
-  };
 
   const openStatusModal = (character: Character) => {
     setStatusError(null);
@@ -426,25 +409,6 @@ export default function HomeScreen({ navigation }: Props) {
     setStatusLineSeed(0);
     setPortraitIndex(safeIndex);
     persistSelectedCharacter(nextCharacter.id);
-  };
-
-  const themeEmojis: Record<AppTheme, string> = {
-    urbanClear: '✦',
-    softSweet: '♡',
-    pink: '💗',
-    blue: '💙',
-    yellow: '💛',
-    purple: '💜',
-    midnight: '🌙',
-  };
-  const themeNames: Record<AppTheme, string> = {
-    urbanClear: '都市清透',
-    softSweet: '甜美柔软',
-    pink: '粉色甜心',
-    blue: '蓝色清新',
-    yellow: '黄色阳光',
-    purple: '紫色梦幻',
-    midnight: '午夜深色',
   };
 
   const selectedCharacter =
@@ -680,26 +644,17 @@ export default function HomeScreen({ navigation }: Props) {
               <View style={styles.luyaHomeLinks}>
                 <TouchableOpacity style={[styles.luyaHomeLink, { backgroundColor: C.inputBg, borderColor: C.border }]}
                   onPress={() => navigation.navigate('LuyaRoom')} accessibilityRole="button" activeOpacity={0.78}>
-                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>⌂  共同房间</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
+                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>⌂  鹿芽的房间</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.luyaHomeLink, { backgroundColor: C.inputBg, borderColor: C.border }]}
                   onPress={() => navigation.navigate('LuyaUnderstanding')} accessibilityRole="button" activeOpacity={0.78}>
-                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>♡  怎样理解我</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
+                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>◎  怎样理解我</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.luyaSecondaryLinks}>
-                <TouchableOpacity onPress={() => handleOpenMemory(currentCharacter)} accessibilityRole="button" activeOpacity={0.78}
-                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>▧</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>故事与漫画</Text>
-                </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleOpenProfile(currentCharacter)} accessibilityRole="button" activeOpacity={0.78}
                   style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
                   <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>♧</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>人物档案</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { persistSelectedCharacter(currentCharacter.id); navigation.navigate('LifeSettings'); }}
-                  accessibilityRole="button" activeOpacity={0.78}
-                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>◷</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>提醒</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -735,9 +690,9 @@ export default function HomeScreen({ navigation }: Props) {
 
           <LinearGradient
             colors={[
-              currentCharacter?.theme === 'midnight' ? 'rgba(6,7,16,0.08)' : 'rgba(255,247,248,0)',
-              currentCharacter?.theme === 'midnight' ? 'rgba(6,7,16,0.08)' : 'rgba(255,247,248,0)',
-              currentCharacter?.theme === 'midnight' ? 'rgba(5,6,14,0.76)' : 'rgba(18,12,18,0.18)',
+              'rgba(255,247,248,0)',
+              'rgba(255,247,248,0)',
+              'rgba(18,12,18,0.18)',
             ]}
             locations={[0, 0.58, 1]}
             style={styles.spaceShade}
@@ -780,7 +735,7 @@ export default function HomeScreen({ navigation }: Props) {
                 </View>
               </TouchableOpacity>
             ) : (
-              <Text style={[styles.spaceBrand, { color: C.text }]}>心动伴侣</Text>
+              <Text style={[styles.spaceBrand, { color: C.text }]}>饮之</Text>
             )}
 
             <TouchableOpacity
@@ -871,11 +826,11 @@ export default function HomeScreen({ navigation }: Props) {
                       accessibilityElementsHidden
                       importantForAccessibility="no"
                     >
-                      ♡
+                      ◎
                     </Text>
                   </View>}
                   <View style={styles.contextActions}>
-                    {currentCharacter.id === 'qingning' && <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>共同房间</Text></TouchableOpacity>}
+                    {currentCharacter.id === 'qingning' && <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>鹿芽的房间</Text></TouchableOpacity>}
                     {currentCharacter.id === 'qingning' && <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaUnderstanding')}><Text style={[styles.contextActionText, { color: C.primary }]}>怎样理解我</Text></TouchableOpacity>}
                     <TouchableOpacity
                       style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]}
@@ -883,23 +838,6 @@ export default function HomeScreen({ navigation }: Props) {
                       activeOpacity={0.76}
                     >
                       <Text style={[styles.contextActionText, { color: C.primary }]}>档案</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]}
-                      onPress={() => handleOpenMemory(currentCharacter)}
-                      activeOpacity={0.76}
-                    >
-                      <Text style={[styles.contextActionText, { color: C.primary }]}>故事与漫画</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]}
-                      onPress={() => {
-                        persistSelectedCharacter(currentCharacter.id);
-                        navigation.navigate('LifeSettings');
-                      }}
-                      activeOpacity={0.76}
-                    >
-                      <Text style={[styles.contextActionText, { color: C.primary }]}>提醒</Text>
                     </TouchableOpacity>
                   </View>
                 </>
@@ -941,7 +879,7 @@ export default function HomeScreen({ navigation }: Props) {
       {/* 横屏：横向轮播（人设图 + 名字 + 性格词）+ 左右箭头 + 末尾创建新角色 */}
       {!showLuyaHome && isLandscape && (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
-          <Text style={[styles.spaceBrand, { color: C.text }]}>心动伴侣</Text>
+          <Text style={[styles.spaceBrand, { color: C.text }]}>饮之</Text>
           <TouchableOpacity
             style={[styles.glassIconBtn, { backgroundColor: C.surface, borderColor: C.border }]}
             onPress={() => navigation.navigate('Settings')}
@@ -996,31 +934,11 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 18, gap: 10 }}>
           <Text style={{ color: C.textSecondary, textAlign: 'center' }}>{LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor']} · {luyaProjection?.currentActivity ?? '慢慢认识彼此'}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
-            <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>共同房间</Text></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>鹿芽的房间</Text></TouchableOpacity>
             <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaUnderstanding')}><Text style={[styles.contextActionText, { color: C.primary }]}>怎样理解我</Text></TouchableOpacity>
           </View>
         </View>
       )}
-
-      {/* 主题弹窗 */}
-      <Modal visible={showThemeModal} transparent animationType="fade" onRequestClose={() => setShowThemeModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowThemeModal(false)}>
-          <View style={[styles.modalContent, { backgroundColor: C.surface }]}>
-            <Text style={[styles.modalTitle, { color: C.text }]}>选择主题色</Text>
-            {(['urbanClear', 'softSweet', 'pink', 'blue', 'yellow', 'purple', 'midnight'] as const).map((theme) => (
-              <TouchableOpacity
-                key={theme}
-                style={[styles.themeOption, settings.advanced.theme === theme && { backgroundColor: C.primaryLight + '22' }]}
-                onPress={() => handleSelectTheme(theme)}
-              >
-                <Text style={styles.themeEmoji}>{themeEmojis[theme]}</Text>
-                <Text style={[styles.themeName, { color: C.text }]}>{themeNames[theme]}</Text>
-                {settings.advanced.theme === theme && <Text style={styles.checkMark}>✓</Text>}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       <ExperienceSheet visible={showStatusModal} title="调整这次聊聊的状态" onClose={closeStatusModal}
         subtitle="选择会记录这次互动。5 分钟内进入聊天会带入该状态；重新打开时，鹿芽的状态会按生活日程恢复。画面模式和历史消息保持原样。">

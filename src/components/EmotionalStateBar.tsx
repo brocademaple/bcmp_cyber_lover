@@ -18,7 +18,7 @@ export default function EmotionalStateBar({ emotionalState }: Props) {
         {getMoodEmoji(mood)} {mood}
       </Text>
       <Text style={[styles.item, { color: C.textSecondary }]}>
-        💕 {getIntimacyLevel(intimacy)} ({intimacy})
+        ◎ {getIntimacyLevel(intimacy)} ({intimacy})
       </Text>
       <Text style={[styles.item, { color: C.textSecondary }]}>
         ⚡ {energy}%

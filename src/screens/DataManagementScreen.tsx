@@ -16,6 +16,7 @@ import { RootStackParamList } from '../types';
 import { useThemeColors } from '../utils/theme';
 import {
   DataExportResult,
+  DataExportMode,
   exportAppData,
   listAppDataExports,
   restoreAppDataExport,
@@ -37,6 +38,7 @@ export default function DataManagementScreen({ navigation }: Props) {
   const C = useThemeColors();
   const [exports, setExports] = useState<string[]>([]);
   const [issues, setIssues] = useState<AppDiagnosticIssue[]>([]);
+  const [choosingExport, setChoosingExport] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastResult, setLastResult] = useState<DataExportResult | null>(null);
 
@@ -53,15 +55,16 @@ export default function DataManagementScreen({ navigation }: Props) {
     refresh();
   }, [refresh]);
 
-  const createBackup = async () => {
+  const createBackup = async (mode: DataExportMode) => {
+    setChoosingExport(false);
     setBusy(true);
     try {
-      const result = await exportAppData();
+      const result = await exportAppData('manual', Date.now(), mode);
       setLastResult(result);
       await refresh();
       Alert.alert(
         '备份完成',
-        `已保存 ${result.characterCount} 个角色和 ${result.messageCount} 条消息。\n\n${filename(result.uri)}`
+        mode === 'confirmed' ? `已保存 ${result.confirmedCount ?? 0} 条确认内容，不含聊天原文。\n\n${filename(result.uri)}` : `已保存 ${result.characterCount} 个角色和 ${result.messageCount} 条消息。\n\n${filename(result.uri)}`
       );
     } catch (error) {
       await recordAppIssue('数据备份', error, true);
@@ -151,7 +154,7 @@ export default function DataManagementScreen({ navigation }: Props) {
     }
     await Sharing.shareAsync(latest, {
       mimeType: 'application/json',
-      dialogTitle: '导出心动伴侣备份',
+      dialogTitle: '导出饮之备份',
       UTI: 'public.json',
     });
   };
@@ -178,15 +181,15 @@ export default function DataManagementScreen({ navigation }: Props) {
         </View>
 
         <View style={[styles.hero, { backgroundColor: C.surface, borderColor: C.border }]}>
-          <Text style={[styles.heroTitle, { color: C.text }]}>关系数据是产品资产</Text>
-          <Text style={[styles.body, { color: C.textSecondary }]}>聊天、角色设定、记忆、日记和版本记录会写入备份。恢复前会再次自动备份当前状态。</Text>
+          <Text style={[styles.heroTitle, { color: C.text }]}>留下你选择保留的内容</Text>
+          <Text style={[styles.body, { color: C.textSecondary }]}>你可以导出全部聊天原文与档案，或只导出已确认的理解卡和共同事件。恢复前会自动备份当前状态。</Text>
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[styles.primaryButton, { backgroundColor: C.primary, opacity: busy ? 0.6 : 1 }]}
-              onPress={createBackup}
+              onPress={() => setChoosingExport(true)}
               disabled={busy}
             >
-              <Text style={styles.primaryText}>{busy ? '处理中…' : '创建本地备份'}</Text>
+              <Text style={styles.primaryText}>{busy ? '处理中…' : '导出数据'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.secondaryButton, { backgroundColor: C.background, borderColor: C.border }]}
@@ -210,8 +213,20 @@ export default function DataManagementScreen({ navigation }: Props) {
               <Text style={[styles.secondaryText, { color: C.text }]}>分享最近备份</Text>
             </TouchableOpacity>
           </View>
+          {choosingExport && <View style={styles.stack}>
+            <Text style={[styles.body, { color: C.text }]}>选择导出内容</Text>
+            <TouchableOpacity accessibilityRole="button" disabled={busy} onPress={() => void createBackup('full')} style={[styles.secondaryButton, { borderColor: C.border }]}>
+              <Text style={[styles.secondaryText, { color: C.text }]}>全部聊天原文</Text>
+              <Text style={[styles.itemMeta, { color: C.textSecondary }]}>聊天、角色、记忆与媒体</Text>
+            </TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" disabled={busy} onPress={() => void createBackup('confirmed')} style={[styles.secondaryButton, { borderColor: C.border }]}>
+              <Text style={[styles.secondaryText, { color: C.text }]}>只带确认过的内容</Text>
+              <Text style={[styles.itemMeta, { color: C.textSecondary }]}>已确认的理解卡和共同事件，不含聊天原文</Text>
+            </TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" onPress={() => setChoosingExport(false)}><Text style={[styles.body, { color: C.textSecondary }]}>取消</Text></TouchableOpacity>
+          </View>}
           {lastResult && (
-            <Text style={[styles.result, { color: C.primary }]}>最近处理：{lastResult.characterCount} 个角色 · {lastResult.messageCount} 条消息</Text>
+            <Text style={[styles.result, { color: C.primary }]}>最近处理：{lastResult.mode === 'confirmed' ? `${lastResult.confirmedCount ?? 0} 条确认内容` : `${lastResult.characterCount} 个角色 · ${lastResult.messageCount} 条消息`}</Text>
           )}
         </View>
 

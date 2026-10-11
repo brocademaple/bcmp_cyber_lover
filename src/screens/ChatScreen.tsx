@@ -44,6 +44,7 @@ import {
 } from '../services/aiService';
 import ChatBubble from '../components/ChatBubble';
 import MessageInput from '../components/MessageInput';
+import { REMINDERS_ENABLED } from '../services/notificationService';
 import { useThemeColors, useThemeId } from '../utils/theme';
 import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { oldestFirst, recentChronological } from '../utils/chatHistory';
@@ -81,9 +82,9 @@ function getImageSource(source?: Character['imageUri']): ImageSourcePropType | n
 
 const QUICK_REPLIES = [
   { label: '😊 嗯嗯～', text: '嗯嗯～' },
-  { label: '❤️ 我也是', text: '我也是' },
+  { label: '我也是', text: '我也是' },
   { label: '😴 今天好累', text: '今天好累' },
-  { label: '🥺 想你了', text: '想你了' },
+  { label: '今天怎么样', text: '今天怎么样' },
 ];
 const MOOD_ENTRY_VALID_MS = 5 * 60 * 1000;
 
@@ -572,7 +573,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   // Auto-send AI daily greeting when opened from notification
   useEffect(() => {
-    if (!autoGreet || !character || autoGreetSentRef.current) return;
+    if (!REMINDERS_ENABLED || !autoGreet || !character || autoGreetSentRef.current) return;
     if (!settingsRef.current.life.enabled || !settingsRef.current.life.allowProactiveMessages || character.luyaRuntime?.boundaries.quietUntilNextUserTurn) return;
     if (!settingsRef.current.service.apiKey) return;
     autoGreetSentRef.current = true;

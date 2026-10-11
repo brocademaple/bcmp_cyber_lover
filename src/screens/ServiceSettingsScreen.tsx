@@ -265,7 +265,7 @@ export default function ServiceSettingsScreen() {
         <View style={styles.hero}>
           <Text style={[styles.pageTitle, { color: C.text }]}>连接服务</Text>
           <Text style={[styles.pageDesc, { color: C.textSecondary }]}>
-            像控制台一样管理服务、密钥和模型能力。连接完成后，聊天、好感和记忆才会进入真实体验。
+            像控制台一样管理服务、密钥和模型能力。连接完成后，聊天、理解和记忆才会进入真实体验。
           </Text>
         </View>
 

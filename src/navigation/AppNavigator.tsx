@@ -23,6 +23,7 @@ import DeveloperDebugScreen from '../screens/DeveloperDebugScreen';
 import CharacterEditorScreen from '../screens/CharacterEditorScreen';
 import CharacterSettingsScreen from '../screens/CharacterSettingsScreen';
 import DataManagementScreen from '../screens/DataManagementScreen';
+import { cancelDailyNotification } from '../services/notificationService';
 import { recoverInterruptedRestore } from '../services/appDataPortability';
 import { recordAppIssue } from '../services/appDiagnostics';
 
@@ -48,6 +49,8 @@ export default function AppNavigator({ navigationRef }: Props) {
       } catch (error) {
         await recordAppIssue('恢复中断回滚', error, true);
       }
+      // Remove the legacy registered reminder; this never requests permission.
+      await cancelDailyNotification();
       await loadSettings();
       const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
       const loadedSettings = useSettingsStore.getState().settings;
@@ -118,7 +121,7 @@ export default function AppNavigator({ navigationRef }: Props) {
         <Stack.Screen
           name="Main"
           component={HomeScreen}
-          options={{ title: '心动伴侣', headerShown: false }}
+          options={{ title: '饮之', headerShown: false }}
         />
         <Stack.Screen
           name="Chat"

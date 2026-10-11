@@ -1,23 +1,23 @@
-// 粉色主题（默认）
+// 饮之：固定浅色粉金主题。旧主题常量仅保留兼容性。
 export const PinkTheme = {
-  primary: '#ff6b9d',
-  primaryLight: '#ffb3d9',
-  primaryDark: '#c2185b',
-  accent: '#ffc1e3',
-  accentLight: '#ffe0f0',
-  background: '#fff5f8',
-  surface: '#ffffff',
-  text: '#4a1942',
-  textSecondary: '#b8739f',
-  bubbleUser: '#ff6b9d',
-  bubbleAssistant: '#ffffff',
-  bubbleUserText: '#ffffff',
-  bubbleAssistantText: '#4a1942',
-  border: '#ffd4e5',
-  inputBg: '#fff0f5',
-  shadow: 'rgba(255, 107, 157, 0.2)',
-  danger: '#e25563',
-  chatBackgroundOverlay: 'rgba(0,0,0,0.48)',
+  primary: '#E7A0B4',
+  primaryLight: '#F4D5DF',
+  primaryDark: '#AF7185',
+  accent: '#C4A574',
+  accentLight: '#F2E8D8',
+  background: '#FFF8F8',
+  surface: '#FFFDFB',
+  text: '#56454A',
+  textSecondary: '#947780',
+  bubbleUser: '#F4D5DF',
+  bubbleAssistant: '#FFFDFB',
+  bubbleUserText: '#56454A',
+  bubbleAssistantText: '#56454A',
+  border: '#EADACD',
+  inputBg: '#FCF0F2',
+  shadow: 'rgba(196, 165, 116, 0.18)',
+  danger: '#B86F80',
+  chatBackgroundOverlay: 'rgba(255,248,248,0.70)',
 };
 
 export const PinkThemeDark = {
@@ -292,23 +292,8 @@ export const SoftSweetThemeDark = {
 export const Colors = PinkTheme;
 
 export const ThemeMap = {
-  pink: PinkTheme,
-  blue: BlueTheme,
-  yellow: YellowTheme,
-  purple: PurpleTheme,
-  midnight: MidnightTheme,
-  urbanClear: UrbanClearTheme,
-  softSweet: SoftSweetTheme,
+  pink: PinkTheme, blue: PinkTheme, yellow: PinkTheme, purple: PinkTheme,
+  midnight: PinkTheme, urbanClear: PinkTheme, softSweet: PinkTheme,
 };
-
-export const ThemeMapDark = {
-  pink: PinkThemeDark,
-  blue: BlueThemeDark,
-  yellow: YellowThemeDark,
-  purple: PurpleThemeDark,
-  midnight: MidnightThemeDark,
-  urbanClear: UrbanClearThemeDark,
-  softSweet: SoftSweetThemeDark,
-};
-
+export const ThemeMapDark = ThemeMap;
 export type ThemeType = keyof typeof ThemeMap;
