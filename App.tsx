@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useFonts } from 'expo-font';
-import { Platform } from 'react-native';
+import { Platform, Text, TextInput } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
@@ -10,7 +10,21 @@ import { setupNotificationHandler } from './src/services/notificationService';
 import { RootStackParamList } from './src/types';
 import AppErrorBoundary from './src/components/AppErrorBoundary';
 import ImageRecoveryProbe from './src/dev/ImageRecoveryProbe';
-import { YINZHI_FONT_FILES } from './src/utils/appFonts';
+import { YINZHI_BODY, YINZHI_FONT_FILES } from './src/utils/appFonts';
+
+/** Body default so screens without explicit fontFamily still use GenSenRounded2. Once only. */
+let yinzhiDefaultFontsApplied = false;
+function applyYinzhiDefaultFonts() {
+  if (yinzhiDefaultFontsApplied) return;
+  yinzhiDefaultFontsApplied = true;
+  const body = { fontFamily: YINZHI_BODY.regular };
+  const T = Text as typeof Text & { defaultProps?: { style?: unknown } };
+  T.defaultProps = T.defaultProps ?? {};
+  T.defaultProps.style = [body, T.defaultProps.style].filter(Boolean);
+  const TI = TextInput as typeof TextInput & { defaultProps?: { style?: unknown } };
+  TI.defaultProps = TI.defaultProps ?? {};
+  TI.defaultProps.style = [body, TI.defaultProps.style].filter(Boolean);
+}
 
 setupNotificationHandler();
 
@@ -44,6 +58,8 @@ export default function App() {
     // Wait for 站酷小薇 / 源泉圆体 so first paint does not flash system fonts.
     return null;
   }
+
+  applyYinzhiDefaultFonts();
 
   return (
     <AppErrorBoundary>

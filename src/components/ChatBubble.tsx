@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 20,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   urbanAvatar: {
     borderWidth: StyleSheet.hairlineWidth,

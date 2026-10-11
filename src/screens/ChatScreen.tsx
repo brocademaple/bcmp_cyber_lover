@@ -972,10 +972,10 @@ export default function ChatScreen({ route, navigation }: Props) {
             </Text>
             <View style={styles.roomContextActions}>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="开始输入商量内容" onPress={() => inputRef.current?.focus()} style={styles.roomContextAction}>
-                <Text style={{ color: C.primary, fontSize: 13 }}>开始商量</Text>
+                <Text style={{ color: C.primary, fontSize: 13, fontFamily: NOTO_SANS_SC.medium }}>开始商量</Text>
               </TouchableOpacity>
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="关闭房间商量提示" onPress={() => navigation.setParams({ roomContext: undefined })} style={styles.roomContextAction}>
-                <Text style={{ color: C.textSecondary, fontSize: 13 }}>关闭提示</Text>
+                <Text style={{ color: C.textSecondary, fontSize: 13, fontFamily: NOTO_SANS_SC.regular }}>关闭提示</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1235,7 +1235,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   roomContext: { marginHorizontal: 16, marginBottom: 8, padding: 12, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth },
-  roomContextText: { fontSize: 13, lineHeight: 20 },
+  roomContextText: { fontSize: 13, lineHeight: 20, fontFamily: NOTO_SANS_SC.regular },
   roomContextActions: { flexDirection: 'row', gap: 16 },
   roomContextAction: { minHeight: 44, justifyContent: 'center' },
   container: { flex: 1 },
@@ -1293,7 +1293,8 @@ const styles = StyleSheet.create({
   chatBackIcon: {
     fontSize: 36,
     lineHeight: 38,
-    fontWeight: '500',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
     marginTop: -2,
   },
   chatSettingsIcon: {
@@ -1360,6 +1361,7 @@ const styles = StyleSheet.create({
   },
   chatIdentityEmoji: {
     fontSize: 24,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   chatIdentityCopy: {
     flex: 1,
@@ -1367,11 +1369,13 @@ const styles = StyleSheet.create({
   },
   chatIdentityName: {
     fontFamily: NOTO_SERIF_SC.black,
+    fontWeight: undefined,
     fontSize: 16,
     lineHeight: 20,
   },
   chatIdentityStatus: {
     fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
     marginTop: 2,
     fontSize: 13,
     lineHeight: 18,
@@ -1494,6 +1498,7 @@ const styles = StyleSheet.create({
   moodCloseText: {
     fontSize: 18,
     lineHeight: 22,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   moodScoreTrack: {
     height: 6,

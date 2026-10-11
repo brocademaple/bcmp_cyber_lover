@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { useThemeColors } from '../utils/theme';
+import { YINZHI_BODY, YINZHI_TITLE } from '../utils/appFonts';
 
 interface SettingsRowProps {
   label: string;
@@ -93,12 +94,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 15,
-    fontWeight: '800',
+    fontFamily: YINZHI_BODY.medium,
+    fontWeight: undefined,
   },
   description: {
     fontSize: 12,
     marginTop: 3,
     lineHeight: 17,
+    fontFamily: YINZHI_BODY.regular,
   },
   controlSection: {
     flexDirection: 'row',
@@ -107,6 +110,7 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 22,
     marginLeft: 4,
+    fontFamily: YINZHI_BODY.regular,
   },
   section: {
     marginBottom: 20,
@@ -114,7 +118,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: '900',
+    fontFamily: YINZHI_TITLE,
+    fontWeight: undefined,
     marginBottom: 8,
     marginLeft: 4,
     textTransform: 'uppercase',

@@ -227,7 +227,8 @@ const styles = StyleSheet.create({
   backIcon: {
     fontSize: 34,
     lineHeight: 36,
-    fontWeight: '500',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
   },
   topTitle: {
     position: 'absolute',
@@ -275,7 +276,8 @@ const styles = StyleSheet.create({
   statusIconText: {
     color: '#fff',
     fontSize: 21,
-    fontWeight: '900',
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
   },
   statusCopy: {
     flex: 1,
@@ -294,7 +296,8 @@ const styles = StyleSheet.create({
   },
   statusValue: {
     fontSize: 12,
-    fontWeight: '900',
+    fontFamily: NOTO_SANS_SC.bold,
+    fontWeight: undefined,
   },
   group: {
     marginBottom: 20,
@@ -323,6 +326,7 @@ const styles = StyleSheet.create({
   modeDesc: {
     fontSize: 12,
     marginTop: 2,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   modeFooter: {
     marginTop: 8,
@@ -336,12 +340,14 @@ const styles = StyleSheet.create({
   },
   debugTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
   },
   debugDesc: {
     fontSize: 12,
     marginTop: 4,
     marginBottom: 10,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   debugBtnRow: {
     flexDirection: 'row',
@@ -357,7 +363,8 @@ const styles = StyleSheet.create({
   },
   debugBtnText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
   },
   resetBtn: {
     marginTop: 4,
@@ -368,7 +375,8 @@ const styles = StyleSheet.create({
   resetBtnText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: NOTO_SANS_SC.bold,
+    fontWeight: undefined,
   },
   hintCard: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -377,6 +385,7 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: 12,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   versionTap: {
     alignItems: 'center',
@@ -409,7 +418,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 22,
     marginRight: 14,
-    fontWeight: '800',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
   },
   menuText: {
     flex: 1,
@@ -432,5 +442,6 @@ const styles = StyleSheet.create({
   },
   arrow: {
     fontSize: 22,
+    fontFamily: NOTO_SANS_SC.regular,
   },
 });

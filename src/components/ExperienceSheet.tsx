@@ -2,6 +2,7 @@ import React, { type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../utils/theme';
+import { YINZHI_BODY, YINZHI_TITLE } from '../utils/appFonts';
 
 interface Props {
   visible: boolean;
@@ -48,10 +49,10 @@ const styles = StyleSheet.create({
   handle: { width: 40, height: 4, borderRadius: 2, marginTop: 10, marginBottom: 4, alignSelf: 'center' },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 14 },
   heading: { flex: 1, minWidth: 0, gap: 5 },
-  title: { fontSize: 20, fontWeight: '600', lineHeight: 28 },
-  subtitle: { fontSize: 13, lineHeight: 21 },
+  title: { fontSize: 20, fontFamily: YINZHI_TITLE, fontWeight: undefined, lineHeight: 28 },
+  subtitle: { fontSize: 13, fontFamily: YINZHI_BODY.regular, lineHeight: 21 },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 28, lineHeight: 32 },
+  closeText: { fontSize: 28, lineHeight: 32, fontFamily: YINZHI_BODY.regular },
   scroll: { flexShrink: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 22, gap: 12 },
   footer: { padding: 16, borderTopWidth: StyleSheet.hairlineWidth, gap: 10 },
