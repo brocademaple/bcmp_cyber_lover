@@ -57,7 +57,7 @@ export default function LuyaRoomScene({ room, daySource, nightSource, portraitDa
     <ResilientImage accessible={false} source={portrait ?? landscape} fallbackSources={[landscape]} resizeMode="cover" blurRadius={18} style={styles.portraitImage} />
     <LinearGradient pointerEvents="none" colors={daylight ? ['rgba(220,200,167,0.12)', 'transparent', 'rgba(102,78,49,0.12)'] : ['rgba(36,41,37,0.10)', 'transparent', 'rgba(30,27,23,0.16)']} style={StyleSheet.absoluteFill} />
     <View style={{ position: 'absolute', left: (size.width - imageWidth) / 2, top: (size.height - imageHeight) / 2, width: imageWidth, height: imageHeight }}>
-    <ResilientImage source={portrait ?? landscape} fallbackSources={portrait ? [landscape] : [daylight ? nightSource : daySource]} accessibilityLabel={`共同房间，${daylight ? '日间' : '夜间'}，${ROOM_WALL_NAMES[room.wallColor]}，${bright ? '明亮主灯' : '柔和暖灯'}`} resizeMode="contain" style={styles.portraitImage} />
+    <ResilientImage source={portrait ?? landscape} fallbackSources={portrait ? [landscape] : [daylight ? nightSource : daySource]} accessibilityLabel={`鹿芽的房间，${daylight ? '日间' : '夜间'}，${ROOM_WALL_NAMES[room.wallColor]}，${bright ? '明亮主灯' : '柔和暖灯'}`} resizeMode="contain" style={styles.portraitImage} />
     {/* Soft edges follow the open right wall; the original texture and furniture stay visible. */}
     {room.wallColor !== 'cream' && <View pointerEvents="none" style={styles.wallTint}>
       {Array.from({ length: 24 }, (_, index) => {

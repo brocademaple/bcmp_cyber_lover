@@ -112,7 +112,7 @@ export default function SettingsScreen({ navigation }: Props) {
         </View>
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: C.textSecondary }]}>关于</Text>
-          <Text style={[styles.menuLabel, { color: C.text }]}>饮之 · 1.5.0</Text>
+          <Text style={[styles.menuLabel, { color: C.text }]}>陪伴对话与本地记忆</Text>
         </View>
 
         {isAdmin && (
