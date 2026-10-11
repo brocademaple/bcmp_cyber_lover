@@ -21,6 +21,10 @@ const INK_SOFT = '#3C3032';
 const WIDE_BREAKPOINT = 768;
 
 const HOME_PORTRAIT = require('../../assets/luya-home-v3.jpg');
+/** Approximate 2.5D layers from luya-home-v3 (no cutout): blurred stage, sharp mid, soft edge haze. */
+const HOME_BG = require('../../assets/luya-25d/luya-home-v3-bg.jpg');
+const HOME_MID = require('../../assets/luya-25d/luya-home-v3-mid.jpg');
+const HOME_FG = require('../../assets/luya-25d/luya-home-v3-fg.png');
 
 type Props = {
   characterName: string;
@@ -84,19 +88,29 @@ export default function LuyaImmersiveHome({
   const isWide = width >= WIDE_BREAKPOINT || width > height;
 
   const breath = useRef(new Animated.Value(0)).current;
+  const drift = useRef(new Animated.Value(0)).current;
   const parallaxX = useRef(new Animated.Value(0)).current;
   const parallaxY = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    const loop = Animated.loop(
+    const breathLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(breath, { toValue: 1, duration: 3200, useNativeDriver: true }),
-        Animated.timing(breath, { toValue: 0, duration: 3200, useNativeDriver: true }),
+        Animated.timing(breath, { toValue: 1, duration: 3400, useNativeDriver: true }),
+        Animated.timing(breath, { toValue: 0, duration: 3400, useNativeDriver: true }),
       ])
     );
-    loop.start();
-    return () => loop.stop();
-  }, [breath]);
+    const driftLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(drift, { toValue: 1, duration: 5600, useNativeDriver: true }),
+        Animated.timing(drift, { toValue: 0, duration: 5600, useNativeDriver: true }),
+      ])
+    );
+    breathLoop.start();
+    driftLoop.start();
+    return () => {
+      breathLoop.stop();
+      driftLoop.stop();
+    };
+  }, [breath, drift]);
 
   const panResponder = useMemo(
     () =>
@@ -104,37 +118,60 @@ export default function LuyaImmersiveHome({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) + Math.abs(g.dy) > 2,
         onPanResponderMove: (_, g) => {
-          const nx = Math.max(-1, Math.min(1, g.dx / 140));
-          const ny = Math.max(-1, Math.min(1, g.dy / 140));
+          const nx = Math.max(-1, Math.min(1, g.dx / 110));
+          const ny = Math.max(-1, Math.min(1, g.dy / 110));
           parallaxX.setValue(nx);
           parallaxY.setValue(ny);
         },
         onPanResponderRelease: () => {
           Animated.parallel([
-            Animated.spring(parallaxX, { toValue: 0, useNativeDriver: true, friction: 8 }),
-            Animated.spring(parallaxY, { toValue: 0, useNativeDriver: true, friction: 8 }),
+            Animated.spring(parallaxX, { toValue: 0, useNativeDriver: true, friction: 7, tension: 48 }),
+            Animated.spring(parallaxY, { toValue: 0, useNativeDriver: true, friction: 7, tension: 48 }),
+          ]).start();
+        },
+        onPanResponderTerminate: () => {
+          Animated.parallel([
+            Animated.spring(parallaxX, { toValue: 0, useNativeDriver: true, friction: 7 }),
+            Animated.spring(parallaxY, { toValue: 0, useNativeDriver: true, friction: 7 }),
           ]).start();
         },
       }),
     [parallaxX, parallaxY]
   );
 
-  const portraitScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1.02, 1.055] });
-  const portraitTx = Animated.add(
-    breath.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }),
-    Animated.multiply(parallaxX, 10)
-  );
-  const portraitTy = Animated.add(
-    breath.interpolate({ inputRange: [0, 1], outputRange: [0, -6] }),
-    Animated.multiply(parallaxY, 8)
-  );
-  const fgTx = Animated.multiply(parallaxX, -6);
-  const fgTy = Animated.multiply(parallaxY, -4);
+  // Idle drift adds a slow automatic sway so layered depth reads even without touch.
+  const idleX = drift.interpolate({ inputRange: [0, 1], outputRange: [-0.35, 0.35] });
+  const idleY = drift.interpolate({ inputRange: [0, 1], outputRange: [0.2, -0.25] });
+  const combinedX = Animated.add(parallaxX, idleX);
+  const combinedY = Animated.add(parallaxY, idleY);
 
-  const displayedSource = showLifeScene && lifeSceneSource ? lifeSceneSource : HOME_PORTRAIT;
-  const fallbacks = showLifeScene
+  // Depth: bg least, mid + breath, soft fg most + opposite bias.
+  const bgScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1.08, 1.1] });
+  const bgTx = Animated.multiply(combinedX, 6);
+  const bgTy = Animated.multiply(combinedY, 4);
+
+  const midScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1.03, 1.07] });
+  const midTx = Animated.add(
+    breath.interpolate({ inputRange: [0, 1], outputRange: [0, 5] }),
+    Animated.multiply(combinedX, 16)
+  );
+  const midTy = Animated.add(
+    breath.interpolate({ inputRange: [0, 1], outputRange: [0, -8] }),
+    Animated.multiply(combinedY, 12)
+  );
+
+  const hazeTx = Animated.multiply(combinedX, -14);
+  const hazeTy = Animated.multiply(combinedY, -10);
+  const hazeOpacity = breath.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0.78] });
+
+  const fgTx = Animated.multiply(combinedX, -8);
+  const fgTy = Animated.multiply(combinedY, -5);
+
+  const useLayeredPortrait = !(showLifeScene && lifeSceneSource);
+  const displayedSource = useLayeredPortrait ? HOME_MID : lifeSceneSource!;
+  const fallbacks = useLayeredPortrait
     ? [HOME_PORTRAIT, ...classicFallbackSources]
-    : classicFallbackSources;
+    : [HOME_PORTRAIT, ...classicFallbackSources];
 
   const controls = (
     <Animated.View
@@ -215,31 +252,103 @@ export default function LuyaImmersiveHome({
     <View style={[styles.stage, { paddingTop: insets.top }]} {...panResponder.panHandlers}>
       <View style={[styles.stageInner, isWide && styles.stageInnerWide]}>
         <View style={[styles.artStage, isWide && styles.artStageWide]}>
-          <Animated.View
-            style={[
-              styles.portraitWrap,
-              {
-                transform: [
-                  { translateX: portraitTx },
-                  { translateY: portraitTy },
-                  { scale: portraitScale },
-                ],
-              },
-            ]}
-          >
-            <ResilientImage
-              key={`immersive-${homeArtMode}-${showLifeScene ? 'life' : 'classic'}`}
-              source={displayedSource}
-              fallbackSources={fallbacks}
-              retryKey={Number(isFocused)}
-              style={styles.portraitImage}
-              resizeMode="cover"
-              accessibilityLabel={showLifeScene ? `鹿芽生活插画：${lifeSceneLabel}` : `鹿芽立绘：${characterName}`}
-              onError={() => {
-                if (showLifeScene) onLifeSceneError?.();
-              }}
-            />
-          </Animated.View>
+          {useLayeredPortrait ? (
+            <>
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.portraitWrap,
+                  styles.layerBg,
+                  {
+                    transform: [
+                      { translateX: bgTx },
+                      { translateY: bgTy },
+                      { scale: bgScale },
+                    ],
+                  },
+                ]}
+              >
+                <ResilientImage
+                  source={HOME_BG}
+                  fallbackSources={[HOME_PORTRAIT]}
+                  retryKey={Number(isFocused)}
+                  style={styles.portraitImage}
+                  resizeMode="cover"
+                  accessibilityLabel=""
+                />
+              </Animated.View>
+
+              <Animated.View
+                style={[
+                  styles.portraitWrap,
+                  {
+                    transform: [
+                      { translateX: midTx },
+                      { translateY: midTy },
+                      { scale: midScale },
+                    ],
+                  },
+                ]}
+              >
+                <ResilientImage
+                  key={`immersive-mid-${homeArtMode}`}
+                  source={HOME_MID}
+                  fallbackSources={fallbacks}
+                  retryKey={Number(isFocused)}
+                  style={styles.portraitImage}
+                  resizeMode="cover"
+                  accessibilityLabel={`鹿芽立绘：${characterName}`}
+                />
+              </Animated.View>
+
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.portraitWrap,
+                  styles.layerHaze,
+                  {
+                    opacity: hazeOpacity,
+                    transform: [{ translateX: hazeTx }, { translateY: hazeTy }, { scale: 1.06 }],
+                  },
+                ]}
+              >
+                <ResilientImage
+                  source={HOME_FG}
+                  fallbackSources={[]}
+                  retryKey={Number(isFocused)}
+                  style={styles.portraitImage}
+                  resizeMode="cover"
+                  accessibilityLabel=""
+                />
+              </Animated.View>
+            </>
+          ) : (
+            <Animated.View
+              style={[
+                styles.portraitWrap,
+                {
+                  transform: [
+                    { translateX: midTx },
+                    { translateY: midTy },
+                    { scale: midScale },
+                  ],
+                },
+              ]}
+            >
+              <ResilientImage
+                key={`immersive-${homeArtMode}-life`}
+                source={displayedSource}
+                fallbackSources={fallbacks}
+                retryKey={Number(isFocused)}
+                style={styles.portraitImage}
+                resizeMode="cover"
+                accessibilityLabel={`鹿芽生活插画：${lifeSceneLabel}`}
+                onError={() => {
+                  onLifeSceneError?.();
+                }}
+              />
+            </Animated.View>
+          )}
 
           <LinearGradient
             colors={['rgba(251,246,243,0.08)', 'rgba(251,246,243,0)', 'rgba(20,14,16,0.28)']}
@@ -306,6 +415,12 @@ const styles = StyleSheet.create({
   },
   portraitWrap: {
     ...StyleSheet.absoluteFill,
+  },
+  layerBg: {
+    zIndex: 0,
+  },
+  layerHaze: {
+    zIndex: 2,
   },
   portraitImage: {
     width: '100%',
