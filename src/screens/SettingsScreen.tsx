@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppMode, RootStackParamList } from '../types';
 import { useThemeColors } from '../utils/theme';
+import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { useSettingsStore } from '../store/settingsStore';
 import { format } from 'date-fns';
 
@@ -235,7 +236,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     lineHeight: 24,
-    fontWeight: '900',
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
   },
   intro: {
     marginBottom: 12,
@@ -243,7 +245,8 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 32,
     lineHeight: 38,
-    fontWeight: '900',
+    fontFamily: NOTO_SERIF_SC.black,
+    fontWeight: undefined,
     marginLeft: 4,
   },
   pageDesc: {
@@ -251,6 +254,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 6,
     marginHorizontal: 4,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   statusCard: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -279,12 +283,14 @@ const styles = StyleSheet.create({
   },
   statusTitle: {
     fontSize: 17,
-    fontWeight: '900',
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
   },
   statusDesc: {
     fontSize: 13,
     lineHeight: 19,
     marginTop: 3,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   statusValue: {
     fontSize: 12,
@@ -311,7 +317,8 @@ const styles = StyleSheet.create({
   },
   modeLabel: {
     fontSize: 15,
-    fontWeight: '900',
+    fontFamily: NOTO_SANS_SC.bold,
+    fontWeight: undefined,
   },
   modeDesc: {
     fontSize: 12,
@@ -377,15 +384,16 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: NOTO_SANS_SC.regular,
+    fontWeight: undefined,
   },
   groupLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
     marginBottom: 8,
     marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   menuItem: {
     flexDirection: 'row',
@@ -408,15 +416,18 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
   },
   menuDesc: {
     fontSize: 12,
     marginTop: 2,
+    fontFamily: NOTO_SANS_SC.regular,
   },
   menuValue: {
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
     marginHorizontal: 8,
   },
   arrow: {

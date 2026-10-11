@@ -18,6 +18,7 @@ import { RootStackParamList } from '../types';
 import { DEFAULT_CHARACTERS } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { PinkTheme } from '../utils/colors';
+import { NOTO_SANS_SC, NOTO_SERIF_SC } from '../utils/appFonts';
 import { testChatCompletion } from '../services/aiService';
 
 import { getVisibleCharacters } from '../utils/characterRelease';
@@ -381,9 +382,11 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   headerTitle: {
+    fontFamily: NOTO_SERIF_SC.black,
+    fontWeight: undefined,
     fontSize: 32,
     lineHeight: 38,
-    fontWeight: '900',
+
     marginBottom: 14,
   },
   stepIndicator: {
@@ -414,16 +417,20 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   stepTitle: {
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
     fontSize: 24,
     lineHeight: 31,
-    fontWeight: '900',
+
     marginBottom: 6,
     textAlign: 'center',
   },
   stepSubtitle: {
+    fontFamily: NOTO_SANS_SC.regular,
+    fontWeight: undefined,
     fontSize: 15,
     lineHeight: 21,
-    fontWeight: '700',
+
     textAlign: 'center',
   },
   characterList: {
@@ -495,19 +502,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   characterName: {
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
     fontSize: 20,
     lineHeight: 25,
-    fontWeight: '900',
+
     marginBottom: 4,
   },
   characterPersonality: {
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
     fontSize: 12,
     lineHeight: 17,
-    fontWeight: '800',
+
     marginBottom: 8,
     textAlign: 'center',
   },
   characterGreeting: {
+    fontFamily: NOTO_SANS_SC.regular,
     fontSize: 12,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -520,9 +532,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   primaryBtnText: {
+    fontFamily: NOTO_SANS_SC.bold,
+    fontWeight: undefined,
     color: '#fff',
     fontSize: 17,
-    fontWeight: '700',
+
   },
   backBtn: {
     alignItems: 'center',
@@ -530,6 +544,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   backBtnText: {
+    fontFamily: NOTO_SANS_SC.regular,
     color: '#999',
     fontSize: 15,
   },
@@ -540,9 +555,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   apiKeyLabel: {
+    fontFamily: NOTO_SANS_SC.medium,
+    fontWeight: undefined,
     fontSize: 13,
     marginBottom: 8,
-    fontWeight: '600',
+
   },
   apiKeyInput: {
     fontSize: 15,
@@ -558,11 +575,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   helpTitle: {
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
     fontSize: 14,
-    fontWeight: '700',
+
     marginBottom: 8,
   },
   helpText: {
+    fontFamily: NOTO_SANS_SC.regular,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -601,8 +621,10 @@ const styles = StyleSheet.create({
     lineHeight: 120,
   },
   completeName: {
+    fontFamily: NOTO_SERIF_SC.bold,
+    fontWeight: undefined,
     fontSize: 24,
-    fontWeight: '900',
+
     marginBottom: 16,
   },
   completeGreetingBubble: {
@@ -614,11 +636,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   completeGreeting: {
+    fontFamily: NOTO_SANS_SC.regular,
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'center',
   },
   completeTip: {
+    fontFamily: NOTO_SANS_SC.regular,
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 32,

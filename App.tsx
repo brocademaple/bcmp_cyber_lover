@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useFonts } from 'expo-font';
 import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,10 +10,12 @@ import { setupNotificationHandler } from './src/services/notificationService';
 import { RootStackParamList } from './src/types';
 import AppErrorBoundary from './src/components/AppErrorBoundary';
 import ImageRecoveryProbe from './src/dev/ImageRecoveryProbe';
+import { YINZHI_FONT_FILES } from './src/utils/appFonts';
 
 setupNotificationHandler();
 
 export default function App() {
+  const [fontsLoaded] = useFonts(YINZHI_FONT_FILES);
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
   const isImageRecoveryProbe = __DEV__ && Platform.OS === 'web' && typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('experienceProbe') === 'images';
@@ -36,6 +39,11 @@ export default function App() {
 
     return () => subscription.remove();
   }, []);
+
+  if (!fontsLoaded) {
+    // Wait for 站酷小薇 / 源泉圆体 so first paint does not flash system fonts.
+    return null;
+  }
 
   return (
     <AppErrorBoundary>
