@@ -1,0 +1,39 @@
+{
+  "assets": [
+    {
+      "path": "assets/luya-art-v1/life-focus.png",
+      "bytes": 2227752,
+      "sha256": "8b483ece5fd281014fef7807494d08e2c653264477594f8955ba3751138463b8"
+    },
+    {
+      "path": "assets/luya-art-v1/life-reading.png",
+      "bytes": 2480298,
+      "sha256": "730515efdd8e32b5fce7e21cdf0152142b3cb00d75f6775ee14d5715f352f9b7"
+    },
+    {
+      "path": "assets/luya-art-v1/life-rest.png",
+      "bytes": 2367972,
+      "sha256": "de8181fc2e0ea364a7e8a04577b454e80b2a330ae2e5d3919aee9f20177e9a7a"
+    },
+    {
+      "path": "assets/luya-art-v1/room-day.png",
+      "bytes": 2705461,
+      "sha256": "4ecae29b785db356e082f806902ae5d53a28b5c754b93d9b430d4c75621d0074"
+    },
+    {
+      "path": "assets/luya-art-v1/room-night.png",
+      "bytes": 2357816,
+      "sha256": "0a9373a3b379abf6694f2080a0216c9d7ead32cf0ffe9d01dbbe9e2c5ba2b05c"
+    }
+  ],
+  "screenshots": [
+    "chat-mobile.png",
+    "classic-mobile.png",
+    "home-desktop.png",
+    "home-mobile.png",
+    "room-desktop.png",
+    "room-mobile.png"
+  ],
+  "originalAssets": "preserved; new assets live in a separate versioned folder",
+  "provider": "built-in image_gen"
+}

@@ -1,0 +1,13 @@
+
+> heartbeat-companion@1.5.0 verify:debug-now
+> node scripts/verify-debug-now-chain.js
+
+debugNowTs(local) = Tue Jun 16 2026 01:30:00 GMT+0800 (China Standard Time)
+PASS 聊天 system prompt 写入深夜时段
+PASS 聊天 system prompt 写入深夜行为指引
+PASS 每日开场白 prompt 写入深夜时段
+PASS 每日开场白用户指令携带深夜语境
+PASS 聊天回复按深夜语境变化
+PASS 每日开场白按深夜语境变化
+chat reply: 深夜了，我把声音放轻一点陪你。先别硬撑，喝口水，我们慢慢把心放下来。
+daily greeting: 深夜了，我把声音放轻一点陪你。先别硬撑，喝口水，我们慢慢把心放下来。

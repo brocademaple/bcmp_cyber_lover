@@ -1,0 +1,890 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-29T16:13:33.226Z",
+  "command": "node scripts/verify-luya-life-replay.js",
+  "testData": "Synthetic isolated replay. No user app storage is read or changed. No model or network requests are made.",
+  "timezone": "Asia/Shanghai",
+  "seedTimestamp": 1790559000000,
+  "sourceFiles": [
+    {
+      "file": "src/services/luyaLifeService.ts",
+      "sha256": "329fb6ba9272ec1a662aa7a9442fee31025a81de45eeb3d300d4408c7c69bdef"
+    },
+    {
+      "file": "src/services/luyaRelationshipService.ts",
+      "sha256": "11782ecc31cadb84f689b996e5ed2862eb2ee44086ecf01c850271eba1708bbb"
+    },
+    {
+      "file": "src/services/luyaRoomService.ts",
+      "sha256": "4d9373b9f73f43bc72f1c491f31bbc3cec98f67d04fae94571b3ec66ce47ba50"
+    },
+    {
+      "file": "src/types/luya.ts",
+      "sha256": "15d50166531a93c6702c2210ea7068a2e9a5ed70798f9726d305b1cdecacc6b4"
+    }
+  ],
+  "limitations": [
+    "Historical time travel is deliberately blocked: runtime lacks full historical snapshots. Rewinding before updatedAt preserves storage and suppresses dynamic prompt facts. Restore time at or after the latest saved record before operating.",
+    "This replay verifies deterministic engine behavior and JSON round trips. It does not prove a device restart, UI rendering or real-model behavior."
+  ],
+  "replays": [
+    {
+      "durationDays": 14,
+      "checkpoints": [
+        {
+          "day": 0,
+          "dateKey": "2026-09-28",
+          "timestamp": 1790559000000,
+          "eventCount": 0,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "4bdd7ede14953122ee31710d0fd41d664274664da2ff37a4a2ce3a45f516f937",
+          "restartedHash": "4bdd7ede14953122ee31710d0fd41d664274664da2ff37a4a2ce3a45f516f937",
+          "hashesEqual": true
+        },
+        {
+          "day": 1,
+          "dateKey": "2026-09-29",
+          "timestamp": 1790645400000,
+          "eventCount": 3,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "9edc928e38ad4dd1bef9d76d7af06a09b64f459e79fafc05d8ea4d263b8c9274",
+          "restartedHash": "9edc928e38ad4dd1bef9d76d7af06a09b64f459e79fafc05d8ea4d263b8c9274",
+          "hashesEqual": true
+        },
+        {
+          "day": 2,
+          "dateKey": "2026-09-30",
+          "timestamp": 1790731800000,
+          "eventCount": 6,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "9c240555df81ae3cfb5d669927d85181bece335b53c448fc3045931fd3b14976",
+          "restartedHash": "9c240555df81ae3cfb5d669927d85181bece335b53c448fc3045931fd3b14976",
+          "hashesEqual": true
+        },
+        {
+          "day": 3,
+          "dateKey": "2026-10-01",
+          "timestamp": 1790818200000,
+          "eventCount": 9,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "166a1508c2e8a3d5ff0b8ceb0cdcd4a82ac0df4bdc6d879fb35244c08a7f356a",
+          "restartedHash": "166a1508c2e8a3d5ff0b8ceb0cdcd4a82ac0df4bdc6d879fb35244c08a7f356a",
+          "hashesEqual": true
+        },
+        {
+          "day": 4,
+          "dateKey": "2026-10-02",
+          "timestamp": 1790904600000,
+          "eventCount": 12,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "8bacb110013d9388c36f473d8279459566010bcc72fbabc53708559ab11c098d",
+          "restartedHash": "8bacb110013d9388c36f473d8279459566010bcc72fbabc53708559ab11c098d",
+          "hashesEqual": true
+        },
+        {
+          "day": 5,
+          "dateKey": "2026-10-03",
+          "timestamp": 1790991000000,
+          "eventCount": 15,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "0bf56395f18a7f83c33c3f10c87e5ff0f1038c6b458862769b43e55cdb8dd00f",
+          "restartedHash": "0bf56395f18a7f83c33c3f10c87e5ff0f1038c6b458862769b43e55cdb8dd00f",
+          "hashesEqual": true
+        },
+        {
+          "day": 6,
+          "dateKey": "2026-10-04",
+          "timestamp": 1791077400000,
+          "eventCount": 19,
+          "roomObjectCount": 3,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "02bc07f5950497e483d731aef387b9b0ecc8435e8149bd6125a7228a58e8a2a0",
+          "restartedHash": "02bc07f5950497e483d731aef387b9b0ecc8435e8149bd6125a7228a58e8a2a0",
+          "hashesEqual": true
+        },
+        {
+          "day": 7,
+          "dateKey": "2026-10-05",
+          "timestamp": 1791163800000,
+          "eventCount": 23,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "c913561945285dfa0d2a3346ad399d5491fc2e78ae89ab075a515bf38081d167",
+          "restartedHash": "c913561945285dfa0d2a3346ad399d5491fc2e78ae89ab075a515bf38081d167",
+          "hashesEqual": true
+        },
+        {
+          "day": 8,
+          "dateKey": "2026-10-06",
+          "timestamp": 1791250200000,
+          "eventCount": 26,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "b0aca1a0076483f0733d630f663a799a94a895fd1a982e49b6ee872d453f6f6c",
+          "restartedHash": "b0aca1a0076483f0733d630f663a799a94a895fd1a982e49b6ee872d453f6f6c",
+          "hashesEqual": true
+        },
+        {
+          "day": 9,
+          "dateKey": "2026-10-07",
+          "timestamp": 1791336600000,
+          "eventCount": 29,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "5c08a15f5a116b3b9a8d8d995912d73a7d1128a13a9b4025ecf3541e5a359eca",
+          "restartedHash": "5c08a15f5a116b3b9a8d8d995912d73a7d1128a13a9b4025ecf3541e5a359eca",
+          "hashesEqual": true
+        },
+        {
+          "day": 10,
+          "dateKey": "2026-10-08",
+          "timestamp": 1791423000000,
+          "eventCount": 32,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "eb55002e9841b153b72a351256b5ea28718f53ffcb7a3ddfb4efd1d4e08803b7",
+          "restartedHash": "eb55002e9841b153b72a351256b5ea28718f53ffcb7a3ddfb4efd1d4e08803b7",
+          "hashesEqual": true
+        },
+        {
+          "day": 11,
+          "dateKey": "2026-10-09",
+          "timestamp": 1791509400000,
+          "eventCount": 35,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "a6a12120fe71b5fda8ab678e92e2233de8e921de26dd568fbe38817fabf7f67b",
+          "restartedHash": "a6a12120fe71b5fda8ab678e92e2233de8e921de26dd568fbe38817fabf7f67b",
+          "hashesEqual": true
+        },
+        {
+          "day": 12,
+          "dateKey": "2026-10-10",
+          "timestamp": 1791595800000,
+          "eventCount": 38,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "81c3a5715a4530aad53f7f605891a54545090fdd29da7fb0baf1470156491c65",
+          "restartedHash": "81c3a5715a4530aad53f7f605891a54545090fdd29da7fb0baf1470156491c65",
+          "hashesEqual": true
+        },
+        {
+          "day": 13,
+          "dateKey": "2026-10-11",
+          "timestamp": 1791682200000,
+          "eventCount": 42,
+          "roomObjectCount": 5,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "8f6df2ca9d382359a489818071fb85afb3b883450e257a8622fd164048554cd5",
+          "restartedHash": "8f6df2ca9d382359a489818071fb85afb3b883450e257a8622fd164048554cd5",
+          "hashesEqual": true
+        },
+        {
+          "day": 14,
+          "dateKey": "2026-10-12",
+          "timestamp": 1791768600000,
+          "eventCount": 46,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "086c7cda31cb1f399ce1d3f0d1a82897d15d44dbdd67698f01f82bb3f0d1e7f6",
+          "restartedHash": "086c7cda31cb1f399ce1d3f0d1a82897d15d44dbdd67698f01f82bb3f0d1e7f6",
+          "hashesEqual": true
+        }
+      ],
+      "finalStateHash": "086c7cda31cb1f399ce1d3f0d1a82897d15d44dbdd67698f01f82bb3f0d1e7f6",
+      "restartHashesEqual": true,
+      "offlineCatchup": {
+        "planCount": 4,
+        "eventCount": 8,
+        "relationshipStage": "visitor",
+        "requests": 0
+      },
+      "provenance": [
+        {
+          "itemId": "luya_note_life_2026-10-03_1400",
+          "sourceEventIds": [
+            "life_2026-10-03_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-03_1400",
+              "kind": "activity",
+              "occurredAt": 1791018000000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-03_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-04_1400",
+          "sourceEventIds": [
+            "life_2026-10-04_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-04_1400",
+              "kind": "activity",
+              "occurredAt": 1791104400000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-04_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-10_1400",
+          "sourceEventIds": [
+            "life_2026-10-10_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-10_1400",
+              "kind": "activity",
+              "occurredAt": 1791622800000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-10_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-11_1400",
+          "sourceEventIds": [
+            "life_2026-10-11_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-11_1400",
+              "kind": "activity",
+              "occurredAt": 1791709200000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-11_1400"
+              ]
+            }
+          ]
+        }
+      ],
+      "rewind": {
+        "target": 1790559000000,
+        "dynamicFacts": [],
+        "prompt": "【时间校验】调试时间早于最近保存的运行记录。没有该历史时刻的完整快照，禁止引用当前日程、实习阶段、关系身份、房间变化或权限作为当时事实。请恢复到最近记录之后再验收。昵称、肢体动作、现实操作一律不推定许可。",
+        "mutationBlocked": true
+      },
+      "passed": true
+    },
+    {
+      "durationDays": 30,
+      "checkpoints": [
+        {
+          "day": 0,
+          "dateKey": "2026-09-28",
+          "timestamp": 1790559000000,
+          "eventCount": 0,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "4bdd7ede14953122ee31710d0fd41d664274664da2ff37a4a2ce3a45f516f937",
+          "restartedHash": "4bdd7ede14953122ee31710d0fd41d664274664da2ff37a4a2ce3a45f516f937",
+          "hashesEqual": true
+        },
+        {
+          "day": 1,
+          "dateKey": "2026-09-29",
+          "timestamp": 1790645400000,
+          "eventCount": 3,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "9edc928e38ad4dd1bef9d76d7af06a09b64f459e79fafc05d8ea4d263b8c9274",
+          "restartedHash": "9edc928e38ad4dd1bef9d76d7af06a09b64f459e79fafc05d8ea4d263b8c9274",
+          "hashesEqual": true
+        },
+        {
+          "day": 2,
+          "dateKey": "2026-09-30",
+          "timestamp": 1790731800000,
+          "eventCount": 6,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "9c240555df81ae3cfb5d669927d85181bece335b53c448fc3045931fd3b14976",
+          "restartedHash": "9c240555df81ae3cfb5d669927d85181bece335b53c448fc3045931fd3b14976",
+          "hashesEqual": true
+        },
+        {
+          "day": 3,
+          "dateKey": "2026-10-01",
+          "timestamp": 1790818200000,
+          "eventCount": 9,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "166a1508c2e8a3d5ff0b8ceb0cdcd4a82ac0df4bdc6d879fb35244c08a7f356a",
+          "restartedHash": "166a1508c2e8a3d5ff0b8ceb0cdcd4a82ac0df4bdc6d879fb35244c08a7f356a",
+          "hashesEqual": true
+        },
+        {
+          "day": 4,
+          "dateKey": "2026-10-02",
+          "timestamp": 1790904600000,
+          "eventCount": 12,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "8bacb110013d9388c36f473d8279459566010bcc72fbabc53708559ab11c098d",
+          "restartedHash": "8bacb110013d9388c36f473d8279459566010bcc72fbabc53708559ab11c098d",
+          "hashesEqual": true
+        },
+        {
+          "day": 5,
+          "dateKey": "2026-10-03",
+          "timestamp": 1790991000000,
+          "eventCount": 15,
+          "roomObjectCount": 2,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "0bf56395f18a7f83c33c3f10c87e5ff0f1038c6b458862769b43e55cdb8dd00f",
+          "restartedHash": "0bf56395f18a7f83c33c3f10c87e5ff0f1038c6b458862769b43e55cdb8dd00f",
+          "hashesEqual": true
+        },
+        {
+          "day": 6,
+          "dateKey": "2026-10-04",
+          "timestamp": 1791077400000,
+          "eventCount": 19,
+          "roomObjectCount": 3,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "02bc07f5950497e483d731aef387b9b0ecc8435e8149bd6125a7228a58e8a2a0",
+          "restartedHash": "02bc07f5950497e483d731aef387b9b0ecc8435e8149bd6125a7228a58e8a2a0",
+          "hashesEqual": true
+        },
+        {
+          "day": 7,
+          "dateKey": "2026-10-05",
+          "timestamp": 1791163800000,
+          "eventCount": 23,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "c913561945285dfa0d2a3346ad399d5491fc2e78ae89ab075a515bf38081d167",
+          "restartedHash": "c913561945285dfa0d2a3346ad399d5491fc2e78ae89ab075a515bf38081d167",
+          "hashesEqual": true
+        },
+        {
+          "day": 8,
+          "dateKey": "2026-10-06",
+          "timestamp": 1791250200000,
+          "eventCount": 26,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "b0aca1a0076483f0733d630f663a799a94a895fd1a982e49b6ee872d453f6f6c",
+          "restartedHash": "b0aca1a0076483f0733d630f663a799a94a895fd1a982e49b6ee872d453f6f6c",
+          "hashesEqual": true
+        },
+        {
+          "day": 9,
+          "dateKey": "2026-10-07",
+          "timestamp": 1791336600000,
+          "eventCount": 29,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "5c08a15f5a116b3b9a8d8d995912d73a7d1128a13a9b4025ecf3541e5a359eca",
+          "restartedHash": "5c08a15f5a116b3b9a8d8d995912d73a7d1128a13a9b4025ecf3541e5a359eca",
+          "hashesEqual": true
+        },
+        {
+          "day": 10,
+          "dateKey": "2026-10-08",
+          "timestamp": 1791423000000,
+          "eventCount": 32,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "eb55002e9841b153b72a351256b5ea28718f53ffcb7a3ddfb4efd1d4e08803b7",
+          "restartedHash": "eb55002e9841b153b72a351256b5ea28718f53ffcb7a3ddfb4efd1d4e08803b7",
+          "hashesEqual": true
+        },
+        {
+          "day": 11,
+          "dateKey": "2026-10-09",
+          "timestamp": 1791509400000,
+          "eventCount": 35,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "a6a12120fe71b5fda8ab678e92e2233de8e921de26dd568fbe38817fabf7f67b",
+          "restartedHash": "a6a12120fe71b5fda8ab678e92e2233de8e921de26dd568fbe38817fabf7f67b",
+          "hashesEqual": true
+        },
+        {
+          "day": 12,
+          "dateKey": "2026-10-10",
+          "timestamp": 1791595800000,
+          "eventCount": 38,
+          "roomObjectCount": 4,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "81c3a5715a4530aad53f7f605891a54545090fdd29da7fb0baf1470156491c65",
+          "restartedHash": "81c3a5715a4530aad53f7f605891a54545090fdd29da7fb0baf1470156491c65",
+          "hashesEqual": true
+        },
+        {
+          "day": 13,
+          "dateKey": "2026-10-11",
+          "timestamp": 1791682200000,
+          "eventCount": 42,
+          "roomObjectCount": 5,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "8f6df2ca9d382359a489818071fb85afb3b883450e257a8622fd164048554cd5",
+          "restartedHash": "8f6df2ca9d382359a489818071fb85afb3b883450e257a8622fd164048554cd5",
+          "hashesEqual": true
+        },
+        {
+          "day": 14,
+          "dateKey": "2026-10-12",
+          "timestamp": 1791768600000,
+          "eventCount": 46,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "086c7cda31cb1f399ce1d3f0d1a82897d15d44dbdd67698f01f82bb3f0d1e7f6",
+          "restartedHash": "086c7cda31cb1f399ce1d3f0d1a82897d15d44dbdd67698f01f82bb3f0d1e7f6",
+          "hashesEqual": true
+        },
+        {
+          "day": 15,
+          "dateKey": "2026-10-13",
+          "timestamp": 1791855000000,
+          "eventCount": 49,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "475fb4aa151e0f9d0a79d35f20163b3deb11b6ce533fe796a961e15a86385b01",
+          "restartedHash": "475fb4aa151e0f9d0a79d35f20163b3deb11b6ce533fe796a961e15a86385b01",
+          "hashesEqual": true
+        },
+        {
+          "day": 16,
+          "dateKey": "2026-10-14",
+          "timestamp": 1791941400000,
+          "eventCount": 52,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "b842b2773591e378e938151f53e7da9ace9002ac6e252f1f00a229d8d9ecdb45",
+          "restartedHash": "b842b2773591e378e938151f53e7da9ace9002ac6e252f1f00a229d8d9ecdb45",
+          "hashesEqual": true
+        },
+        {
+          "day": 17,
+          "dateKey": "2026-10-15",
+          "timestamp": 1792027800000,
+          "eventCount": 55,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "6d4e607e3844ef6de32002af4185ddd23e0310a2cdeb1bae0149f56130b4a8f0",
+          "restartedHash": "6d4e607e3844ef6de32002af4185ddd23e0310a2cdeb1bae0149f56130b4a8f0",
+          "hashesEqual": true
+        },
+        {
+          "day": 18,
+          "dateKey": "2026-10-16",
+          "timestamp": 1792114200000,
+          "eventCount": 58,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "38c6078b9f36b74d83704141d480bca8e62474d6d12d16045b91dda00e9f5050",
+          "restartedHash": "38c6078b9f36b74d83704141d480bca8e62474d6d12d16045b91dda00e9f5050",
+          "hashesEqual": true
+        },
+        {
+          "day": 19,
+          "dateKey": "2026-10-17",
+          "timestamp": 1792200600000,
+          "eventCount": 61,
+          "roomObjectCount": 6,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "229fa9a74ab5ab05804457b305661eeb79d205c8aacfd1f98c182c220a4b2a70",
+          "restartedHash": "229fa9a74ab5ab05804457b305661eeb79d205c8aacfd1f98c182c220a4b2a70",
+          "hashesEqual": true
+        },
+        {
+          "day": 20,
+          "dateKey": "2026-10-18",
+          "timestamp": 1792287000000,
+          "eventCount": 65,
+          "roomObjectCount": 7,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "41fad7392485a0c062d56b986bd4d08f085c11e333fece96c72f042dcdd2926e",
+          "restartedHash": "41fad7392485a0c062d56b986bd4d08f085c11e333fece96c72f042dcdd2926e",
+          "hashesEqual": true
+        },
+        {
+          "day": 21,
+          "dateKey": "2026-10-19",
+          "timestamp": 1792373400000,
+          "eventCount": 69,
+          "roomObjectCount": 8,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "f1cda787d8d778791cf650cc47560fcf990fb5c5eb10d3f2bf9ea53bc1860198",
+          "restartedHash": "f1cda787d8d778791cf650cc47560fcf990fb5c5eb10d3f2bf9ea53bc1860198",
+          "hashesEqual": true
+        },
+        {
+          "day": 22,
+          "dateKey": "2026-10-20",
+          "timestamp": 1792459800000,
+          "eventCount": 72,
+          "roomObjectCount": 8,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "17a2607a363f94dabb96449996a5b3b11b7af2ecfa72e527ab74da1177796cc6",
+          "restartedHash": "17a2607a363f94dabb96449996a5b3b11b7af2ecfa72e527ab74da1177796cc6",
+          "hashesEqual": true
+        },
+        {
+          "day": 23,
+          "dateKey": "2026-10-21",
+          "timestamp": 1792546200000,
+          "eventCount": 75,
+          "roomObjectCount": 8,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "a5fa610d2207cb9dff93a9880291fd6ce66567be84ec03697f086e7996d48f83",
+          "restartedHash": "a5fa610d2207cb9dff93a9880291fd6ce66567be84ec03697f086e7996d48f83",
+          "hashesEqual": true
+        },
+        {
+          "day": 24,
+          "dateKey": "2026-10-22",
+          "timestamp": 1792632600000,
+          "eventCount": 78,
+          "roomObjectCount": 8,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "c2be61a495bb8d50f5622c5e032d537bd5c3e1a6b8674e2c31ea274bfe1a26d9",
+          "restartedHash": "c2be61a495bb8d50f5622c5e032d537bd5c3e1a6b8674e2c31ea274bfe1a26d9",
+          "hashesEqual": true
+        },
+        {
+          "day": 25,
+          "dateKey": "2026-10-23",
+          "timestamp": 1792719000000,
+          "eventCount": 81,
+          "roomObjectCount": 8,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "412001840782b098253a4d3c532018e055c383db6adf62166f9ec50249814dbf",
+          "restartedHash": "412001840782b098253a4d3c532018e055c383db6adf62166f9ec50249814dbf",
+          "hashesEqual": true
+        },
+        {
+          "day": 26,
+          "dateKey": "2026-10-24",
+          "timestamp": 1792805400000,
+          "eventCount": 84,
+          "roomObjectCount": 8,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "3b4eb5da5f9b8a504d09fa12d48d0c2d065dd348c678cd364bac95f03ba70ca6",
+          "restartedHash": "3b4eb5da5f9b8a504d09fa12d48d0c2d065dd348c678cd364bac95f03ba70ca6",
+          "hashesEqual": true
+        },
+        {
+          "day": 27,
+          "dateKey": "2026-10-25",
+          "timestamp": 1792891800000,
+          "eventCount": 88,
+          "roomObjectCount": 9,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "e323bfc6d22ac670a8a1db6b1b1521e0e09db28cc3d7b247032095679ae1f213",
+          "restartedHash": "e323bfc6d22ac670a8a1db6b1b1521e0e09db28cc3d7b247032095679ae1f213",
+          "hashesEqual": true
+        },
+        {
+          "day": 28,
+          "dateKey": "2026-10-26",
+          "timestamp": 1792978200000,
+          "eventCount": 92,
+          "roomObjectCount": 10,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "a9cc344db5c357bc428bb15f5480aee654af84126b6ade0e61cc7183e94ce8f9",
+          "restartedHash": "a9cc344db5c357bc428bb15f5480aee654af84126b6ade0e61cc7183e94ce8f9",
+          "hashesEqual": true
+        },
+        {
+          "day": 29,
+          "dateKey": "2026-10-27",
+          "timestamp": 1793064600000,
+          "eventCount": 95,
+          "roomObjectCount": 10,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "a501506e61cac6310ee532ad3df236fb2b710d22b4999f31146d82f50d8876b1",
+          "restartedHash": "a501506e61cac6310ee532ad3df236fb2b710d22b4999f31146d82f50d8876b1",
+          "hashesEqual": true
+        },
+        {
+          "day": 30,
+          "dateKey": "2026-10-28",
+          "timestamp": 1793151000000,
+          "eventCount": 98,
+          "roomObjectCount": 10,
+          "relationshipStage": "visitor",
+          "internshipStage": "preparing",
+          "projectedFactCount": 3,
+          "directHash": "5773a41da9fec6720cb0566d0660c436bb008c7a4564971ef44b21745c86f1cb",
+          "restartedHash": "5773a41da9fec6720cb0566d0660c436bb008c7a4564971ef44b21745c86f1cb",
+          "hashesEqual": true
+        }
+      ],
+      "finalStateHash": "5773a41da9fec6720cb0566d0660c436bb008c7a4564971ef44b21745c86f1cb",
+      "restartHashesEqual": true,
+      "offlineCatchup": {
+        "planCount": 4,
+        "eventCount": 6,
+        "relationshipStage": "visitor",
+        "requests": 0
+      },
+      "provenance": [
+        {
+          "itemId": "luya_note_life_2026-10-03_1400",
+          "sourceEventIds": [
+            "life_2026-10-03_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-03_1400",
+              "kind": "activity",
+              "occurredAt": 1791018000000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-03_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-04_1400",
+          "sourceEventIds": [
+            "life_2026-10-04_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-04_1400",
+              "kind": "activity",
+              "occurredAt": 1791104400000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-04_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-10_1400",
+          "sourceEventIds": [
+            "life_2026-10-10_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-10_1400",
+              "kind": "activity",
+              "occurredAt": 1791622800000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-10_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-11_1400",
+          "sourceEventIds": [
+            "life_2026-10-11_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-11_1400",
+              "kind": "activity",
+              "occurredAt": 1791709200000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-11_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-17_1400",
+          "sourceEventIds": [
+            "life_2026-10-17_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-17_1400",
+              "kind": "activity",
+              "occurredAt": 1792227600000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-17_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-18_1400",
+          "sourceEventIds": [
+            "life_2026-10-18_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-18_1400",
+              "kind": "activity",
+              "occurredAt": 1792314000000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-18_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-24_1400",
+          "sourceEventIds": [
+            "life_2026-10-24_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-24_1400",
+              "kind": "activity",
+              "occurredAt": 1792832400000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-24_1400"
+              ]
+            }
+          ]
+        },
+        {
+          "itemId": "luya_note_life_2026-10-25_1400",
+          "sourceEventIds": [
+            "life_2026-10-25_1400"
+          ],
+          "sourceEvents": [
+            {
+              "id": "life_2026-10-25_1400",
+              "kind": "activity",
+              "occurredAt": 1792918800000,
+              "summary": "在熟悉的街区走走，留意旧招牌和普通人的生活",
+              "source": "generated_character_life",
+              "sourceIds": [
+                "life_2026-10-25_1400"
+              ]
+            }
+          ]
+        }
+      ],
+      "rewind": {
+        "target": 1790559000000,
+        "dynamicFacts": [],
+        "prompt": "【时间校验】调试时间早于最近保存的运行记录。没有该历史时刻的完整快照，禁止引用当前日程、实习阶段、关系身份、房间变化或权限作为当时事实。请恢复到最近记录之后再验收。昵称、肢体动作、现实操作一律不推定许可。",
+        "mutationBlocked": true
+      },
+      "passed": true
+    }
+  ]
+}

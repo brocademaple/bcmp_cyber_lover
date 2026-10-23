@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#E7A0B4" />
+  <title>鹿芽的家 · 饮之</title>
+  <style>
+    :root {
+      --pink: #E7A0B4;
+      --gold: #C4A574;
+      --cream: #FFF8F2;
+      --ink: #4A3A3E;
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-l: env(safe-area-inset-left, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #2a1f22;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Helvetica Neue", sans-serif;
+      color: var(--cream);
+      touch-action: none;
+    }
+    .stage {
+      position: fixed; inset: 0;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 30%, #5a3d45 0%, #2a1f22 70%);
+    }
+    .room-wrap {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 112%; height: 112%;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+    .room {
+      width: 100%; height: 100%;
+      background: url("./room.jpg") center / cover no-repeat;
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .veil {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(42,31,34,0.35) 0%, transparent 18%, transparent 62%, rgba(42,31,34,0.55) 100%),
+        radial-gradient(ellipse at 50% 100%, rgba(231,160,180,0.18), transparent 55%);
+    }
+    .hud {
+      position: absolute;
+      left: calc(16px + var(--safe-l));
+      right: calc(16px + var(--safe-r));
+      top: calc(14px + var(--safe-t));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .nameplate {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px 10px 12px;
+      border-radius: 999px;
+      background: rgba(255, 248, 242, 0.78);
+      border: 1px solid rgba(196, 165, 116, 0.65);
+      box-shadow: 0 8px 28px rgba(74, 58, 62, 0.18), inset 0 1px 0 rgba(255,255,255,0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: var(--ink);
+      pointer-events: auto;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--pink);
+      box-shadow: 0 0 0 3px rgba(231,160,180,0.28);
+      flex-shrink: 0;
+    }
+    .nameplate .name {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+    .nameplate .status {
+      font-size: 12px;
+      opacity: 0.72;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+    .caption {
+      align-self: flex-start;
+      max-width: min(78vw, 280px);
+      margin-top: 2px;
+      padding: 12px 16px;
+      border-radius: 18px 18px 18px 6px;
+      background: rgba(255, 248, 242, 0.82);
+      border: 1px solid rgba(196, 165, 116, 0.55);
+      box-shadow: 0 10px 32px rgba(74, 58, 62, 0.16);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.55;
+      letter-spacing: 0.03em;
+      pointer-events: auto;
+    }
+    .caption em {
+      font-style: normal;
+      color: #9a6b7a;
+      font-size: 12px;
+      display: block;
+      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+    }
+    .hint {
+      position: absolute;
+      left: 50%;
+      bottom: calc(22px + var(--safe-b));
+      transform: translateX(-50%);
+      z-index: 5;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(42, 31, 34, 0.42);
+      border: 1px solid rgba(196, 165, 116, 0.35);
+      color: rgba(255, 248, 242, 0.88);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0.9;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .hint.fade { opacity: 0; }
+    .gold-line {
+      position: absolute;
+      left: 50%;
+      bottom: calc(56px + var(--safe-b));
+      transform: translateX(-50%);
+      width: min(42vw, 160px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0.55;
+      z-index: 4;
+      pointer-events: none;
+    }
+    @media (min-aspect-ratio: 3/4) {
+      .room-wrap { width: 120%; height: 120%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="room-wrap" id="parallax">
+      <div class="room" role="img" aria-label="鹿芽的家：窗边茶室"></div>
+    </div>
+    <div class="veil"></div>
+    <div class="hud">
+      <div class="nameplate" aria-label="鹿芽">
+        <span class="dot" aria-hidden="true"></span>
+        <div>
+          <div class="name">鹿芽</div>
+          <div class="status">窗边晒着太阳，茶还热着</div>
+        </div>
+      </div>
+      <div class="caption">
+        <em>茶室一角</em>
+        茶刚泡好。
+      </div>
+    </div>
+    <div class="gold-line" aria-hidden="true"></div>
+    <div class="hint" id="hint">轻拖画面 · 可随手机倾斜</div>
+  </div>
+  <script>
+    (function () {
+      var el = document.getElementById("parallax");
+      var hint = document.getElementById("hint");
+      var tx = 0, ty = 0, cx = 0, cy = 0;
+      var dragging = false, sx = 0, sy = 0, bx = 0, by = 0;
+      var max = 18;
+      var hintGone = false;
+
+      function clamp(v, m) { return Math.max(-m, Math.min(m, v)); }
+
+      function apply() {
+        el.style.transform =
+          "translate(calc(-50% + " + cx.toFixed(2) + "px), calc(-50% + " + cy.toFixed(2) + "px))";
+      }
+
+      function tick() {
+        cx += (tx - cx) * 0.12;
+        cy += (ty - cy) * 0.12;
+        apply();
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+
+      function hideHint() {
+        if (hintGone) return;
+        hintGone = true;
+        hint.classList.add("fade");
+      }
+
+      var stage = document.getElementById("stage");
+      stage.addEventListener("pointerdown", function (e) {
+        dragging = true;
+        sx = e.clientX; sy = e.clientY;
+        bx = tx; by = ty;
+        stage.setPointerCapture(e.pointerId);
+        hideHint();
+      });
+      stage.addEventListener("pointermove", function (e) {
+        if (!dragging) return;
+        tx = clamp(bx + (e.clientX - sx) * 0.22, max);
+        ty = clamp(by + (e.clientY - sy) * 0.22, max);
+      });
+      function endDrag(e) {
+        dragging = false;
+        try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+      }
+      stage.addEventListener("pointerup", endDrag);
+      stage.addEventListener("pointercancel", endDrag);
+
+      if (window.DeviceOrientationEvent) {
+        var onOri = function (e) {
+          if (e.gamma == null || e.beta == null) return;
+          if (dragging) return;
+          var gx = clamp(e.gamma, 30);
+          var byb = clamp(e.beta - 45, 30);
+          tx = clamp(gx * 0.45, max);
+          ty = clamp(byb * 0.35, max);
+          hideHint();
+        };
+        if (typeof DeviceOrientationEvent.requestPermission === "function") {
+          stage.addEventListener("click", function once() {
+            DeviceOrientationEvent.requestPermission()
+              .then(function (s) { if (s === "granted") window.addEventListener("deviceorientation", onOri); })
+              .catch(function () {});
+            stage.removeEventListener("click", once);
+          }, { once: true });
+        } else {
+          window.addEventListener("deviceorientation", onOri);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+[
+  {
+    "path": "docs/luya/ip-v1/evidence/art-zoom-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/art-zoom-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/background-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/background-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/bookshelf-desktop.jpg",
+    "raw": "docs/luya/ip-v1/evidence/bookshelf-desktop-raw.jpg",
+    "cssViewport": [
+      1280,
+      900
+    ],
+    "rawPixels": [
+      1910,
+      1342
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/bookshelf-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/bookshelf-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/bookshelf-small.jpg",
+    "raw": "docs/luya/ip-v1/evidence/bookshelf-small-raw.jpg",
+    "cssViewport": [
+      358,
+      569
+    ],
+    "rawPixels": [
+      534,
+      848
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/memories-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/memories-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/picturebook-desktop.jpg",
+    "raw": "docs/luya/ip-v1/evidence/picturebook-desktop-raw.jpg",
+    "cssViewport": [
+      1280,
+      900
+    ],
+    "rawPixels": [
+      1910,
+      1342
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/reader-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/reader-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/reader-small.jpg",
+    "raw": "docs/luya/ip-v1/evidence/reader-small-raw.jpg",
+    "cssViewport": [
+      358,
+      569
+    ],
+    "rawPixels": [
+      534,
+      848
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/scene-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/scene-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/text-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/text-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/turnarounds-desktop.jpg",
+    "raw": "docs/luya/ip-v1/evidence/turnarounds-desktop-raw.jpg",
+    "cssViewport": [
+      1280,
+      900
+    ],
+    "rawPixels": [
+      1910,
+      1342
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/turnarounds-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/turnarounds-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/zoom-desktop.jpg",
+    "raw": "docs/luya/ip-v1/evidence/zoom-desktop-raw.jpg",
+    "cssViewport": [
+      1280,
+      900
+    ],
+    "rawPixels": [
+      1910,
+      1342
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  },
+  {
+    "path": "docs/luya/ip-v1/evidence/zoom-mobile.jpg",
+    "raw": "docs/luya/ip-v1/evidence/zoom-mobile-raw.jpg",
+    "cssViewport": [
+      389,
+      845
+    ],
+    "rawPixels": [
+      581,
+      1260
+    ],
+    "cropReason": "Only remove capture padding outside the observed complete CSS viewport."
+  }
+]

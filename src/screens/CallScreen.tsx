@@ -8,30 +8,47 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Audio } from 'expo-av';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, CameraView } from 'expo-camera';
 import * as Speech from 'expo-speech';
-import { RootStackParamList, CallType } from '../types';
+import { RootStackParamList, Character } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useSettingsStore } from '../store/settingsStore';
-import { sendMessage, analyzeFrameWithEmotion } from '../services/aiService';
-import { calculateEmotionChange } from '../services/emotionService';
+import { analyzeFrameWithEmotion } from '../services/aiService';
+import { recordAppIssue } from '../services/appDiagnostics';
 import { useThemeColors } from '../utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Call'>;
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+
+function getImageSource(source?: Character['imageUri']) {
+  if (source == null) return null;
+  return typeof source === 'number' ? source : { uri: source };
+}
+
+function getCallCharacterImage(character: Character) {
+  return (
+    character.assetSet?.headshot ??
+    character.assetSet?.avatar ??
+    character.assetSet?.main ??
+    character.imageUri
+  );
+}
 
 export default function CallScreen({ route, navigation }: Props) {
   const { characterId, callType } = route.params;
   const C = useThemeColors();
 
-  const { getCharacter, messages, addMessage, updateEmotionalState } = useChatStore();
+  const { getCharacter, addMessage, updateEmotionalState } = useChatStore();
   const { settings } = useSettingsStore();
   const character = getCharacter(characterId);
+  const characterGreeting = character?.greeting;
+  const characterName = character?.name;
+  const getEffectiveNow = () => settings.advanced.debugNowTs ?? Date.now();
 
   const [callState, setCallState] = useState({
     active: true,
@@ -44,70 +61,54 @@ export default function CallScreen({ route, navigation }: Props) {
   const [aiResponse, setAiResponse] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [cameraPermission, setCameraPermission] = useState(false);
-  const [audioPermission, setAudioPermission] = useState(false);
 
   const cameraRef = useRef<CameraView>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const analyzeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const chatMessages = messages[characterId] || [];
+  const connectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    requestPermissions();
-    return () => cleanup();
+  const cleanup = useCallback(() => {
+    Speech.stop();
+    if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
+    connectionTimerRef.current = null;
+    timerRef.current = null;
+    analyzeTimerRef.current = null;
   }, []);
 
-  useEffect(() => {
-    if (status === 'connected') {
-      timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
-      // Periodic frame analysis for video calls
-      if (callType === 'video' && settings.service.visionModel) {
-        analyzeTimerRef.current = setInterval(() => {
-          captureAndAnalyze();
-        }, 8000); // Every 8 seconds
-      }
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
-    };
-  }, [status]);
-
-  const requestPermissions = async () => {
-    try {
-      const audioStatus = await Audio.requestPermissionsAsync();
-      setAudioPermission(audioStatus.granted);
-
-      if (callType === 'video') {
-        // CameraView permissions use useCameraPermissions hook; fallback via static method
-        const { Camera: StaticCamera } = require('expo-camera');
-        const camStatus = await StaticCamera.requestCameraPermissionsAsync();
-        setCameraPermission(camStatus.granted);
-      }
-
-      // Simulate connection delay
-      setTimeout(() => {
-        setStatus('connected');
-        speakGreeting();
-      }, 1500);
-    } catch (e) {
-      Alert.alert('权限错误', '无法获取摄像头或麦克风权限');
-    }
-  };
-
-  const speakGreeting = () => {
-    if (!character) return;
-    const greeting =
-      callType === 'video'
-        ? `哇，老公，我终于看到你了～你今天好帅啊`
-        : `老公，是你打来的呀～嘿嘿，好开心`;
+  const speakGreeting = useCallback(() => {
+    if (!characterName || characterGreeting == null) return;
+    const configuredGreeting = characterGreeting.trim();
+    const greeting = configuredGreeting
+      ? configuredGreeting.slice(0, 80)
+      : callType === 'video'
+        ? `看到你了。这里是 ${characterName}，我们慢慢聊。`
+        : `听到你的来电了。这里是 ${characterName}。`;
     setAiResponse(greeting);
     Speech.speak(greeting, {
       language: 'zh-CN',
       rate: 1.0,
       pitch: 1.2,
     });
-  };
+  }, [callType, characterGreeting, characterName]);
+
+  const requestPermissions = useCallback(async () => {
+    try {
+      if (callType === 'video') {
+        const camStatus = await Camera.requestCameraPermissionsAsync();
+        setCameraPermission(camStatus.granted);
+      }
+
+      connectionTimerRef.current = setTimeout(() => {
+        setStatus('connected');
+        speakGreeting();
+      }, 1500);
+    } catch (e) {
+      void recordAppIssue('通话权限', e, true);
+      Alert.alert('权限错误', '无法获取摄像头权限');
+    }
+  }, [callType, speakGreeting]);
 
   const captureAndAnalyze = useCallback(async () => {
     if (!cameraRef.current || callState.isCameraOff || isProcessing || !character) return;
@@ -134,9 +135,9 @@ export default function CallScreen({ route, navigation }: Props) {
         }
 
         // 根据检测到的用户情绪更新角色情感状态
-        if (detectedEmotion === '难过' && character.emotionalState) {
+        if (characterId !== 'qingning' && detectedEmotion === '难过' && character.emotionalState) {
           await updateEmotionalState(characterId, { mood: 'sad' });
-        } else if (detectedEmotion === '开心' && character.emotionalState) {
+        } else if (characterId !== 'qingning' && detectedEmotion === '开心' && character.emotionalState) {
           await updateEmotionalState(characterId, {
             mood: 'happy',
             intimacy: Math.min(100, character.emotionalState.intimacy + 2)
@@ -144,55 +145,39 @@ export default function CallScreen({ route, navigation }: Props) {
         }
       }
     } catch (e) {
-      // Silent fail for frame analysis
+      void recordAppIssue('视频画面理解', e, true);
     } finally {
       setIsProcessing(false);
     }
-  }, [callState, isProcessing, character, settings.service, characterId, updateEmotionalState]);
+  }, [callState.isCameraOff, callState.isMuted, isProcessing, character, settings.service, characterId, updateEmotionalState]);
 
-  const startVoiceRecording = async () => {
-    if (!audioPermission) return;
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      recordingRef.current = recording;
-    } catch {}
-  };
+  useEffect(() => {
+    void requestPermissions();
+    return cleanup;
+  }, [cleanup, requestPermissions]);
 
-  const stopVoiceRecordingAndProcess = async () => {
-    if (!recordingRef.current || !character) return;
-    try {
-      await recordingRef.current.stopAndUnloadAsync();
-      // In a full implementation, we'd use a speech-to-text API here
-      // For now, we send a simulated interaction message
-      const uri = recordingRef.current.getURI();
-      recordingRef.current = null;
-
-      if (!uri) return;
-
-      setIsProcessing(true);
-      const voiceMsg = '（语音消息）请和我说说话吧';
-      const response = await sendMessage(
-        voiceMsg,
-        character,
-        chatMessages,
-        settings.service,
-        settings.memory,
-        settings.advanced
-      );
-
-      setAiResponse(response);
-      Speech.speak(response, { language: 'zh-CN', rate: 1.0, pitch: 1.2 });
-    } catch (e) {
-      // Silent fail
-    } finally {
-      setIsProcessing(false);
+  useEffect(() => {
+    if (status === 'connected') {
+      timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+      if (callType === 'video' && settings.service.visionModel) {
+        analyzeTimerRef.current = setInterval(() => {
+          void captureAndAnalyze();
+        }, 8000);
+      }
     }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
+      timerRef.current = null;
+      analyzeTimerRef.current = null;
+    };
+  }, [callType, captureAndAnalyze, settings.service.visionModel, status]);
+
+  const explainVoiceInputRequirement = () => {
+    Alert.alert(
+      '语音输入待配置',
+      '当前版本支持角色语音朗读。语音识别需要接入 Speech-to-Text API，配置前不会把录音伪装成真实转写。'
+    );
   };
 
   const handleMuteToggle = () => {
@@ -213,24 +198,14 @@ export default function CallScreen({ route, navigation }: Props) {
     // Save call to chat history
     if (character) {
       const callMsg = {
-        id: `call_${Date.now()}`,
+        id: `call_${getEffectiveNow()}`,
         role: 'assistant' as const,
         content: `📞 ${callType === 'video' ? '视频' : '语音'}通话已结束，时长 ${formatDuration(duration)}`,
-        timestamp: Date.now(),
+        timestamp: getEffectiveNow(),
       };
       await addMessage(characterId, callMsg);
     }
     navigation.goBack();
-  };
-
-  const cleanup = () => {
-    Speech.stop();
-    if (recordingRef.current) {
-      recordingRef.current.stopAndUnloadAsync().catch(() => {});
-      recordingRef.current = null;
-    }
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (analyzeTimerRef.current) clearInterval(analyzeTimerRef.current);
   };
 
   const formatDuration = (secs: number) => {
@@ -243,6 +218,8 @@ export default function CallScreen({ route, navigation }: Props) {
     navigation.goBack();
     return null;
   }
+
+  const callImageSource = getImageSource(getCallCharacterImage(character));
 
   return (
     <View style={[styles.container, { backgroundColor: C.primaryDark }]}>
@@ -263,7 +240,11 @@ export default function CallScreen({ route, navigation }: Props) {
       <SafeAreaView style={styles.safeArea}>
         {/* Top info */}
         <View style={styles.topSection}>
-          <Text style={styles.characterEmoji}>{character.avatar}</Text>
+          {callImageSource ? (
+            <Image source={callImageSource} style={styles.characterPortrait} resizeMode="cover" />
+          ) : (
+            <Text style={styles.characterEmoji}>{character.avatar}</Text>
+          )}
           <Text style={styles.characterName}>{character.name}</Text>
           <Text style={styles.callTypeLabel}>
             {callType === 'video' ? '视频通话' : '语音通话'}
@@ -285,7 +266,11 @@ export default function CallScreen({ route, navigation }: Props) {
         {callType === 'video' && (
           <View style={styles.aiVideoBox}>
             <View style={[styles.aiVideoInner, { backgroundColor: C.primary }]}>
-              <Text style={{ fontSize: 40 }}>{character.avatar}</Text>
+              {callImageSource ? (
+                <Image source={callImageSource} style={styles.aiVideoPortrait} resizeMode="cover" />
+              ) : (
+                <Text style={{ fontSize: 40 }}>{character.avatar}</Text>
+              )}
               <Text style={{ color: '#fff', fontSize: 11, marginTop: 4 }}>{character.name}</Text>
             </View>
           </View>
@@ -317,11 +302,9 @@ export default function CallScreen({ route, navigation }: Props) {
           />
 
           <CallButton
-            icon="💬"
-            label="说话"
-            onPress={startVoiceRecording}
-            onPressOut={stopVoiceRecordingAndProcess}
-            isHold
+            icon="🎧"
+            label="语音配置"
+            onPress={explainVoiceInputRequirement}
           />
         </View>
 
@@ -342,23 +325,17 @@ function CallButton({
   icon,
   label,
   onPress,
-  onPressOut,
   active,
-  isHold,
 }: {
   icon: string;
   label: string;
   onPress: () => void;
-  onPressOut?: () => void;
   active?: boolean;
-  isHold?: boolean;
 }) {
   return (
     <TouchableOpacity
       style={[styles.callBtn, active && styles.callBtnActive]}
-      onPress={isHold ? undefined : onPress}
-      onPressIn={isHold ? onPress : undefined}
-      onPressOut={isHold ? onPressOut : undefined}
+      onPress={onPress}
       activeOpacity={0.7}
     >
       <Text style={styles.callBtnIcon}>{icon}</Text>
@@ -372,7 +349,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(92, 46, 70, 0.95)',
   },
   overlayTransparent: {
@@ -391,6 +368,15 @@ const styles = StyleSheet.create({
   characterEmoji: {
     fontSize: 72,
     marginBottom: 8,
+  },
+  characterPortrait: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.46)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   characterName: {
     fontSize: 26,
@@ -435,6 +421,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.4)',
+    overflow: 'hidden',
+    paddingTop: 8,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+  },
+  aiVideoPortrait: {
+    width: 76,
+    height: 96,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   controls: {
     flexDirection: 'row',

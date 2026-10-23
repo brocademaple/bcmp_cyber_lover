@@ -1,0 +1,139 @@
+{
+  "generatedAt": "2026-09-29T16:18:45.251363+00:00",
+  "baseCommit": "cb6f5e58587a40c269742812d34a2a72734b40dc",
+  "workingTree": "uncommitted; pre-existing user changes preserved",
+  "inputs": [
+    {
+      "file": "/Users/eee/Downloads/鹿芽_用户逐项验收清单_v1.0.md",
+      "sha256": "15f85aa8708384c4d875da255c9102f5fac0ae221508f725c4fb4e68e0aad3d9"
+    },
+    {
+      "file": "/Users/eee/Downloads/鹿芽_人物设定与活人感机制_开发实现规格_v1.0.md",
+      "sha256": "cb76bb8fa4ff3816e51453e64f1d82f42c58de86508fc83590ec2a2eedda4e4e"
+    },
+    {
+      "file": "/Users/eee/Downloads/鹿芽_开发交接包_v1.0.zip",
+      "sha256": "e66d665ecd4a23451f84315cd63fbe6b78700be7ccfb08a236620778410fd5dd"
+    }
+  ],
+  "currentBundle": [
+    {
+      "path": "output/luya-preview/_expo/static/js/web/AppEntry-9ede8237d6ec6d78951639036226c2d5.js",
+      "sha256": "4ed031877fffb68c77538dc3972fbe2b424850ff652d120d3cf3aa06817b471d"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/chat-history-reload-current.png",
+      "sha256": "a3a50c2d22d0ed5f8e98ddb5f0ed53d555dc145d62837f360b660c413029a530"
+    },
+    {
+      "path": "evidence/chat-history.log",
+      "sha256": "d5cac69a608c419bb747975c56fd0e7c33353fc4db3c4236c771e95195f33373"
+    },
+    {
+      "path": "evidence/debug-now.log",
+      "sha256": "103ab3dd9e068793dedd6e47a7081722fdd44dabbdc486441a5dfd5a6416cd77"
+    },
+    {
+      "path": "evidence/engineering.log",
+      "sha256": "74bb3a77634d06f610b55dea4934806a28b8835142bf0b73a831534a2f4d903c"
+    },
+    {
+      "path": "evidence/home-landscape.png",
+      "sha256": "19a48e767dfb5b27ca8118ccbfa93562c1b42fbcfbfb124d3521c19cb993232a"
+    },
+    {
+      "path": "evidence/home-mobile-current.png",
+      "sha256": "a9eb8737f48fa2e1a4fdd17023de34eff94809781b178ada7160ad7595928c23"
+    },
+    {
+      "path": "evidence/life-replay.json",
+      "sha256": "70a86a038630c06d5e2dcf9e5a9fac19bb529c0c3dd70e7fe8ac1634697ac331"
+    },
+    {
+      "path": "evidence/memory-empty-mobile.png",
+      "sha256": "4ff6de0974b6684ada7b135c4d3217acbcda24acb5bfe90683041a6f63e8b4fe"
+    },
+    {
+      "path": "evidence/migration-comparison.json",
+      "sha256": "cda25016625dcd6400a962ce9b568af6fa2e7ccc1c5ea2991d29629d585d32c7"
+    },
+    {
+      "path": "evidence/model-review.md",
+      "sha256": "691ff426d3e4cfd44945e025e4a2128ff09f7935df36a4c7f1e1a49b4b082630"
+    },
+    {
+      "path": "evidence/model-scenarios-before-extra-boundaries.json",
+      "sha256": "8d38979135dafdf1432522147efa5e15e659c7a4707dc4c1ccec071d7dd1102f"
+    },
+    {
+      "path": "evidence/model-scenarios-before-family-refinement.json",
+      "sha256": "2525aae5518da2e4755c209481c0b29e6b92c2415efc8ac5df3aa95d9159735d"
+    },
+    {
+      "path": "evidence/model-scenarios-before-final-refinement.json",
+      "sha256": "c2602e5dece58b3591970b3a0c3a81674ea8f7814eb170c77f286ff99cb5802b"
+    },
+    {
+      "path": "evidence/model-scenarios-before-subject-refinement.json",
+      "sha256": "18d88e711f99b9c5252f6e3f37899a504a1e3edfcfd992c2bfa7f77146676fdb"
+    },
+    {
+      "path": "evidence/model-scenarios-before-tail-constraints.json",
+      "sha256": "d69594ee6b6ee694fac167f6478a24d4e8c04bf37227cfbc3b3443b91e96a999"
+    },
+    {
+      "path": "evidence/model-scenarios-initial.json",
+      "sha256": "9562bd886981aa56fe01019a977e14ee88a33d8033cd2092d177a93f0169801b"
+    },
+    {
+      "path": "evidence/model-scenarios.json",
+      "sha256": "12f5075726a90266e44a90a2319f72e753a9bdf4d119b28dd14a5119cfbbdd75"
+    },
+    {
+      "path": "evidence/relationship-mobile.png",
+      "sha256": "60078c9d475f25147c59e0f3b148e545d2fb014d2cbcc2cfa30199b04881a479"
+    },
+    {
+      "path": "evidence/room-fresh-landscape.png",
+      "sha256": "7cf94ce396c003528de33ed7147e5dc69ccfbfd1a0056e30f242e320717b3032"
+    },
+    {
+      "path": "evidence/room-landscape.png",
+      "sha256": "a4a40c39d2e185cc71b220b8805d13bb5752c2aebe4a8acb7db475911448e83f"
+    },
+    {
+      "path": "evidence/room-mobile.png",
+      "sha256": "4d406bb257b5647acbd10ae2e253f85102b5e887f9f036d465a2287e50e79505"
+    },
+    {
+      "path": "evidence/understanding-card-mobile.png",
+      "sha256": "963ef25f63066ac0b610fe31627684c7e70a35b8a72c040f05dbec919462e39a"
+    },
+    {
+      "path": "evidence/understanding-mobile.png",
+      "sha256": "7f8ba169ef1d5b10dbeb17b850888054d7f41673162254350de497439612b24a"
+    },
+    {
+      "path": "evidence/understanding-revoked-reload.png",
+      "sha256": "88f8546714bbcc1f4c4ba93594f47a021a928d3cf5766d8ef4ca61ffc34e0834"
+    },
+    {
+      "path": "evidence/understanding-source-mobile.png",
+      "sha256": "32a6807c46a95fee3c3b934daab0d0094d8b9fb6f1a007fa742ecc1741400b54"
+    },
+    {
+      "path": "evidence/v1.5.log",
+      "sha256": "678b6af5464a22de960fe416649b9824d464c1b21fd1697e26aff5041a2b3c11"
+    },
+    {
+      "path": "evidence/visual-assets.log",
+      "sha256": "421f4730d5476b609ba04755213e507009fff7ab33b1aefb3240e8046e85033c"
+    },
+    {
+      "path": "evidence/web-export.log",
+      "sha256": "cfabb989ebb6d861c344ccff561bd41e228b95ea9c511c948bc2ded3e7e61af2"
+    }
+  ]
+}
