@@ -6,150 +6,296 @@
     <title>饮之 · 鹿芽</title>
     <meta
       name="description"
-      content="鹿芽帮你理完一条记忆线索，再回到现实生活。茶馆 + 记忆封瓶。"
+      content="进来坐。茶还热着。"
     />
-    <meta property="og:image" content="./assets/cyberlover-home-hero-preview.webp" />
+    <meta property="og:image" content="./assets/tearoom/tearoom-hero-16x9.jpg" />
     <link rel="icon" type="image/png" href="./assets/favicon.png" />
-    <link rel="preload" as="image" href="./assets/cyberlover-home-hero.webp" type="image/webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Noto Serif SC', serif;
+        overflow: hidden;
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #1a1512;
+      }
+
+      /* 视频背景容器 */
+      .tearoom-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .tearoom-video,
+      .tearoom-poster {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: cover;
+      }
+
+      .tearoom-video {
+        opacity: 1;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      .tearoom-poster {
+        z-index: 1;
+      }
+
+      .tearoom-video.loaded ~ .tearoom-poster {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* 尊重减少动画偏好 */
+      @media (prefers-reduced-motion: reduce) {
+        .tearoom-video {
+          display: none;
+        }
+        .tearoom-poster {
+          opacity: 1 !important;
+        }
+      }
+
+      /* 渐变覆盖层 */
+      .tearoom-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          rgba(26, 21, 18, 0.1) 0%,
+          rgba(26, 21, 18, 0.3) 50%,
+          rgba(26, 21, 18, 0.5) 100%
+        );
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      /* 内容容器 */
+      .tearoom-content {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+      }
+
+      /* 文字样式 */
+      .tearoom-greeting {
+        color: #E7A0B4;
+        font-size: 1.125rem;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      /* 入口按钮 */
+      .tearoom-enter {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        color: #1a1512;
+        background: rgba(231, 160, 180, 0.9);
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(231, 160, 180, 0.3);
+        backdrop-filter: blur(8px);
+      }
+
+      .tearoom-enter:hover {
+        background: rgba(231, 160, 180, 1);
+        box-shadow: 0 6px 24px rgba(231, 160, 180, 0.5);
+        transform: translateY(-2px);
+      }
+
+      .tearoom-enter:active {
+        transform: translateY(0);
+      }
+
+      /* 品牌标记 */
+      .tearoom-brand {
+        position: fixed;
+        top: 2rem;
+        left: 2rem;
+        z-index: 10;
+        color: rgba(196, 165, 116, 0.8);
+        font-size: 0.875rem;
+        font-weight: 300;
+        letter-spacing: 0.15em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 响应式：平板和移动设备 */
+      @media (max-width: 768px) {
+        .tearoom-content {
+          padding: 1.5rem;
+          gap: 1.25rem;
+        }
+
+        .tearoom-greeting {
+          font-size: 1rem;
+        }
+
+        .tearoom-enter {
+          padding: 0.65rem 1.75rem;
+          font-size: 0.9375rem;
+        }
+
+        .tearoom-brand {
+          top: 1.5rem;
+          left: 1.5rem;
+          font-size: 0.8125rem;
+        }
+      }
+
+      /* 竖屏优先使用 9:16 资源 */
+      @media (orientation: portrait) {
+        .tearoom-video.landscape,
+        .tearoom-poster.landscape {
+          display: none;
+        }
+      }
+
+      @media (orientation: landscape) {
+        .tearoom-video.portrait,
+        .tearoom-poster.portrait {
+          display: none;
+        }
+      }
+
+      /* 小屏幕宽度也优先竖屏资源 */
+      @media (max-width: 768px) {
+        .tearoom-video.landscape,
+        .tearoom-poster.landscape {
+          display: none;
+        }
+        .tearoom-video.portrait,
+        .tearoom-poster.portrait {
+          display: block;
+        }
+      }
+
+      @media (min-width: 769px) {
+        .tearoom-video.landscape,
+        .tearoom-poster.landscape {
+          display: block;
+        }
+        .tearoom-video.portrait,
+        .tearoom-poster.portrait {
+          display: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <header class="topbar">
-      <div class="topbar-inner">
-        <a class="brand" href="./index.html" aria-label="饮之首页">
-          <span class="brand-mark">饮</span>
-          <span>饮之</span>
-        </a>
-        <nav class="nav">
-          <a href="#luya-room">鹿芽的家</a>
-          <a href="#flow">使用路径</a>
-          <a href="#trust">本地信任</a>
-          <a href="#direction">产品方向</a>
-          <a href="./changelog.html">更新日志</a>
-        </nav>
-      </div>
-    </header>
+    <!-- 品牌标记 -->
+    <div class="tearoom-brand">饮之</div>
 
-    <main>
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="meta-line">quiet guide / tea house memory bottles</p>
-          <h1>鹿芽帮你理完<br />一条记忆线索。</h1>
-          <p class="lead">
-            茶馆里的记忆封瓶，是慢慢说完一件事，再回到现实生活的出口。
-          </p>
-          <div class="hero-actions">
-            <a class="button primary" href="./luya-room/">看看鹿芽的家</a>
-            <a class="button" href="#flow">了解使用路径</a>
-            <a class="button" href="https://github.com/brocademaple/bcmp_cyber_lover" target="_blank" rel="noreferrer">GitHub</a>
-          </div>
-        </div>
+    <!-- 视频背景 -->
+    <div class="tearoom-background">
+      <!-- 16:9 横屏视频 -->
+      <video
+        class="tearoom-video landscape"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        aria-label="茶室氛围视频"
+      >
+        <source src="./assets/tearoom/tearoom-loop-16x9.mp4" type="video/mp4" />
+      </video>
+      
+      <!-- 16:9 横屏海报 -->
+      <img
+        class="tearoom-poster landscape"
+        src="./assets/tearoom/tearoom-hero-16x9.jpg"
+        alt="茶室窗边，鹿芽在等候"
+      />
 
-        <figure class="hero-poster-panel" aria-label="鹿芽记忆墙">
-          <img
-            src="./assets/cyberlover-home-hero.webp"
-            width="3200"
-            height="1600"
-            alt="饮之首页，中央是鹿芽主视觉，周围是记忆、漫画、聊天碎片"
-          />
-          <figcaption>鹿芽主视觉 / 记忆碎片墙</figcaption>
-        </figure>
-      </section>
+      <!-- 9:16 竖屏视频 -->
+      <video
+        class="tearoom-video portrait"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        aria-label="茶室氛围视频"
+      >
+        <source src="./assets/tearoom/tearoom-loop-9x16.mp4" type="video/mp4" />
+      </video>
+      
+      <!-- 9:16 竖屏海报 -->
+      <img
+        class="tearoom-poster portrait"
+        src="./assets/tearoom/tearoom-hero-9x16.jpg"
+        alt="茶室窗边，鹿芽在等候"
+      />
+    </div>
 
-      <section id="luya-room" class="section concept-section reveal">
-        <div class="section-heading">
-          <p class="meta-line">room preview</p>
-          <h2>鹿芽的家 · 窗边茶室</h2>
-          <p>
-            茶刚泡好。轻拖画面，可随手机倾斜。
-          </p>
-        </div>
-        <div class="hero-actions" style="margin-top: 24px;">
-          <a class="button primary" href="./luya-room/" style="font-size: 16px;">
-            进入鹿芽的家 →
-          </a>
-        </div>
-      </section>
+    <!-- 渐变覆盖层 -->
+    <div class="tearoom-overlay"></div>
 
-      <section id="flow" class="section split-section reveal">
-        <div>
-          <p class="meta-line">how it works</p>
-          <h2>聊天、记忆、封瓶</h2>
-          <p>
-            鹿芽陪你慢慢说完一件事。记忆留在本地，你可以修改、锁定或删除。说完之后，茶馆里的封瓶仪式是一个出口，让你重新回到现实生活。
-          </p>
-        </div>
-        <div class="space-principles">
-          <article>
-            <span>01</span>
-            <h3>聊天</h3>
-            <p>鹿芽倾听，不评判。慢慢说，不着急。</p>
-          </article>
-          <article>
-            <span>02</span>
-            <h3>记忆</h3>
-            <p>每段对话的记忆留在本地，你随时可以修改或删除。</p>
-          </article>
-          <article>
-            <span>03</span>
-            <h3>封瓶</h3>
-            <p>茶馆里的记忆封瓶仪式，是说完一件事、回到现实的出口。</p>
-          </article>
-        </div>
-      </section>
+    <!-- 内容 -->
+    <div class="tearoom-content">
+      <p class="tearoom-greeting">进来坐。茶还热着。</p>
+      <a class="tearoom-enter" href="./luya-room/">鹿芽的家</a>
+    </div>
 
-      <section id="trust" class="section reveal">
-        <div class="section-heading narrow">
-          <p class="meta-line">local trust</p>
-          <h2>对话和记忆都在本地</h2>
-          <p>
-            所有聊天记录、记忆数据和角色状态都保存在你的设备上。你可以随时查看、修改、锁定或删除任何一条记忆。API Key 加密保存，不会上传到任何服务器。
-          </p>
-        </div>
-      </section>
+    <script>
+      // 视频加载完成后添加 loaded 类，隐藏海报
+      document.addEventListener('DOMContentLoaded', () => {
+        const videos = document.querySelectorAll('.tearoom-video');
+        
+        videos.forEach(video => {
+          // 当视频可以播放时
+          video.addEventListener('canplay', () => {
+            video.classList.add('loaded');
+          });
 
-      <section id="direction" class="section memory-section reveal">
-        <div class="memory-panel">
-          <p class="meta-line">product direction</p>
-          <h2>记忆封瓶 + Live2D</h2>
-          <p>
-            当前产品方向是完成记忆封瓶的茶馆仪式出口，以及鹿芽的 Live2D / Cubism 技术验证。纪遥、凛夜的开发暂停，数据保留。
-          </p>
-        </div>
-        <div class="memory-comics" aria-label="鹿芽记忆示例">
-          <article>
-            <img src="./assets/memories/comics/qingning-comic-magazine.png" alt="鹿芽记忆漫画页" />
-            <div>
-              <span>鹿芽</span>
-              <strong>记忆在本地，你可以修改或删除。</strong>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="section closing-section reveal">
-        <div>
-          <p class="meta-line">yinzhi / luya</p>
-          <h2>饮之 · 鹿芽</h2>
-          <p>
-            理完一条记忆线索，再回到现实生活。
-          </p>
-        </div>
-        <a class="button" href="./luya-room/">进入鹿芽的家</a>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <span>饮之 · 鹿芽</span>
-      <span>茶馆 · 记忆封瓶 · 本地信任</span>
-    </footer>
-
-    <script src="./site.js"></script>
+          // 如果视频加载失败，确保海报仍然显示
+          video.addEventListener('error', () => {
+            console.warn('视频加载失败，显示静态海报');
+          });
+        });
+      });
+    </script>
   </body>
 </html>
