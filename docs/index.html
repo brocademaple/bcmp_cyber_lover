@@ -8,7 +8,7 @@
       name="description"
       content="进来坐。茶还热着。"
     />
-    <meta property="og:image" content="./assets/tearoom/tearoom-hero-16x9.jpg" />
+    <meta property="og:image" content="./assets/tearoom/hero-16x9.jpg" />
     <link rel="icon" type="image/png" href="./assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -57,12 +57,18 @@
       }
 
       .tearoom-video {
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+      }
+
+      .tearoom-video.loaded {
         opacity: 1;
-        transition: opacity 0.5s ease-in-out;
       }
 
       .tearoom-poster {
         z-index: 1;
+        opacity: 1;
+        transition: opacity 0.8s ease-in-out;
       }
 
       .tearoom-video.loaded ~ .tearoom-poster {
@@ -73,7 +79,7 @@
       /* 尊重减少动画偏好 */
       @media (prefers-reduced-motion: reduce) {
         .tearoom-video {
-          display: none;
+          display: none !important;
         }
         .tearoom-poster {
           opacity: 1 !important;
@@ -183,44 +189,6 @@
           font-size: 0.8125rem;
         }
       }
-
-      /* 竖屏优先使用 9:16 资源 */
-      @media (orientation: portrait) {
-        .tearoom-video.landscape,
-        .tearoom-poster.landscape {
-          display: none;
-        }
-      }
-
-      @media (orientation: landscape) {
-        .tearoom-video.portrait,
-        .tearoom-poster.portrait {
-          display: none;
-        }
-      }
-
-      /* 小屏幕宽度也优先竖屏资源 */
-      @media (max-width: 768px) {
-        .tearoom-video.landscape,
-        .tearoom-poster.landscape {
-          display: none;
-        }
-        .tearoom-video.portrait,
-        .tearoom-poster.portrait {
-          display: block;
-        }
-      }
-
-      @media (min-width: 769px) {
-        .tearoom-video.landscape,
-        .tearoom-poster.landscape {
-          display: block;
-        }
-        .tearoom-video.portrait,
-        .tearoom-poster.portrait {
-          display: none;
-        }
-      }
     </style>
   </head>
   <body>
@@ -229,43 +197,23 @@
 
     <!-- 视频背景 -->
     <div class="tearoom-background">
-      <!-- 16:9 横屏视频 -->
+      <!-- 动态视频元素 -->
       <video
-        class="tearoom-video landscape"
+        id="tearoom-video"
+        class="tearoom-video"
         autoplay
         muted
-        loop
         playsinline
         preload="auto"
         aria-label="茶室氛围视频"
       >
-        <source src="./assets/tearoom/tearoom-loop-16x9.mp4" type="video/mp4" />
+        <!-- 视频源将由 JavaScript 动态设置 -->
       </video>
       
-      <!-- 16:9 横屏海报 -->
+      <!-- 静态海报（视频加载前或失败时显示） -->
       <img
-        class="tearoom-poster landscape"
-        src="./assets/tearoom/tearoom-hero-16x9.jpg"
-        alt="茶室窗边，鹿芽在等候"
-      />
-
-      <!-- 9:16 竖屏视频 -->
-      <video
-        class="tearoom-video portrait"
-        autoplay
-        muted
-        loop
-        playsinline
-        preload="auto"
-        aria-label="茶室氛围视频"
-      >
-        <source src="./assets/tearoom/tearoom-loop-9x16.mp4" type="video/mp4" />
-      </video>
-      
-      <!-- 9:16 竖屏海报 -->
-      <img
-        class="tearoom-poster portrait"
-        src="./assets/tearoom/tearoom-hero-9x16.jpg"
+        id="tearoom-poster"
+        class="tearoom-poster"
         alt="茶室窗边，鹿芽在等候"
       />
     </div>
@@ -280,20 +228,200 @@
     </div>
 
     <script>
-      // 视频加载完成后添加 loaded 类，隐藏海报
-      document.addEventListener('DOMContentLoaded', () => {
-        const videos = document.querySelectorAll('.tearoom-video');
-        
-        videos.forEach(video => {
-          // 当视频可以播放时
-          video.addEventListener('canplay', () => {
-            video.classList.add('loaded');
-          });
+      // 视频池配置
+      const VIDEO_POOLS = {
+        landscape: [
+          './assets/tearoom/loop-16x9-v1.mp4',
+          './assets/tearoom/loop-16x9-v2.mp4',
+          './assets/tearoom/loop-16x9-v3.mp4'
+        ],
+        portrait: [
+          './assets/tearoom/loop-9x16-v1.mp4',
+          './assets/tearoom/loop-9x16-v2.mp4',
+          './assets/tearoom/loop-9x16-v3-from16.mp4',
+          './assets/tearoom/loop-9x16-v3.mp4',
+          './assets/tearoom/loop-9x16-v3b.mp4',
+          './assets/tearoom/loop-9x16-v3c.mp4'
+        ]
+      };
 
-          // 如果视频加载失败，确保海报仍然显示
-          video.addEventListener('error', () => {
-            console.warn('视频加载失败，显示静态海报');
+      // 海报池配置
+      const POSTER_POOLS = {
+        landscape: [
+          './assets/tearoom/hero-16x9.jpg',
+          './assets/tearoom/hero-16x9-smile.jpg'
+        ],
+        portrait: [
+          './assets/tearoom/hero-9x16.jpg',
+          './assets/tearoom/hero-9x16-smile.jpg'
+        ]
+      };
+
+      // 状态管理
+      let currentOrientation = null;
+      let lastPlayedVideo = null;
+      let isReducedMotion = false;
+
+      /**
+       * 检测用户是否偏好减少动画
+       */
+      function checkReducedMotion() {
+        if (window.matchMedia) {
+          const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+          isReducedMotion = mediaQuery.matches;
+          
+          // 监听偏好变化
+          mediaQuery.addEventListener('change', (e) => {
+            isReducedMotion = e.matches;
+            if (isReducedMotion) {
+              pauseVideo();
+            }
           });
+        }
+        return isReducedMotion;
+      }
+
+      /**
+       * 检测当前视口方向
+       */
+      function detectOrientation() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // 优先使用宽度判断，768px 以下或竖屏用 portrait
+        if (width <= 768 || height > width) {
+          return 'portrait';
+        }
+        return 'landscape';
+      }
+
+      /**
+       * 从池中随机选择一项，避免与上次相同
+       */
+      function randomPick(pool, lastItem = null) {
+        if (pool.length === 1) {
+          return pool[0];
+        }
+        
+        // 过滤掉上次播放的项
+        const availableItems = lastItem 
+          ? pool.filter(item => item !== lastItem)
+          : pool;
+        
+        const randomIndex = Math.floor(Math.random() * availableItems.length);
+        return availableItems[randomIndex];
+      }
+
+      /**
+       * 加载随机视频和海报
+       */
+      function loadRandomMedia() {
+        const orientation = detectOrientation();
+        currentOrientation = orientation;
+
+        const videoElement = document.getElementById('tearoom-video');
+        const posterElement = document.getElementById('tearoom-poster');
+
+        // 选择随机视频
+        const videoPool = VIDEO_POOLS[orientation];
+        const selectedVideo = randomPick(videoPool, lastPlayedVideo);
+        lastPlayedVideo = selectedVideo;
+
+        // 选择随机海报
+        const posterPool = POSTER_POOLS[orientation];
+        const selectedPoster = randomPick(posterPool);
+
+        // 设置海报
+        posterElement.src = selectedPoster;
+
+        // 如果用户偏好减少动画，只显示海报
+        if (checkReducedMotion()) {
+          videoElement.style.display = 'none';
+          return;
+        }
+
+        // 设置视频源
+        videoElement.innerHTML = `<source src="${selectedVideo}" type="video/mp4" />`;
+        videoElement.load();
+
+        // 视频加载完成
+        videoElement.addEventListener('canplay', handleVideoCanPlay, { once: true });
+        
+        // 视频加载失败
+        videoElement.addEventListener('error', handleVideoError, { once: true });
+
+        // 视频结束时可选择加载下一个随机视频
+        videoElement.addEventListener('ended', handleVideoEnded);
+      }
+
+      /**
+       * 视频可播放时的处理
+       */
+      function handleVideoCanPlay() {
+        const videoElement = document.getElementById('tearoom-video');
+        videoElement.classList.add('loaded');
+      }
+
+      /**
+       * 视频加载失败时的处理
+       */
+      function handleVideoError() {
+        console.warn('视频加载失败，显示静态海报');
+        const videoElement = document.getElementById('tearoom-video');
+        videoElement.style.display = 'none';
+      }
+
+      /**
+       * 视频结束时的处理（可选：加载下一个随机视频）
+       */
+      function handleVideoEnded() {
+        const videoElement = document.getElementById('tearoom-video');
+        
+        // 移除 loaded 类以触发淡出
+        videoElement.classList.remove('loaded');
+        
+        // 等待淡出完成后加载新视频
+        setTimeout(() => {
+          loadRandomMedia();
+        }, 800);
+      }
+
+      /**
+       * 暂停视频
+       */
+      function pauseVideo() {
+        const videoElement = document.getElementById('tearoom-video');
+        videoElement.pause();
+        videoElement.style.display = 'none';
+      }
+
+      /**
+       * 监听窗口大小变化，检测方向变化
+       */
+      function handleResize() {
+        const newOrientation = detectOrientation();
+        
+        // 如果方向改变，重新加载媒体
+        if (newOrientation !== currentOrientation) {
+          const videoElement = document.getElementById('tearoom-video');
+          videoElement.classList.remove('loaded');
+          
+          setTimeout(() => {
+            loadRandomMedia();
+          }, 800);
+        }
+      }
+
+      // 初始化
+      document.addEventListener('DOMContentLoaded', () => {
+        // 加载初始随机媒体
+        loadRandomMedia();
+
+        // 监听窗口大小变化（防抖）
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(handleResize, 300);
         });
       });
     </script>
