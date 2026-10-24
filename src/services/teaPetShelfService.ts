@@ -16,7 +16,7 @@
  * 3. 无法体现自我发现的质量
  * 
  * **Tea Pet Shelf** 的创新：
- * - 不是「和鹿芽的关系进展」，而是「用户的自我发现收藏」
+ * - 焦点从「和鹿芽的关系进展」转为「用户的自我发现收藏」
  * - 4 只茶宠代表 4 种成长维度：澄明、笃行、松弛、灵光
  * - 每个自我发现结晶为「封存的瓶子」，滋养对应的茶宠
  * - 茶宠的「包浆」(patina) 代表用户在该维度的积累
@@ -59,7 +59,7 @@
  * 
  * // 会话结束时，用户确认「封瓶」某个自我发现
  * await sealBottleAndNourishPet('luya', {
- *   insight: '我不是「不想做」，而是「害怕做不好」',
+ *   insight: '我其实「害怕做不好」，所以会拖延和回避',
  *   sessionId: currentSessionId,
  *   nourishes: 'clarity_deer',  // 滋养「澄明」
  *   patinaContribution: 50,

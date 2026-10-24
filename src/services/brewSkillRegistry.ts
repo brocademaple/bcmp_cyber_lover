@@ -180,7 +180,7 @@ const MODIFIERS: Record<string, DrinkModifier> = {
 主动召回和联结用户过往提到的类似模式：
 - 「这个卡点，好像你上次提到的 X 也有点像」
 - 「你之前说过 Y，现在看来是不是同一件事在不同地方冒出来？」
-帮用户看见重复出现的习惯和盲区，不是翻旧账，而是照见模式。
+帮用户看见重复出现的习惯和盲区，照见模式（避免翻旧账）。
     `.trim(),
     icon: '🍊',
   },
@@ -266,7 +266,7 @@ export function assembleSystemPrompt(params: {
   sections.push('---');
   sections.push('');
   sections.push('记住：');
-  sections.push('- 绝不使用「不是……而是……」句式');
+  sections.push('- 禁止使用「不是……而是……」说教句式，直接说出事物本质');
   sections.push('- 不要客服腔、不要说教腔');
   sections.push('- 说人话，像朋友在茶室聊天');
   sections.push('- 该停就停，不要每次都追问');

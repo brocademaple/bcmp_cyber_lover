@@ -9,6 +9,7 @@ import { zhCN } from 'date-fns/locale';
 import { getMoodStateLabel } from '../services/characterPromptArchitectureService';
 import { resolveMessageMediaUri } from '../services/messageMedia';
 import { LUYA_STATE_LABELS } from '../config/luyaPersona';
+import SipCalibrationButton from './SipCalibrationButton';
 
 interface Props {
   message: Message;
@@ -16,9 +17,21 @@ interface Props {
   characterName: string;
   characterId?: string;
   characterPortrait?: CharacterImageSource;
+  showCalibration?: boolean;
+  onSipResonate?: () => void;
+  onSipAdjust?: (note: string) => void;
 }
 
-export default function ChatBubble({ message, characterAvatar, characterName, characterId, characterPortrait }: Props) {
+export default function ChatBubble({ 
+  message, 
+  characterAvatar, 
+  characterName, 
+  characterId, 
+  characterPortrait,
+  showCalibration = false,
+  onSipResonate,
+  onSipAdjust,
+}: Props) {
   const C = useThemeColors();
   const themeId = useThemeId();
   const isUser = message.role === 'user';
@@ -154,6 +167,15 @@ export default function ChatBubble({ message, characterAvatar, characterName, ch
           <Text style={[styles.failedHint, { color: C.danger }, isUser && styles.timestampRight]}>
             服务还没有连接好
           </Text>
+        )}
+
+        {!isUser && showCalibration && characterId === 'qingning' && onSipResonate && onSipAdjust && (
+          <SipCalibrationButton
+            pointId={message.id}
+            snippet={message.content.substring(0, 100)}
+            onResonate={onSipResonate}
+            onAdjust={onSipAdjust}
+          />
         )}
       </View>
 

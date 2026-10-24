@@ -2,6 +2,13 @@ import { resolveLuyaRoomFromDialogue } from '../services/luyaRoomService';
 import { applyLuyaUserTurn } from '../services/luyaRelationshipService';
 import { processLuyaUnderstandingTurn, observeLuyaSharing, getUnderstandingCards, decideUnderstanding } from '../services/luyaUnderstandingService';
 import LuyaUnderstandingCard from '../components/LuyaUnderstandingCard';
+import TeahouseHarnessDrawer from '../components/TeahouseHarnessDrawer';
+import IngestPanel from '../components/IngestPanel';
+import TeaPetShelf from '../components/TeaPetShelf';
+import HarnessInspector from '../components/HarnessInspector';
+import SessionSettlementModal from '../components/SessionSettlementModal';
+import { useTeahouseHarness } from '../contexts/TeahouseHarnessContext';
+import { assembleContextSnapshot } from '../services/contextWindowManager';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -131,6 +138,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { characterId, autoGreet, moodEntry } = route.params;
   const C = useThemeColors();
   const isFocused = useIsFocused();
+  const harness = useTeahouseHarness();
   const themeId = useThemeId();
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
@@ -961,6 +969,22 @@ export default function ChatScreen({ route, navigation }: Props) {
             >
               <Text style={[styles.chatSettingsIcon, { color: C.text }]}>留档</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.chatHeaderButton,
+                styles.chatHeaderCompactButton,
+                isUrbanClear && styles.urbanChatHeaderButton,
+                isSoftSweet && styles.softChatHeaderButton,
+                { backgroundColor: C.surface + 'E8', borderColor: C.border, shadowColor: C.shadow },
+              ]}
+              onPress={() => harness.openHarnessDrawer()}
+              activeOpacity={0.78}
+              accessibilityRole="button"
+              accessibilityLabel="打开茶室 Harness 操控台"
+            >
+              <Text style={[styles.chatSettingsIcon, { color: C.primary }]}>🍵</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1210,6 +1234,50 @@ export default function ChatScreen({ route, navigation }: Props) {
           bottomInset={insets.bottom}
         />
       </KeyboardAvoidingView>
+
+      <TeahouseHarnessDrawer
+        visible={harness.harnessDrawerVisible}
+        onClose={harness.closeHarnessDrawer}
+        currentBaseDrink={harness.baseDrink}
+        currentModifiers={harness.modifiers}
+        onBaseDrinkChange={harness.setBaseDrink}
+        onModifierToggle={harness.toggleModifier}
+        onOpenIngest={harness.openIngestPanel}
+        onOpenShelf={harness.openTeaPetShelf}
+        onOpenInspector={harness.openInspector}
+      />
+
+      <IngestPanel
+        visible={harness.ingestPanelVisible}
+        onClose={harness.closeIngestPanel}
+        characterId={characterId}
+        onLeafCreated={() => harness.refreshLeaves(characterId)}
+      />
+
+      <TeaPetShelf
+        visible={harness.teaPetShelfVisible}
+        onClose={harness.closeTeaPetShelf}
+        characterId={characterId}
+      />
+
+      <HarnessInspector
+        visible={harness.inspectorVisible}
+        onClose={harness.closeInspector}
+        characterId={characterId}
+        currentBaseDrink={harness.baseDrink}
+        currentModifiers={harness.modifiers}
+        contextTokenEstimate={0}
+        hotTurnCount={chatMessages.length > 10 ? 10 : chatMessages.length}
+        warmDigestCount={0}
+        coldBottleCount={0}
+      />
+
+      <SessionSettlementModal
+        visible={harness.settlementVisible}
+        onClose={harness.closeSettlement}
+        settlementCard={null}
+        onConfirm={() => {}}
+      />
     </>
   );
 

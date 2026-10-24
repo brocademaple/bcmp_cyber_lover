@@ -9,6 +9,7 @@ import { setupNotificationHandler } from './src/services/notificationService';
 import { RootStackParamList } from './src/types';
 import AppErrorBoundary from './src/components/AppErrorBoundary';
 import ImageRecoveryProbe from './src/dev/ImageRecoveryProbe';
+import { TeahouseHarnessProvider } from './src/contexts/TeahouseHarnessContext';
 
 setupNotificationHandler();
 
@@ -41,7 +42,9 @@ export default function App() {
     <AppErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          {isImageRecoveryProbe ? <ImageRecoveryProbe /> : <AppNavigator navigationRef={navigationRef} />}
+          <TeahouseHarnessProvider>
+            {isImageRecoveryProbe ? <ImageRecoveryProbe /> : <AppNavigator navigationRef={navigationRef} />}
+          </TeahouseHarnessProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </AppErrorBoundary>
