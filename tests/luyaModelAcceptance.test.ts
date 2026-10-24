@@ -86,7 +86,7 @@ it.skipIf(process.env.LUYA_LIVE_MODEL !== '1')('records actual DeepSeek six-scen
       for (const [index, input] of scenario.inputs.entries()) {
         const userMessage: Message = { id: `${scenario.id}_u${index}`, role: 'user', content: input, timestamp: now + index * 1000 };
         character = { ...character, luyaRuntime: applyLuyaUserTurn(character.luyaRuntime!, userMessage) };
-        const snapshot = buildPromptDebugSnapshot({ character, chatHistory: history, config, memory, advanced, userText: input, nowTs: now + index * 1000 });
+        const snapshot = await buildPromptDebugSnapshot({ character, chatHistory: history, config, memory, advanced, userText: input, nowTs: now + index * 1000 });
         systemPrompt = snapshot.finalSystemPrompt!;
         const started = Date.now();
         try {

@@ -334,6 +334,13 @@ export async function settleSession(
   }
   
   const settings = useSettingsStore.getState().settings;
+  const hasApiKey = Boolean(settings.service.apiKey);
+  const hasSufficientTurns = recentMessages.length >= 6;
+  
+  if (!hasApiKey || !hasSufficientTurns) {
+    console.log('[TeahouseSession] Using deterministic fallback for settlement');
+    return generateDeterministicSettlement(sessionId, recentMessages);
+  }
   
   const systemPrompt = `你是鹿芽，现在需要为这次对话做「封瓶三态分拣」。
 
@@ -387,16 +394,45 @@ export async function settleSession(
     
     return card;
   } catch (error) {
-    console.error('[TeahouseSession] Settlement generation failed:', error);
-    
-    return {
-      sessionId,
-      toSeal: [],
-      toUpdate: {},
-      toDiscard: [],
-      generatedAt: Date.now(),
-    };
+    console.error('[TeahouseSession] Settlement generation failed, using fallback:', error);
+    return generateDeterministicSettlement(sessionId, recentMessages);
   }
+}
+
+function generateDeterministicSettlement(
+  sessionId: string,
+  messages: Message[]
+): SessionSettlementCard {
+  const userMessages = messages.filter(m => m.role === 'user');
+  const assistantMessages = messages.filter(m => m.role === 'assistant');
+  
+  const toSeal: SessionSettlementCard['toSeal'] = [];
+  const toUpdate: SessionSettlementCard['toUpdate'] = { traits: [], currentFocus: [] };
+  const toDiscard: SessionSettlementCard['toDiscard'] = [];
+  
+  if (userMessages.length > 0) {
+    const firstUserMsg = userMessages[0].content;
+    if (firstUserMsg.length > 20) {
+      toSeal.push({
+        insight: `开启了关于「${firstUserMsg.slice(0, 30)}...」的对话`,
+        nourishes: 'clarity_deer',
+        estimatedPatinaExp: 15,
+      });
+    }
+  }
+  
+  if (userMessages.length >= 2) {
+    toUpdate.traits = ['正在探索新话题'];
+    toUpdate.currentFocus = [userMessages[userMessages.length - 1].content.slice(0, 50)];
+  }
+  
+  return {
+    sessionId,
+    toSeal,
+    toUpdate,
+    toDiscard,
+    generatedAt: Date.now(),
+  };
 }
 
 /**

@@ -152,12 +152,12 @@ export function selectPromptMemories(character: Character, messages: Message[]) 
     .map(({ item }) => item);
 }
 
-function buildSystemMessage(
+async function buildSystemMessage(
   character: Character,
   memory: MemoryConfig,
   chatHistory: Message[],
   nowTs = Date.now()
-): string {
+): Promise<string> {
   const promptLayers = buildCharacterPromptLayers(character, { chatHistory, nowTs });
   let systemContent = renderCharacterPromptLayers(promptLayers);
 
@@ -188,20 +188,47 @@ function buildSystemMessage(
   if (character.id === 'qingning') {
     const plan = buildLuyaResponsePlan(character, chatHistory);
     systemContent += `\n\n【本轮执行约束：优先于默认风格和旧对话补写】\n${plan.steps.map((step, index) => `${index + 1}. ${step}`).join('\n')}`;
+    
+    try {
+      const { assembleSystemPrompt } = await import('./brewSkillRegistry');
+      const { loadDualPersonaStore } = await import('./dualPersonaStore');
+      const { assembleContextSnapshot } = await import('./contextWindowManager');
+      
+      const baseDrink = 'oolong';
+      const modifiers: string[] = [];
+      const dualPersona = await loadDualPersonaStore(character.id);
+      const context = await assembleContextSnapshot({
+        characterId: character.id,
+        sessionId: 'default',
+        recentMessages: chatHistory,
+        peelModifierActive: false,
+      });
+      
+      const harnessPrompt = assembleSystemPrompt({
+        baseDrink,
+        modifiers,
+        basePersona: dualPersona.host.identity,
+        userMirrorSummary: dualPersona.userMirror.traits.join(', '),
+      });
+      
+      systemContent += `\n\n【🍵 茶室 Harness 主动注入层】\n${harnessPrompt}`;
+    } catch (error) {
+      console.error('[aiService] Failed to inject harness prompt:', error);
+    }
   }
 
   return systemContent;
 }
 
-function buildMessages(
+async function buildMessages(
   character: Character,
   chatHistory: Message[],
   memory: MemoryConfig,
   advanced: AdvancedConfig,
   imageUri?: string,
   nowTs = Date.now()
-): { role: string; content: string | ContentPart[] }[] {
-  const systemMsg = buildSystemMessage(character, memory, chatHistory, nowTs);
+): Promise<{ role: string; content: string | ContentPart[] }[]> {
+  const systemMsg = await buildSystemMessage(character, memory, chatHistory, nowTs);
 
   const apiMessages: { role: string; content: string | ContentPart[] }[] = [];
 
@@ -288,7 +315,7 @@ function buildSafeBaseRequestSummary(
   ];
 }
 
-export function buildPromptDebugSnapshot({
+export async function buildPromptDebugSnapshot({
   character,
   chatHistory,
   config,
@@ -306,7 +333,7 @@ export function buildPromptDebugSnapshot({
   userText?: string;
   imageUri?: string;
   nowTs?: number;
-}): DebugPromptSnapshot {
+}): Promise<DebugPromptSnapshot> {
   const effectiveNowTs = nowTs ?? advanced.debugNowTs ?? Date.now();
   const model = imageUri ? (config.visionModel || config.model) : config.model;
   const timeContext = buildTimeContext(effectiveNowTs);
@@ -318,8 +345,8 @@ export function buildPromptDebugSnapshot({
     imageUri,
   };
   const allHistory = [...chatHistory, newUserMsg];
-  const finalSystemPrompt = buildSystemMessage(character, memory, allHistory, effectiveNowTs);
-  const apiMessages = buildMessages(character, allHistory, memory, advanced, imageUri, effectiveNowTs);
+  const finalSystemPrompt = await buildSystemMessage(character, memory, allHistory, effectiveNowTs);
+  const apiMessages = await buildMessages(character, allHistory, memory, advanced, imageUri, effectiveNowTs);
   const promptLayers = buildCharacterPromptLayers(character, { chatHistory: allHistory, nowTs: effectiveNowTs });
   const activeMemories = selectPromptMemories(character, allHistory);
   const memoryLines = memory.enabled && activeMemories.length
@@ -363,16 +390,16 @@ export function buildPromptDebugSnapshot({
   };
 }
 
-export function buildDailyGreetingDebugSnapshot(
+export async function buildDailyGreetingDebugSnapshot(
   character: Character,
   config: ServiceConfig,
   advanced: AdvancedConfig,
   nowTs?: number
-): DebugPromptSnapshot {
+): Promise<DebugPromptSnapshot> {
   const effectiveNowTs = nowTs ?? advanced.debugNowTs ?? Date.now();
   const timeContext = buildTimeContext(effectiveNowTs);
   const promptLayers = buildCharacterPromptLayers(character, { chatHistory: [], nowTs: effectiveNowTs });
-  const systemPrompt = buildSystemMessage(character, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
+  const systemPrompt = await buildSystemMessage(character, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
   const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，只引用已有生活事实或中性邀请，不要求回复、不推断用户处境，长度自然，并符合这个时段的语境。`;
   const messages = advanced.compatibilityMode
     ? [{ role: 'user', content: `[系统提示: ${systemPrompt}]\n\n${userPrompt}` }]
@@ -497,7 +524,7 @@ export async function sendMessage(
     )
   );
   const preparedImageUri = imageUri ? await messageImageToProviderUrl(imageUri) : undefined;
-  const apiMessages = buildMessages(
+  const apiMessages = await buildMessages(
     character,
     preparedHistory,
     memory,
@@ -692,7 +719,7 @@ export async function generateMoodEntryGreeting(
   }
 
   const effectiveNowTs = nowTs ?? advanced.debugNowTs ?? Date.now();
-  const systemPrompt = buildSystemMessage(moodCharacter, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
+  const systemPrompt = await buildSystemMessage(moodCharacter, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
   const userPrompt = buildMoodEntryGreetingPrompt(moodCharacter, mood);
   const messages: { role: string; content: string }[] = advanced.compatibilityMode
     ? [{ role: 'user', content: `[系统提示: ${systemPrompt}]\n\n${userPrompt}` }]
@@ -740,7 +767,7 @@ export async function generateDailyGreeting(
 
   const effectiveNowTs = nowTs ?? advanced.debugNowTs ?? Date.now();
   const timeContext = buildTimeContext(effectiveNowTs);
-  const systemPrompt = buildSystemMessage(character, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
+  const systemPrompt = await buildSystemMessage(character, DISABLED_MEMORY_CONFIG, [], effectiveNowTs);
 
   const userPrompt = `现在是${timeContext.timeStr}（${timeContext.periodLabel}），你主动联系了用户，说一句今天的开场白。要自然、有温度，只引用已有生活事实或中性邀请，不要求回复、不推断用户处境，长度自然，并符合这个时段的语境。`;
 

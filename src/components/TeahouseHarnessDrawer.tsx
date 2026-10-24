@@ -44,6 +44,7 @@ interface TeahouseHarnessDrawerProps {
   onOpenIngest: () => void;
   onOpenShelf: () => void;
   onOpenInspector: () => void;
+  onOpenSettlement: () => void;
 }
 
 export default function TeahouseHarnessDrawer({
@@ -56,6 +57,7 @@ export default function TeahouseHarnessDrawer({
   onOpenIngest,
   onOpenShelf,
   onOpenInspector,
+  onOpenSettlement,
 }: TeahouseHarnessDrawerProps) {
   const colors = useThemeColors();
   const registry = getBrewSkillRegistry();
@@ -173,6 +175,13 @@ export default function TeahouseHarnessDrawer({
                     title="Harness 透视镜"
                     description="查看组装的 System Prompt 与上下文状态"
                     onPress={onOpenInspector}
+                    colors={colors}
+                  />
+                  <ToolButton
+                    icon="🍃"
+                    title="收席封瓶 · 三态复盘"
+                    description="结束当前会话，分拣封瓶/更新/遗忘"
+                    onPress={onOpenSettlement}
                     colors={colors}
                   />
                 </View>

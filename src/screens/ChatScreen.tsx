@@ -140,6 +140,13 @@ export default function ChatScreen({ route, navigation }: Props) {
   const isFocused = useIsFocused();
   const harness = useTeahouseHarness();
   const themeId = useThemeId();
+  
+  useEffect(() => {
+    if (isFocused && characterId && !harness.sessionId) {
+      harness.startSession(characterId);
+      harness.refreshLeaves(characterId);
+    }
+  }, [isFocused, characterId, harness]);
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
   const systemScheme = useColorScheme();
@@ -397,7 +404,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           }
           const requestController = new AbortController();
           activeRequestControllerRef.current = requestController;
-          const debugSnapshot = buildPromptDebugSnapshot({
+          const debugSnapshot = await buildPromptDebugSnapshot({
             character: latestCharacter,
             chatHistory: historyForRequest,
             config: latestSettings.service,
@@ -1245,13 +1252,32 @@ export default function ChatScreen({ route, navigation }: Props) {
         onOpenIngest={harness.openIngestPanel}
         onOpenShelf={harness.openTeaPetShelf}
         onOpenInspector={harness.openInspector}
+        onOpenSettlement={() => {
+          harness.closeHarnessDrawer();
+          harness.triggerSettlement(characterId, chatMessages);
+        }}
       />
 
       <IngestPanel
         visible={harness.ingestPanelVisible}
         onClose={harness.closeIngestPanel}
         characterId={characterId}
+        existingLeaves={harness.unsteepedLeaves}
         onLeafCreated={() => harness.refreshLeaves(characterId)}
+        onBrewLeaf={async (leaf) => {
+          const openingMessage: Message = {
+            id: `brew-${leaf.id}-${Date.now()}`,
+            role: 'assistant',
+            content: `${leaf.luyaMirrorLens.openingPrompt || `我注意到你想聊聊「${leaf.luyaMirrorLens.suggestedBrewTopic}」。\n\n${leaf.luyaMirrorLens.reflectedPattern}\n\n说说吧，我在这里听着。`}`,
+            timestamp: Date.now(),
+          };
+          
+          await addMessage(characterId, openingMessage);
+          
+          const { markLeafSteeped } = await import('../services/ingestDistillerService');
+          await markLeafSteeped(characterId, leaf.id);
+          harness.refreshLeaves(characterId);
+        }}
       />
 
       <TeaPetShelf
@@ -1275,8 +1301,10 @@ export default function ChatScreen({ route, navigation }: Props) {
       <SessionSettlementModal
         visible={harness.settlementVisible}
         onClose={harness.closeSettlement}
-        settlementCard={null}
-        onConfirm={() => {}}
+        settlementCard={harness.settlementCard}
+        onConfirm={(selection) => {
+          harness.applySettlement(characterId, selection);
+        }}
       />
     </>
   );

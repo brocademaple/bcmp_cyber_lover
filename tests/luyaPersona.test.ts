@@ -19,16 +19,16 @@ const service = { provider: 'deepseek' as const, apiKey: '', model: 'deepseek-ch
 function message(id: string, role: Message['role'], content: string): Message { return { id, role, content, timestamp: now + Number(id.replace(/\D/g, '') || 0) }; }
 
 describe('Luya live prompt and isolated evidence', () => {
-  it('projects official identity, daily life, relationship evidence, and current-turn priority into the actual system prompt', () => {
-    const snapshot = buildPromptDebugSnapshot({ character, memory, advanced, config: service, chatHistory: [], userText: '今天别安慰，直接分析', nowTs: now });
+  it('projects official identity, daily life, relationship evidence, and current-turn priority into the actual system prompt', async () => {
+    const snapshot = await buildPromptDebugSnapshot({ character, memory, advanced, config: service, chatHistory: [], userText: '今天别安慰，直接分析', nowTs: now });
     const prompt = snapshot.finalSystemPrompt!;
     for (const fact of ['成都', '大二下学期', '计算机相关专业', '未有企业实习', '本轮明确要求', '访客', '原型']) expect(prompt).toContain(fact);
     for (const stale of ['每次回复不超过3句话', '必须包含对用户当下状态的关心', '零食毯子模式', '你们关系很熟，可以更自然地亲近']) expect(prompt).not.toContain(stale);
     expect(snapshot.sections.some(section => section.title === '本轮回应计划与主语证据')).toBe(true);
   });
-  it('preserves explicit user overrides in their own prompt layer', () => {
+  it('preserves explicit user overrides in their own prompt layer', async () => {
     const overridden: Character = { ...character, luyaPersona: { schemaVersion: 2, userOverrides: { personality: '喜欢慢慢讨论' }, snapshot: { ...character }, migratedAt: now, log: [] } };
-    const prompt = buildPromptDebugSnapshot({ character: overridden, memory, advanced, config: service, chatHistory: [], nowTs: now }).finalSystemPrompt;
+    const prompt = (await buildPromptDebugSnapshot({ character: overridden, memory, advanced, config: service, chatHistory: [], nowTs: now })).finalSystemPrompt;
     expect(prompt).toContain('喜欢慢慢讨论');
   });
   it('does not convert user, third-party or fictional emotions to Luya energy/mood', () => {

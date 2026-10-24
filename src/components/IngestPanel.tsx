@@ -38,14 +38,18 @@ interface IngestPanelProps {
   visible: boolean;
   onClose: () => void;
   characterId: string;
+  existingLeaves: UnsteepedLeaf[];
   onLeafCreated?: (leaf: UnsteepedLeaf) => void;
+  onBrewLeaf?: (leaf: UnsteepedLeaf) => void;
 }
 
 export default function IngestPanel({
   visible,
   onClose,
   characterId,
+  existingLeaves,
   onLeafCreated,
+  onBrewLeaf,
 }: IngestPanelProps) {
   const colors = useThemeColors();
   
@@ -119,10 +123,49 @@ export default function IngestPanel({
             </View>
             
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+              {existingLeaves.length > 0 && (
+                <View style={styles.leavesSection}>
+                  <Text style={[styles.leavesSectionTitle, { color: colors.text, fontFamily: NOTO_SANS_SC.bold }]}>
+                    🍃 生茶罐 ({existingLeaves.length})
+                  </Text>
+                  {existingLeaves.map((leaf) => (
+                    <View key={leaf.id} style={[styles.leafPreviewCard, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                      <View style={styles.leafPreviewHeader}>
+                        <Text style={[styles.leafPreviewTopic, { color: colors.text, fontFamily: NOTO_SANS_SC.medium }]} numberOfLines={1}>
+                          {leaf.luyaMirrorLens.suggestedBrewTopic}
+                        </Text>
+                        <Text style={[styles.leafPreviewUrgency, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.regular }]}>
+                          {leaf.objectiveFacts.urgencyLevel === 'high' ? '🔥' :
+                           leaf.objectiveFacts.urgencyLevel === 'medium' ? '⚡' : '💤'}
+                        </Text>
+                      </View>
+                      <Text style={[styles.leafPreviewPattern, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.regular }]} numberOfLines={2}>
+                        {leaf.luyaMirrorLens.reflectedPattern}
+                      </Text>
+                      <TouchableOpacity
+                        style={[styles.brewLeafButton, { backgroundColor: colors.primary }]}
+                        onPress={() => {
+                          if (onBrewLeaf) {
+                            onBrewLeaf(leaf);
+                            onClose();
+                          }
+                        }}
+                      >
+                        <Text style={[styles.brewLeafButtonText, { fontFamily: NOTO_SANS_SC.medium }]}>
+                          ☕ 投茶入席 · 用此叶起泡
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                </View>
+              )}
+              
               {stage === 'input' && (
                 <View>
                   <Text style={[styles.label, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.medium }]}>
-                    输入原始内容
+                    转译新的原始内容
                   </Text>
                   <TextInput
                     style={[styles.textInput, { backgroundColor: colors.inputBg, color: colors.text, borderColor: colors.border }]}
@@ -417,5 +460,51 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 14,
+  },
+  leavesSection: {
+    marginBottom: 20,
+  },
+  leavesSectionTitle: {
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  leafPreviewCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+  },
+  leafPreviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  leafPreviewTopic: {
+    fontSize: 14,
+    flex: 1,
+    marginRight: 8,
+  },
+  leafPreviewUrgency: {
+    fontSize: 16,
+  },
+  leafPreviewPattern: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  brewLeafButton: {
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  brewLeafButtonText: {
+    color: '#fff',
+    fontSize: 13,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 16,
   },
 });

@@ -230,6 +230,7 @@ export interface UnsteepedLeaf {
     reflectedPattern: string;
     suggestedBrewTopic: string;
     relevantUserTraits: string[];
+    openingPrompt?: string;
   };
   status: 'fresh' | 'steeped' | 'expired';
   priority: number;
