@@ -87,10 +87,10 @@ function getImageSource(source?: Character['imageUri']): ImageSourcePropType | n
 }
 
 const QUICK_REPLIES = [
-  { label: '😊 嗯嗯～', text: '嗯嗯～' },
-  { label: '❤️ 我也是', text: '我也是' },
-  { label: '😴 今天好累', text: '今天好累' },
-  { label: '🥺 想你了', text: '想你了' },
+  { label: '🍵 顺着这泡往下聊', text: '顺着这泡往下聊' },
+  { label: '🪞 帮我照照卡在哪', text: '帮我照照卡在哪' },
+  { label: '🧊 加块冰直接挑刺', text: '加块冰直接挑刺' },
+  { label: '🍃 换杯洋甘菊歇会儿', text: '换杯洋甘菊歇会儿' },
 ];
 const MOOD_ENTRY_VALID_MS = 5 * 60 * 1000;
 
@@ -367,18 +367,27 @@ export default function ChatScreen({ route, navigation }: Props) {
         setStreamingContent('');
 
         if (!latestSettings.service.apiKey) {
-          await updateMessage(next.characterId, next.userMsg.id, {
-            status: 'failed',
-            errorMessage: '请先在设置中配置服务提供商和API密钥',
+          // 使用本地茶镜 Fallback
+          const { generateLocalTeahouseReply } = await import('../services/localTeahouseMirror');
+          const localReply = await generateLocalTeahouseReply({
+            characterId: next.characterId,
+            userMessage: next.userMsg.content,
+            recentMessages: historyForRequest,
+            baseDrink: harness.baseDrink,
+            modifiers: harness.modifiers,
           });
+          
+          const aiMsg: Message = {
+            id: genId(),
+            role: 'assistant',
+            content: localReply,
+            timestamp: Date.now(),
+          };
+          
+          await addMessage(next.characterId, aiMsg);
           await removePendingSend(next.userMsg.id).catch((error) =>
             recordAppIssue('发送队列清理', error, false)
           );
-          setDeliveryIssue({
-            messageId: next.userMsg.id,
-            text: next.userMsg.content,
-            imageUri: next.userMsg.imageUri,
-          });
           setStreamingId(null);
           setStreamingContent('');
           continue;
@@ -650,14 +659,31 @@ export default function ChatScreen({ route, navigation }: Props) {
         role: 'user',
         content: text,
         timestamp: settingsRef.current.advanced.debugNowTs ?? Date.now(),
-        status: settings.service.apiKey ? 'queued' : 'failed',
-        errorMessage: settings.service.apiKey ? undefined : '请先在设置中配置服务提供商和API密钥',
+        status: 'queued',
         imageUri,
       };
 
+      await addMessage(characterId, userMsg);
+
       if (!settings.service.apiKey) {
-        await addMessage(characterId, userMsg);
-        setDeliveryIssue({ messageId: userMsg.id, text, imageUri });
+        // 使用本地茶镜 Fallback 生成回复
+        const { generateLocalTeahouseReply } = await import('../services/localTeahouseMirror');
+        const localReply = await generateLocalTeahouseReply({
+          characterId,
+          userMessage: text,
+          recentMessages: chatMessages,
+          baseDrink: harness.baseDrink,
+          modifiers: harness.modifiers,
+        });
+        
+        const aiMsg: Message = {
+          id: genId(),
+          role: 'assistant',
+          content: localReply,
+          timestamp: Date.now(),
+        };
+        
+        await addMessage(characterId, aiMsg);
         return;
       }
 
@@ -1022,6 +1048,13 @@ export default function ChatScreen({ route, navigation }: Props) {
               characterName={character.name}
               characterId={character.id}
               characterPortrait={identityImage}
+              showCalibration={true}
+              onSipResonate={() => {
+                console.log('[SipCalibration] Resonated with:', item.id);
+              }}
+              onSipAdjust={(note) => {
+                console.log('[SipCalibration] Adjust note:', note, 'for:', item.id);
+              }}
             />
           )}
           style={styles.flex}
