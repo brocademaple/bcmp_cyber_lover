@@ -96,8 +96,14 @@ export default function HarnessInspector({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.panel} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.container, { backgroundColor: colors.surface }]}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <View style={[styles.container, { 
+            backgroundColor: 'rgba(253, 248, 245, 0.92)',
+            borderTopWidth: 1,
+            borderLeftWidth: 0.5,
+            borderRightWidth: 0.5,
+            borderColor: '#C4A574',
+          }]}>
+            <View style={[styles.handle, { backgroundColor: '#C4A574' }]} />
             
             <View style={styles.header}>
               <Text style={[styles.title, { color: colors.text, fontFamily: NOTO_SANS_SC.bold }]}>

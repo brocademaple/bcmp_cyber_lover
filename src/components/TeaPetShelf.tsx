@@ -85,10 +85,10 @@ export default function TeaPetShelf({
   }
   
   const petData = [
-    { id: 'clarity_deer', icon: '🦌', name: '青瓷小鹿 · 澄明', level: stats.petLevels.clarity_deer || 1 },
-    { id: 'action_cat', icon: '🐱', name: '乌木小猫 · 笃行', level: stats.petLevels.action_cat || 1 },
-    { id: 'ease_fox', icon: '🦊', name: '白玉睡狐 · 松弛', level: stats.petLevels.ease_fox || 1 },
-    { id: 'spark_bird', icon: '🐦', name: '赤陶小雀 · 灵光', level: stats.petLevels.spark_bird || 1 },
+    { id: 'clarity_deer', icon: '🦌', name: '青瓷小鹿 · 澄明', level: stats.petLevels.clarity_deer || 1, patinaExp: stats.petPatinaExp.clarity_deer || 0 },
+    { id: 'action_cat', icon: '🐱', name: '乌木小猫 · 笃行', level: stats.petLevels.action_cat || 1, patinaExp: stats.petPatinaExp.action_cat || 0 },
+    { id: 'ease_fox', icon: '🦊', name: '白玉睡狐 · 松弛', level: stats.petLevels.ease_fox || 1, patinaExp: stats.petPatinaExp.ease_fox || 0 },
+    { id: 'spark_bird', icon: '🐦', name: '赤陶小雀 · 灵光', level: stats.petLevels.spark_bird || 1, patinaExp: stats.petPatinaExp.spark_bird || 0 },
   ];
   
   return (
@@ -100,8 +100,14 @@ export default function TeaPetShelf({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.panel} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.container, { backgroundColor: colors.surface }]}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <View style={[styles.container, { 
+            backgroundColor: 'rgba(253, 248, 245, 0.92)',
+            borderTopWidth: 1,
+            borderLeftWidth: 0.5,
+            borderRightWidth: 0.5,
+            borderColor: '#C4A574',
+          }]}>
+            <View style={[styles.handle, { backgroundColor: '#C4A574' }]} />
             
             {!selectedPetId ? (
               <>
@@ -128,7 +134,10 @@ export default function TeaPetShelf({
                     {petData.map((pet) => (
                       <TouchableOpacity
                         key={pet.id}
-                        style={[styles.petCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                        style={[styles.petCard, { 
+                          backgroundColor: 'rgba(253, 248, 245, 0.6)', 
+                          borderColor: '#C4A574',
+                        }]}
                         onPress={() => handlePetPress(pet.id)}
                       >
                         <Text style={styles.petIcon}>{pet.icon}</Text>
@@ -136,18 +145,22 @@ export default function TeaPetShelf({
                           {pet.name.split(' · ')[1]}
                         </Text>
                         <View style={styles.levelBadge}>
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.levelDot,
-                                { backgroundColor: i < pet.level ? colors.primary : colors.border },
-                              ]}
-                            />
-                          ))}
+                          {Array.from({ length: 5 }, (_, i) => {
+                            const expInCurrentLevel = pet.patinaExp % 100;
+                            const filledDots = Math.floor(expInCurrentLevel / 20);
+                            return (
+                              <View
+                                key={i}
+                                style={[
+                                  styles.levelDot,
+                                  { backgroundColor: i < filledDots ? '#C4A574' : 'rgba(196, 165, 116, 0.2)' },
+                                ]}
+                              />
+                            );
+                          })}
                         </View>
                         <Text style={[styles.petLevel, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.regular }]}>
-                          Lv.{pet.level}
+                          Lv.{pet.level} · {pet.patinaExp % 100} / 100 XP
                         </Text>
                       </TouchableOpacity>
                     ))}

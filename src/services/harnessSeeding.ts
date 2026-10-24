@@ -117,7 +117,7 @@ async function seedUnsteepedLeaves(characterId: string): Promise<void> {
  */
 async function seedBottlesAndTeaPets(characterId: string): Promise<void> {
   await sealBottleAndNourishPet(characterId, {
-    insight: '我习惯把问题想得很复杂，但其实很多时候「先做一个最简单能跑的版本」反而更快',
+    insight: '我习惯把问题想得很复杂，后来发现「先做一个最简单能跑的版本」经常是更快的路径',
     sourceSessionId: 'seed_session_1',
     nourishes: 'clarity_deer',
     patinaContribution: 80,

@@ -291,13 +291,16 @@ export async function getShelfStats(characterId: string): Promise<{
   totalPatinaExp: number;
   shelfLevel: number;
   petLevels: Record<string, number>;
+  petPatinaExp: Record<string, number>;
   recentBottles: SealedBottle[];
 }> {
   const shelf = await loadCurioShelf(characterId);
   
   const petLevels: Record<string, number> = {};
+  const petPatinaExp: Record<string, number> = {};
   Object.entries(shelf.pets).forEach(([id, pet]) => {
     petLevels[id] = pet.level;
+    petPatinaExp[id] = pet.patinaExp;
   });
   
   const recentBottles = shelf.bottles
@@ -309,6 +312,7 @@ export async function getShelfStats(characterId: string): Promise<{
     totalPatinaExp: shelf.totalPatinaExp,
     shelfLevel: shelf.shelfLevel,
     petLevels,
+    petPatinaExp,
     recentBottles,
   };
 }

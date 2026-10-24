@@ -78,8 +78,14 @@ export default function TeahouseHarnessDrawer({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.drawerContainer} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.drawer, { backgroundColor: colors.surface }]}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <View style={[styles.drawer, { 
+            backgroundColor: 'rgba(253, 248, 245, 0.92)',
+            borderTopWidth: 1,
+            borderLeftWidth: 0.5,
+            borderRightWidth: 0.5,
+            borderColor: '#C4A574',
+          }]}>
+            <View style={[styles.handle, { backgroundColor: '#C4A574' }]} />
             
             <View style={styles.header}>
               <Text style={[styles.title, { color: colors.text, fontFamily: NOTO_SANS_SC.bold }]}>
@@ -209,7 +215,10 @@ function DrinkCard({
     <TouchableOpacity
       style={[
         styles.card,
-        { backgroundColor: selected ? colors.accentLight : colors.surface, borderColor: selected ? colors.primary : colors.border },
+        { 
+          backgroundColor: selected ? 'rgba(231, 160, 180, 0.15)' : 'rgba(253, 248, 245, 0.6)', 
+          borderColor: selected ? '#E7A0B4' : '#C4A574',
+        },
       ]}
       onPress={onPress}
     >
@@ -245,7 +254,10 @@ function ModifierCard({
       style={[
         styles.card,
         styles.modifierCard,
-        { backgroundColor: active ? colors.accentLight : colors.surface, borderColor: active ? colors.primary : colors.border },
+        { 
+          backgroundColor: active ? 'rgba(231, 160, 180, 0.15)' : 'rgba(253, 248, 245, 0.6)', 
+          borderColor: active ? '#E7A0B4' : '#C4A574',
+        },
       ]}
       onPress={onToggle}
     >
