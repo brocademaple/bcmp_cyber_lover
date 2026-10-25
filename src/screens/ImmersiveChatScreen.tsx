@@ -102,12 +102,11 @@ export default function ImmersiveChatScreen({ route, navigation }: Props) {
     );
   }
   
-  const backgroundImage = getCharacterMainImage(character);
-  const backgroundSource = getImageSource(backgroundImage);
-  const defaultAssets = getDefaultCharacterAssetSet(character);
-  const backgroundFallbacks = [defaultAssets?.main]
-    .map(getImageSource)
-    .filter((source): source is ImageSourcePropType => source !== null);
+  // 使用茶室蕾丝版立绘（非便利店开衫版）
+  // 优先使用 tearoom hero 资产，符合 A+C 概念图
+  const teahouseHeroImage = require('../../docs/assets/tearoom/tearoom-hero-9x16.jpg');
+  const backgroundSource = teahouseHeroImage;
+  const backgroundFallbacks = [teahouseHeroImage];
   
   const latestMessages = oldestFirst(chatMessages).slice(-10);
   const latestAssistantMessage = [...latestMessages].reverse().find(m => m.role === 'assistant');
@@ -232,12 +231,17 @@ export default function ImmersiveChatScreen({ route, navigation }: Props) {
     // TODO: 打开校准输入
   };
   
-  // 房间热点
+  // 房间热点（对齐茶室蕾丝版概念图物件）
   const { height, width } = Dimensions.get('window');
   const hotspots = [
-    // 示例热点位置（实际应根据立绘调整）
-    { id: 'teapot', x: width * 0.25, y: height * 0.55, onPress: () => harness.openIngestPanel() },
-    { id: 'shelf', x: width * 0.75, y: height * 0.42, onPress: () => harness.openTeaPetShelf() },
+    // 货架茶罐（左上，避开人物）
+    { id: 'shelf-jar', x: width * 0.15, y: height * 0.22, onPress: () => harness.openIngestPanel() },
+    // 茶壶（桌面中下，低于胸口）
+    { id: 'teapot', x: width * 0.35, y: height * 0.72, onPress: () => harness.openIngestPanel() },
+    // 茶宠博古架（右侧中部）
+    { id: 'tea-pet-shelf', x: width * 0.82, y: height * 0.45, onPress: () => harness.openTeaPetShelf() },
+    // 桌边封瓶（右下桌面）
+    { id: 'sealed-bottle', x: width * 0.75, y: height * 0.75, onPress: () => harness.openTeaPetShelf() },
   ];
   
   return (
