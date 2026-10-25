@@ -490,7 +490,7 @@ export default function HomeScreen({ navigation }: Props) {
     : activeIdentityImage ?? bundledFallbackImage;
   const showHomeFallbackMark = Boolean(currentCharacter && failedImageKeys[activeImageKey]);
   const showIdentityImage = Boolean(activeIdentitySource);
-  const showLuyaHome = currentCharacter?.id === 'qingning' && !isAdmin;
+  const showLuyaHome = currentCharacter?.id === 'qingning';
   const isWideLuyaHome = winWidth >= 920 || isLandscape;
   const lifeNow = settings.advanced.debugNowTs ?? Date.now();
   const luyaProjection = currentCharacter?.luyaRuntime

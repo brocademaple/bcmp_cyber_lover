@@ -93,6 +93,10 @@ function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
     }
   }
 
+  if (!merged.selectedCharacterId?.trim()) {
+    merged.selectedCharacterId = defaultSettings.selectedCharacterId;
+  }
+
   return merged;
 }
 

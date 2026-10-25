@@ -148,6 +148,32 @@
         transform: translateY(0);
       }
 
+      .tearoom-enter-hint {
+        color: rgba(231, 200, 180, 0.85);
+        font-size: 0.8125rem;
+        font-weight: 300;
+        letter-spacing: 0.08em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        margin: -0.5rem 0 0;
+      }
+
+      /* 轻量透明热区：点茶桌区域直达茶室 App（非方框 HUD） */
+      .tearoom-scene-hit {
+        position: fixed;
+        z-index: 5;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .tearoom-scene-hit--table {
+        left: 18%;
+        bottom: 12%;
+        width: 42%;
+        height: 28%;
+      }
+
       /* 品牌标记 */
       .tearoom-brand {
         position: fixed;
@@ -314,10 +340,18 @@
     <!-- 渐变覆盖层 -->
     <div class="tearoom-overlay"></div>
 
+    <a
+      class="tearoom-scene-hit tearoom-scene-hit--table"
+      href="./app/?v=immersive"
+      aria-label="进入全屏茶室"
+      title="进入茶室"
+    ></a>
+
     <!-- 内容 -->
     <div class="tearoom-content">
       <p class="tearoom-greeting">进来坐。茶还热着。</p>
-      <a class="tearoom-enter" href="./luya-room/">鹿芽的家</a>
+      <a class="tearoom-enter" href="./app/?v=immersive">进入茶室</a>
+      <p class="tearoom-enter-hint">全屏茶室 · 边标交互</p>
     </div>
 
     <script>
