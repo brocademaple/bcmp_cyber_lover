@@ -20,6 +20,7 @@ import {
   TextInput,
   Pressable,
   Platform,
+  Animated,
 } from 'react-native';
 import { useThemeColors } from '../utils/theme';
 import { NOTO_SANS_SC } from '../utils/appFonts';
@@ -42,15 +43,28 @@ export default function SipCalibrationButton({
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustmentNote, setAdjustmentNote] = useState('');
   const [calibrated, setCalibrated] = useState<'resonate' | 'adjust' | null>(null);
+  const [badgeScale] = useState(new Animated.Value(0));
   
   const handleResonate = () => {
     setCalibrated('resonate');
+    Animated.spring(badgeScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 40,
+    }).start();
     onResonate();
   };
   
   const handleAdjustSubmit = () => {
     if (adjustmentNote.trim()) {
       setCalibrated('adjust');
+      Animated.spring(badgeScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 6,
+        tension: 40,
+      }).start();
       onAdjust(adjustmentNote.trim());
       setShowAdjustModal(false);
       setAdjustmentNote('');
@@ -59,35 +73,46 @@ export default function SipCalibrationButton({
   
   if (calibrated) {
     return (
-      <View style={[styles.calibratedBadge, { backgroundColor: colors.accentLight, borderColor: colors.primary }]}>
-        <Text style={[styles.calibratedText, { color: colors.primary, fontFamily: NOTO_SANS_SC.medium }]}>
+      <Animated.View 
+        style={[
+          styles.calibratedBadge, 
+          { 
+            backgroundColor: 'rgba(231, 160, 180, 0.15)',
+            borderColor: '#E7A0B4',
+            transform: [{ scale: badgeScale }],
+          }
+        ]}
+      >
+        <Text style={[styles.calibratedText, { color: '#C4A574', fontFamily: NOTO_SANS_SC.medium }]}>
           {calibrated === 'resonate' ? '✓ 回甘确认' : '✓ 已校准'}
         </Text>
-      </View>
+      </Animated.View>
     );
   }
   
   return (
     <>
-      <View style={[styles.container, { backgroundColor: colors.accentLight }]}>
-        <Text style={[styles.hint, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.regular }]}>
+      <View style={[styles.container, { backgroundColor: 'rgba(253, 248, 245, 0.8)', borderColor: 'rgba(196, 165, 116, 0.3)', borderWidth: 1 }]}>
+        <Text style={[styles.hint, { color: '#8B7355', fontFamily: NOTO_SANS_SC.regular }]}>
           这口茶味道如何？
         </Text>
         <View style={styles.buttons}>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.button, { backgroundColor: '#fff', borderColor: '#C4A574' }]}
             onPress={handleResonate}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.buttonText, { color: colors.text, fontFamily: NOTO_SANS_SC.medium }]}>
+            <Text style={[styles.buttonText, { color: '#C4A574', fontFamily: NOTO_SANS_SC.medium }]}>
               回甘 · 说对了
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.button, { backgroundColor: '#fff', borderColor: '#E7A0B4' }]}
             onPress={() => setShowAdjustModal(true)}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.buttonText, { color: colors.text, fontFamily: NOTO_SANS_SC.medium }]}>
+            <Text style={[styles.buttonText, { color: '#E7A0B4', fontFamily: NOTO_SANS_SC.medium }]}>
               添水 · 还没说准
             </Text>
           </TouchableOpacity>
@@ -101,21 +126,21 @@ export default function SipCalibrationButton({
         onRequestClose={() => setShowAdjustModal(false)}
       >
         <Pressable style={styles.modalBackdrop} onPress={() => setShowAdjustModal(false)}>
-          <Pressable style={[styles.modalContent, { backgroundColor: colors.surface }]} onPress={(e) => e.stopPropagation()}>
-            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: NOTO_SANS_SC.bold }]}>
+          <Pressable style={[styles.modalContent, { backgroundColor: 'rgba(253, 248, 245, 0.98)', borderColor: '#C4A574', borderWidth: 1 }]} onPress={(e) => e.stopPropagation()}>
+            <Text style={[styles.modalTitle, { color: '#2c2416', fontFamily: NOTO_SANS_SC.bold }]}>
               校准理解偏差
             </Text>
-            <Text style={[styles.modalSnippet, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.regular }]}>
+            <Text style={[styles.modalSnippet, { color: '#6a5547', fontFamily: NOTO_SANS_SC.regular }]}>
               {snippet}
             </Text>
             
-            <Text style={[styles.modalLabel, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.medium }]}>
+            <Text style={[styles.modalLabel, { color: '#8B7355', fontFamily: NOTO_SANS_SC.medium }]}>
               实际情况：
             </Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.inputBg, color: colors.text, borderColor: colors.border }]}
+              style={[styles.modalInput, { backgroundColor: '#fff', color: '#2c2416', borderColor: '#C4A574' }]}
               placeholder="帮我修正一下理解……"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor="#8B7355"
               multiline
               numberOfLines={4}
               value={adjustmentNote}
@@ -125,18 +150,20 @@ export default function SipCalibrationButton({
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { borderColor: colors.border }]}
+                style={[styles.modalButton, { borderColor: '#C4A574' }]}
                 onPress={() => setShowAdjustModal(false)}
+                activeOpacity={0.7}
               >
-                <Text style={[styles.modalButtonText, { color: colors.textSecondary, fontFamily: NOTO_SANS_SC.medium }]}>
+                <Text style={[styles.modalButtonText, { color: '#8B7355', fontFamily: NOTO_SANS_SC.medium }]}>
                   取消
                 </Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: colors.primary, opacity: adjustmentNote.trim() ? 1 : 0.5 }]}
+                style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: '#E7A0B4', opacity: adjustmentNote.trim() ? 1 : 0.5 }]}
                 onPress={handleAdjustSubmit}
                 disabled={!adjustmentNote.trim()}
+                activeOpacity={0.8}
               >
                 <Text style={[styles.modalButtonTextPrimary, { fontFamily: NOTO_SANS_SC.medium }]}>
                   确认校准
