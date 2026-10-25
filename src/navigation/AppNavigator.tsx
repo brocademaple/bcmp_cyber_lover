@@ -12,7 +12,7 @@ import { NOTO_SERIF_SC } from '../utils/appFonts';
 
 import OnboardingScreen, { ONBOARDING_KEY } from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
-import ChatScreen from '../screens/ChatScreen';
+import ChatScreenRouter from '../screens/ChatScreenRouter';
 import CallScreen from '../screens/CallScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import LifeSettingsScreen from '../screens/LifeSettingsScreen';
@@ -122,7 +122,7 @@ export default function AppNavigator({ navigationRef }: Props) {
         />
         <Stack.Screen
           name="Chat"
-          component={ChatScreen}
+          component={ChatScreenRouter}
           options={{ headerShown: false }}
         />
         <Stack.Screen
