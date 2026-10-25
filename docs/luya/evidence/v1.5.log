@@ -1,0 +1,27 @@
+
+> heartbeat-companion@1.5.0 verify:v1.5
+> node scripts/verify-v15-companion-studio.js
+
+PASS simple studio creates a stable custom character id
+PASS new characters start with non-empty local relationship data
+PASS simple studio prompt contains identity, behavior, voice and boundary layers
+PASS new character definition passes the local quality audit
+PASS relationship stages cover all four V1.5 chapters
+PASS relationship stage only advances forward
+PASS relationship milestones are confirmed records
+PASS memory schema preserves source, confidence and lifecycle metadata
+PASS chat stores source message ids with confirmed memories
+PASS memory store de-duplicates and supports edit/delete
+PASS memory library exposes lock, edit and delete controls
+PASS character revisions snapshot definitions without relationship history
+PASS character editor offers simple/expert depths and rollback
+PASS character editor keeps custom characters in the roster
+PASS backup excludes secure keys and legacy chat duplication
+PASS restore always creates a pre-restore backup
+PASS chat restore writes through the compatibility persistence layer
+PASS data management exposes backup, restore and diagnostics
+PASS onboarding tests the service before persisting configuration
+PASS onboarding hides API key input
+PASS call screen does not simulate speech-to-text
+PASS call greeting comes from the selected character
+V1.5 companion + character studio verification passed.

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>饮之 · 鹿芽</title>
+    <meta
+      name="description"
+      content="进来坐。茶还热着。"
+    />
+    <meta property="og:image" content="./assets/tearoom/hero-16x9.jpg" />
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Noto Serif SC', serif;
+        overflow: hidden;
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #1a1512;
+      }
+
+      /* 视频背景容器 */
+      .tearoom-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .tearoom-video,
+      .tearoom-poster {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: cover;
+      }
+
+      .tearoom-video {
+        opacity: 1;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      .tearoom-poster {
+        z-index: 1;
+      }
+
+      .tearoom-video.loaded ~ .tearoom-poster {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* 尊重减少动画偏好 */
+      @media (prefers-reduced-motion: reduce) {
+        .tearoom-video {
+          display: none;
+        }
+        .tearoom-poster {
+          opacity: 1 !important;
+        }
+      }
+
+      /* 渐变覆盖层 */
+      .tearoom-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          rgba(26, 21, 18, 0.1) 0%,
+          rgba(26, 21, 18, 0.3) 50%,
+          rgba(26, 21, 18, 0.5) 100%
+        );
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      /* 内容容器 */
+      .tearoom-content {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+      }
+
+      /* 文字样式 */
+      .tearoom-greeting {
+        color: #E7A0B4;
+        font-size: 1.125rem;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      /* 入口按钮 */
+      .tearoom-enter {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        color: #1a1512;
+        background: rgba(231, 160, 180, 0.9);
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(231, 160, 180, 0.3);
+        backdrop-filter: blur(8px);
+      }
+
+      .tearoom-enter:hover {
+        background: rgba(231, 160, 180, 1);
+        box-shadow: 0 6px 24px rgba(231, 160, 180, 0.5);
+        transform: translateY(-2px);
+      }
+
+      .tearoom-enter:active {
+        transform: translateY(0);
+      }
+
+      .tearoom-enter-hint {
+        color: rgba(231, 200, 180, 0.85);
+        font-size: 0.8125rem;
+        font-weight: 300;
+        letter-spacing: 0.08em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        margin: -0.5rem 0 0;
+      }
+
+      /* 轻量透明热区：点茶桌区域直达茶室 App（非方框 HUD） */
+      .tearoom-scene-hit {
+        position: fixed;
+        z-index: 5;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .tearoom-scene-hit--table {
+        left: 18%;
+        bottom: 12%;
+        width: 42%;
+        height: 28%;
+      }
+
+      /* 品牌标记 */
+      .tearoom-brand {
+        position: fixed;
+        top: 2rem;
+        left: 2rem;
+        z-index: 10;
+        color: rgba(196, 165, 116, 0.8);
+        font-size: 0.875rem;
+        font-weight: 300;
+        letter-spacing: 0.15em;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 响应式：平板和移动设备 */
+      @media (max-width: 768px) {
+        .tearoom-content {
+          padding: 1.5rem;
+          gap: 1.25rem;
+        }
+
+        .tearoom-greeting {
+          font-size: 1rem;
+        }
+
+        .tearoom-enter {
+          padding: 0.65rem 1.75rem;
+          font-size: 0.9375rem;
+        }
+
+        .tearoom-brand {
+          top: 1.5rem;
+          left: 1.5rem;
+          font-size: 0.8125rem;
+        }
+      }
+
+      /* 架构预览链接 */
+      .architecture-preview-link {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 10;
+        color: rgba(196, 165, 116, 0.9);
+        font-size: 0.875rem;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        background: rgba(26, 21, 18, 0.6);
+        border: 1px solid rgba(196, 165, 116, 0.5);
+        border-radius: 4px;
+        backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .architecture-preview-link:hover {
+        background: rgba(196, 165, 116, 0.2);
+        border-color: rgba(196, 165, 116, 0.8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(196, 165, 116, 0.3);
+      }
+
+      @media (max-width: 768px) {
+        .architecture-preview-link {
+          bottom: 1rem;
+          right: 1rem;
+          font-size: 0.8125rem;
+          padding: 0.4rem 0.8rem;
+        }
+      }
+
+      /* 竖屏优先使用 9:16 资源 */
+      @media (orientation: portrait) {
+        .tearoom-video.landscape,
+        .tearoom-poster.landscape {
+          display: none;
+        }
+      }
+
+      @media (orientation: landscape) {
+        .tearoom-video.portrait,
+        .tearoom-poster.portrait {
+          display: none;
+        }
+      }
+
+      /* 小屏幕宽度也优先竖屏资源 */
+      @media (max-width: 768px) {
+        .tearoom-video.landscape,
+        .tearoom-poster.landscape {
+          display: none;
+        }
+        .tearoom-video.portrait,
+        .tearoom-poster.portrait {
+          display: block;
+        }
+      }
+
+      @media (min-width: 769px) {
+        .tearoom-video.landscape,
+        .tearoom-poster.landscape {
+          display: block;
+        }
+        .tearoom-video.portrait,
+        .tearoom-poster.portrait {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 品牌标记 -->
+    <div class="tearoom-brand">饮之</div>
+
+    <!-- Harness v2 架构预览链接 -->
+    <a class="architecture-preview-link" href="./harness-v2-preview.html" title="查看 Agent Harness v2 架构">
+      🍵 Harness v2
+    </a>
+
+    <!-- 视频背景 -->
+    <div class="tearoom-background">
+      <!-- 16:9 横屏视频 -->
+      <video
+        class="tearoom-video landscape"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        aria-label="茶室氛围视频"
+      >
+        <source src="" type="video/mp4" data-loop-pool="landscape" />
+      </video>
+      
+      <!-- 16:9 横屏海报 -->
+      <img
+        class="tearoom-poster landscape"
+        src="./assets/tearoom/hero-16x9.jpg"
+        alt="茶室窗边，鹿芽在等候"
+      />
+
+      <!-- 9:16 竖屏视频 -->
+      <video
+        class="tearoom-video portrait"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        aria-label="茶室氛围视频"
+      >
+        <source src="" type="video/mp4" data-loop-pool="portrait" />
+      </video>
+      
+      <!-- 9:16 竖屏海报 -->
+      <img
+        class="tearoom-poster portrait"
+        src="./assets/tearoom/hero-9x16.jpg"
+        alt="茶室窗边，鹿芽在等候"
+      />
+    </div>
+
+    <!-- 渐变覆盖层 -->
+    <div class="tearoom-overlay"></div>
+
+    <a
+      class="tearoom-scene-hit tearoom-scene-hit--table"
+      href="./app/?v=immersive"
+      aria-label="进入全屏茶室"
+      title="进入茶室"
+    ></a>
+
+    <!-- 内容 -->
+    <div class="tearoom-content">
+      <p class="tearoom-greeting">进来坐。茶还热着。</p>
+      <a class="tearoom-enter" href="./app/?v=immersive">进入茶室</a>
+      <p class="tearoom-enter-hint">全屏茶室 · 边标交互</p>
+    </div>
+
+    <script>
+      const TEAROOM_LOOP_POOLS = {
+        landscape: [
+          './assets/tearoom/loop-16x9-v1.mp4',
+          './assets/tearoom/loop-16x9-v2.mp4',
+          './assets/tearoom/loop-16x9-v3.mp4',
+        ],
+        portrait: [
+          './assets/tearoom/loop-9x16-v1.mp4',
+          './assets/tearoom/loop-9x16-v2.mp4',
+          './assets/tearoom/loop-9x16-v3.mp4',
+        ],
+      };
+
+      function pickRandomLoop(poolKey) {
+        const pool = TEAROOM_LOOP_POOLS[poolKey] || [];
+        return pool[Math.floor(Math.random() * pool.length)] || pool[0];
+      }
+
+      // 视频加载完成后添加 loaded 类，隐藏海报
+      document.addEventListener('DOMContentLoaded', () => {
+        const videos = document.querySelectorAll('.tearoom-video');
+
+        videos.forEach((video) => {
+          const source = video.querySelector('source[data-loop-pool]');
+          const poolKey = source?.getAttribute('data-loop-pool');
+          if (source && poolKey) {
+            source.src = pickRandomLoop(poolKey);
+            video.load();
+          }
+
+          video.addEventListener('canplay', () => {
+            video.classList.add('loaded');
+          });
+
+          video.addEventListener('error', () => {
+            console.warn('视频加载失败，显示静态海报');
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
