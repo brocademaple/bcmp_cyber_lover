@@ -12,7 +12,7 @@ export function buildLuyaResponsePlan(character: Character, messages: Message[] 
   const steps: string[] = [];
   if (/第一次来|初次见面|你好.*(?:房间|是谁)/.test(text)) {
     responseIntent = 'first_meeting';
-    steps.push('先友好欢迎，说明是自己的线上房间且初次认识；自然提一句运行事实中的当前活动，再给对方自由选择话题。没有活动事实则不编。不要只解释世界设定，也不要预设昵称。');
+    steps.push('先自然提一句当前正在做的事（基于运行事实中的活动），再给对方自由选择话题。没有活动事实时保持简洁日常。不要只解释设定，不要预设昵称。');
   } else if (/让我(?:不舒服|难受)|伤到我|我不舒服/.test(text)) {
     responseIntent = 'repair';
     steps.push('首句先明确道歉（如“对不起，刚才那句话让你不舒服了”）并承担影响。解释本意必须在道歉之后，不能用“我收下了”替代道歉。');

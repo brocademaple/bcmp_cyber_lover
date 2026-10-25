@@ -2,6 +2,13 @@ import { resolveLuyaRoomFromDialogue } from '../services/luyaRoomService';
 import { applyLuyaUserTurn } from '../services/luyaRelationshipService';
 import { processLuyaUnderstandingTurn, observeLuyaSharing, getUnderstandingCards, decideUnderstanding } from '../services/luyaUnderstandingService';
 import LuyaUnderstandingCard from '../components/LuyaUnderstandingCard';
+import TeahouseHarnessDrawer from '../components/TeahouseHarnessDrawer';
+import IngestPanel from '../components/IngestPanel';
+import TeaPetShelf from '../components/TeaPetShelf';
+import HarnessInspector from '../components/HarnessInspector';
+import SessionSettlementModal from '../components/SessionSettlementModal';
+import { useTeahouseHarness } from '../contexts/TeahouseHarnessContext';
+import { assembleContextSnapshot } from '../services/contextWindowManager';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -80,10 +87,10 @@ function getImageSource(source?: Character['imageUri']): ImageSourcePropType | n
 }
 
 const QUICK_REPLIES = [
-  { label: '😊 嗯嗯～', text: '嗯嗯～' },
-  { label: '❤️ 我也是', text: '我也是' },
-  { label: '😴 今天好累', text: '今天好累' },
-  { label: '🥺 想你了', text: '想你了' },
+  { label: '🍵 顺着这泡往下聊', text: '顺着这泡往下聊' },
+  { label: '🪞 帮我照照卡在哪', text: '帮我照照卡在哪' },
+  { label: '🧊 加块冰直接挑刺', text: '加块冰直接挑刺' },
+  { label: '🍃 换杯洋甘菊歇会儿', text: '换杯洋甘菊歇会儿' },
 ];
 const MOOD_ENTRY_VALID_MS = 5 * 60 * 1000;
 
@@ -131,7 +138,15 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { characterId, autoGreet, moodEntry } = route.params;
   const C = useThemeColors();
   const isFocused = useIsFocused();
+  const harness = useTeahouseHarness();
   const themeId = useThemeId();
+  
+  useEffect(() => {
+    if (isFocused && characterId && !harness.sessionId) {
+      harness.startSession(characterId);
+      harness.refreshLeaves(characterId);
+    }
+  }, [isFocused, characterId, harness]);
   const isUrbanClear = themeId === 'urbanClear';
   const isSoftSweet = themeId === 'softSweet';
   const systemScheme = useColorScheme();
@@ -352,18 +367,27 @@ export default function ChatScreen({ route, navigation }: Props) {
         setStreamingContent('');
 
         if (!latestSettings.service.apiKey) {
-          await updateMessage(next.characterId, next.userMsg.id, {
-            status: 'failed',
-            errorMessage: '请先在设置中配置服务提供商和API密钥',
+          // 使用本地茶镜 Fallback
+          const { generateLocalTeahouseReply } = await import('../services/localTeahouseMirror');
+          const localReply = await generateLocalTeahouseReply({
+            characterId: next.characterId,
+            userMessage: next.userMsg.content,
+            recentMessages: historyForRequest,
+            baseDrink: harness.baseDrink,
+            modifiers: harness.modifiers,
           });
+          
+          const aiMsg: Message = {
+            id: genId(),
+            role: 'assistant',
+            content: localReply,
+            timestamp: Date.now(),
+          };
+          
+          await addMessage(next.characterId, aiMsg);
           await removePendingSend(next.userMsg.id).catch((error) =>
             recordAppIssue('发送队列清理', error, false)
           );
-          setDeliveryIssue({
-            messageId: next.userMsg.id,
-            text: next.userMsg.content,
-            imageUri: next.userMsg.imageUri,
-          });
           setStreamingId(null);
           setStreamingContent('');
           continue;
@@ -389,7 +413,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           }
           const requestController = new AbortController();
           activeRequestControllerRef.current = requestController;
-          const debugSnapshot = buildPromptDebugSnapshot({
+          const debugSnapshot = await buildPromptDebugSnapshot({
             character: latestCharacter,
             chatHistory: historyForRequest,
             config: latestSettings.service,
@@ -635,14 +659,31 @@ export default function ChatScreen({ route, navigation }: Props) {
         role: 'user',
         content: text,
         timestamp: settingsRef.current.advanced.debugNowTs ?? Date.now(),
-        status: settings.service.apiKey ? 'queued' : 'failed',
-        errorMessage: settings.service.apiKey ? undefined : '请先在设置中配置服务提供商和API密钥',
+        status: 'queued',
         imageUri,
       };
 
+      await addMessage(characterId, userMsg);
+
       if (!settings.service.apiKey) {
-        await addMessage(characterId, userMsg);
-        setDeliveryIssue({ messageId: userMsg.id, text, imageUri });
+        // 使用本地茶镜 Fallback 生成回复
+        const { generateLocalTeahouseReply } = await import('../services/localTeahouseMirror');
+        const localReply = await generateLocalTeahouseReply({
+          characterId,
+          userMessage: text,
+          recentMessages: chatMessages,
+          baseDrink: harness.baseDrink,
+          modifiers: harness.modifiers,
+        });
+        
+        const aiMsg: Message = {
+          id: genId(),
+          role: 'assistant',
+          content: localReply,
+          timestamp: Date.now(),
+        };
+        
+        await addMessage(characterId, aiMsg);
         return;
       }
 
@@ -961,6 +1002,22 @@ export default function ChatScreen({ route, navigation }: Props) {
             >
               <Text style={[styles.chatSettingsIcon, { color: C.text }]}>留档</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.chatHeaderButton,
+                styles.chatHeaderCompactButton,
+                isUrbanClear && styles.urbanChatHeaderButton,
+                isSoftSweet && styles.softChatHeaderButton,
+                { backgroundColor: C.surface + 'E8', borderColor: C.border, shadowColor: C.shadow },
+              ]}
+              onPress={() => harness.openHarnessDrawer()}
+              activeOpacity={0.78}
+              accessibilityRole="button"
+              accessibilityLabel="打开茶室 Harness 操控台"
+            >
+              <Text style={[styles.chatSettingsIcon, { color: C.primary }]}>🍵</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -991,6 +1048,13 @@ export default function ChatScreen({ route, navigation }: Props) {
               characterName={character.name}
               characterId={character.id}
               characterPortrait={identityImage}
+              showCalibration={true}
+              onSipResonate={() => {
+                console.log('[SipCalibration] Resonated with:', item.id);
+              }}
+              onSipAdjust={(note) => {
+                console.log('[SipCalibration] Adjust note:', note, 'for:', item.id);
+              }}
             />
           )}
           style={styles.flex}
@@ -1210,6 +1274,71 @@ export default function ChatScreen({ route, navigation }: Props) {
           bottomInset={insets.bottom}
         />
       </KeyboardAvoidingView>
+
+      <TeahouseHarnessDrawer
+        visible={harness.harnessDrawerVisible}
+        onClose={harness.closeHarnessDrawer}
+        currentBaseDrink={harness.baseDrink}
+        currentModifiers={harness.modifiers}
+        onBaseDrinkChange={harness.setBaseDrink}
+        onModifierToggle={harness.toggleModifier}
+        onOpenIngest={harness.openIngestPanel}
+        onOpenShelf={harness.openTeaPetShelf}
+        onOpenInspector={harness.openInspector}
+        onOpenSettlement={() => {
+          harness.closeHarnessDrawer();
+          harness.triggerSettlement(characterId, chatMessages);
+        }}
+      />
+
+      <IngestPanel
+        visible={harness.ingestPanelVisible}
+        onClose={harness.closeIngestPanel}
+        characterId={characterId}
+        existingLeaves={harness.unsteepedLeaves}
+        onLeafCreated={() => harness.refreshLeaves(characterId)}
+        onBrewLeaf={async (leaf) => {
+          const openingMessage: Message = {
+            id: `brew-${leaf.id}-${Date.now()}`,
+            role: 'assistant',
+            content: `${leaf.luyaMirrorLens.openingPrompt || `我注意到你想聊聊「${leaf.luyaMirrorLens.suggestedBrewTopic}」。\n\n${leaf.luyaMirrorLens.reflectedPattern}\n\n说说吧，我在这里听着。`}`,
+            timestamp: Date.now(),
+          };
+          
+          await addMessage(characterId, openingMessage);
+          
+          const { markLeafSteeped } = await import('../services/ingestDistillerService');
+          await markLeafSteeped(characterId, leaf.id);
+          harness.refreshLeaves(characterId);
+        }}
+      />
+
+      <TeaPetShelf
+        visible={harness.teaPetShelfVisible}
+        onClose={harness.closeTeaPetShelf}
+        characterId={characterId}
+      />
+
+      <HarnessInspector
+        visible={harness.inspectorVisible}
+        onClose={harness.closeInspector}
+        characterId={characterId}
+        currentBaseDrink={harness.baseDrink}
+        currentModifiers={harness.modifiers}
+        contextTokenEstimate={0}
+        hotTurnCount={chatMessages.length > 10 ? 10 : chatMessages.length}
+        warmDigestCount={0}
+        coldBottleCount={0}
+      />
+
+      <SessionSettlementModal
+        visible={harness.settlementVisible}
+        onClose={harness.closeSettlement}
+        settlementCard={harness.settlementCard}
+        onConfirm={(selection) => {
+          harness.applySettlement(characterId, selection);
+        }}
+      />
     </>
   );
 

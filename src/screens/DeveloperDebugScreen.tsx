@@ -170,9 +170,15 @@ export default function DeveloperDebugScreen() {
     void loadTraces();
   }, [loadTraces]);
 
-  const promptSnapshot = useMemo(() => {
-    if (!selectedCharacter) return null;
-    return buildPromptDebugSnapshot({
+  const [promptSnapshot, setPromptSnapshot] = useState<DebugPromptSnapshot | null>(null);
+  const [dailyGreetingSnapshot, setDailyGreetingSnapshot] = useState<DebugPromptSnapshot | null>(null);
+  
+  useEffect(() => {
+    if (!selectedCharacter) {
+      setPromptSnapshot(null);
+      return;
+    }
+    buildPromptDebugSnapshot({
       character: selectedCharacter,
       chatHistory: selectedMessages,
       config: settings.service,
@@ -180,12 +186,16 @@ export default function DeveloperDebugScreen() {
       advanced: settings.advanced,
       userText: emotionInput,
       nowTs: effectiveNow,
-    });
+    }).then(setPromptSnapshot);
   }, [effectiveNow, emotionInput, selectedCharacter, selectedMessages, settings.advanced, settings.memory, settings.service]);
-
-  const dailyGreetingSnapshot = useMemo(() => {
-    if (!selectedCharacter) return null;
-    return buildDailyGreetingDebugSnapshot(selectedCharacter, settings.service, settings.advanced, effectiveNow);
+  
+  useEffect(() => {
+    if (!selectedCharacter) {
+      setDailyGreetingSnapshot(null);
+      return;
+    }
+    buildDailyGreetingDebugSnapshot(selectedCharacter, settings.service, settings.advanced, effectiveNow)
+      .then(setDailyGreetingSnapshot);
   }, [effectiveNow, selectedCharacter, settings.advanced, settings.service]);
 
   const visionSnapshot = useMemo(() => {

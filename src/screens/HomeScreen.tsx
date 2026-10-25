@@ -994,7 +994,7 @@ export default function HomeScreen({ navigation }: Props) {
 
       {!showLuyaHome && isLandscape && currentCharacter?.id === 'qingning' && (
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 18, gap: 10 }}>
-          <Text style={{ color: C.textSecondary, textAlign: 'center' }}>{LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor']} · {luyaProjection?.currentActivity ?? '慢慢认识彼此'}</Text>
+          <Text style={{ color: C.textSecondary, textAlign: 'center' }}>{LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor']} · {luyaProjection?.currentActivity ?? '整理茶罐，听窗外雨声'}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
             <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaRoom')}><Text style={[styles.contextActionText, { color: C.primary }]}>共同房间</Text></TouchableOpacity>
             <TouchableOpacity accessibilityRole="button" style={[styles.contextActionPill, { borderColor: C.border, backgroundColor: C.inputBg }]} onPress={() => navigation.navigate('LuyaUnderstanding')}><Text style={[styles.contextActionText, { color: C.primary }]}>怎样理解我</Text></TouchableOpacity>
