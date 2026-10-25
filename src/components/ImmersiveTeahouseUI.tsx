@@ -1,8 +1,10 @@
 /**
  * Immersive Teahouse UI (A+C Layout)
  * 
- * A边标HUD + C房间物件热点
- * 符合饮之视觉规范（2026-10-25）
+ * ⚠️ 重写版本：使用定制素材，禁止CSS方框堆砌
+ * - 对话丝带：ribbon 图做底，不是白圆角 View
+ * - 圆标：全部用图片，不是 emoji
+ * - 热点：gold-rings 双环，不是 CSS 圆
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -12,7 +14,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  ScrollView,
+  Image,
+  ImageBackground,
   Animated,
   Dimensions,
   Platform,
@@ -23,8 +26,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // 饮之色值（已锁）
 const YZ_COLORS = {
   bg: '#FBF6F3',
-  glass: 'rgba(255, 253, 251, 0.66)',
-  glassBright: 'rgba(255, 253, 251, 0.72)',
   text: '#3C3032',
   muted: '#8A735C',
   accent: '#6E5430',
@@ -33,11 +34,25 @@ const YZ_COLORS = {
   gold: '#C4A574',
 };
 
+// 定制素材路径
+const ASSETS = {
+  ribbon: require('../../assets/ui/yinzhi-hud/ribbon_b6d8.jpg'),
+  goldRings: require('../../assets/ui/yinzhi-hud/gold-rings_900a.jpg'),
+  // 圆标图标（从 circle-icons 裁切，这里先用占位）
+  iconTea: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+  iconCoffee: require('../../assets/ui/yinzhi-hud/icon-coffee_0eda.jpg'),
+  iconFlower: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+  iconJar: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+  iconScroll: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+  // 四动作圆标
+  actionCircles: require('../../assets/ui/yinzhi-hud/action-circles_25d0.jpg'),
+};
+
 interface StatusBadgeProps {
   status: string;
 }
 
-/** 左上状态名牌 */
+/** 左上状态名牌（用细金边半透，不是大白卡） */
 function StatusBadge({ status }: StatusBadgeProps) {
   return (
     <View style={styles.statusBadge}>
@@ -47,17 +62,15 @@ function StatusBadge({ status }: StatusBadgeProps) {
 }
 
 interface CircleIconButtonProps {
-  icon: string;
+  iconSource?: any;
   label?: string;
   onPress: () => void;
   size?: number;
   active?: boolean;
 }
 
-/** 圆形图标按钮（HUD 入口/饮品/动作） */
-function CircleIconButton({ icon, label, onPress, size = 52, active = false }: CircleIconButtonProps) {
-  const [pressed, setPressed] = useState(false);
-  
+/** 圆形图标按钮（用真实图片，不是emoji） */
+function CircleIconButton({ iconSource, label, onPress, size = 52, active = false }: CircleIconButtonProps) {
   return (
     <View style={{ alignItems: 'center' }}>
       <TouchableOpacity
@@ -65,14 +78,17 @@ function CircleIconButton({ icon, label, onPress, size = 52, active = false }: C
           styles.circleButton,
           { width: size, height: size, borderRadius: size / 2 },
           active && styles.circleButtonActive,
-          pressed && { transform: [{ scale: 0.96 }] },
         ]}
         onPress={onPress}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
         activeOpacity={0.8}
       >
-        <Text style={styles.circleIcon}>{icon}</Text>
+        {iconSource && (
+          <Image
+            source={iconSource}
+            style={{ width: size * 0.5, height: size * 0.5 }}
+            resizeMode="contain"
+          />
+        )}
       </TouchableOpacity>
       {label && <Text style={styles.circleLabel}>{label}</Text>}
     </View>
@@ -84,7 +100,7 @@ interface RibbonMessageProps {
   characterName?: string;
 }
 
-/** 对话丝带 */
+/** 对话丝带（用 ribbon 图做底，不是白圆角View） */
 function RibbonMessage({ text, characterName }: RibbonMessageProps) {
   return (
     <View style={styles.ribbonContainer}>
@@ -93,11 +109,16 @@ function RibbonMessage({ text, characterName }: RibbonMessageProps) {
           <Text style={styles.ribbonNameText}>{characterName}</Text>
         </View>
       )}
-      <View style={styles.ribbon}>
+      <ImageBackground
+        source={ASSETS.ribbon}
+        style={styles.ribbon}
+        imageStyle={styles.ribbonImage}
+        resizeMode="stretch"
+      >
         <Text style={styles.ribbonText} numberOfLines={3}>
           {text}
         </Text>
-      </View>
+      </ImageBackground>
     </View>
   );
 }
@@ -108,7 +129,7 @@ interface CalibrationPillsProps {
   visible: boolean;
 }
 
-/** 回甘/添水校准小胶囊 */
+/** 回甘/添水校准小胶囊（细金边，不是粗圆角框） */
 function CalibrationPills({ onResonate, onAdjust, visible }: CalibrationPillsProps) {
   if (!visible) return null;
   
@@ -131,14 +152,16 @@ interface ActionButtonsProps {
   onRest: () => void;
 }
 
-/** 四动作圆标 */
+/** 四动作圆标（用 action-circles 图，不是emoji） */
 function ActionButtons({ onContinue, onReflect, onChallenge, onRest }: ActionButtonsProps) {
+  // TODO: 裁切 action-circles 为四个独立图标
+  // 当前用占位，文案固定：顺着聊/照照卡住/加冰挑刺/歇会儿
   return (
     <View style={styles.actionsRow}>
-      <CircleIconButton icon="🍵" label="顺着聊" onPress={onContinue} size={60} />
-      <CircleIconButton icon="🪞" label="照照卡住" onPress={onReflect} size={60} />
-      <CircleIconButton icon="🧊" label="加冰挑刺" onPress={onChallenge} size={60} />
-      <CircleIconButton icon="🍃" label="歇会儿" onPress={onRest} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionCircles} label="顺着聊" onPress={onContinue} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionCircles} label="照照卡住" onPress={onReflect} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionCircles} label="加冰挑刺" onPress={onChallenge} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionCircles} label="歇会儿" onPress={onRest} size={60} />
     </View>
   );
 }
@@ -150,7 +173,7 @@ interface InputCapsuleProps {
   placeholder?: string;
 }
 
-/** 输入胶囊 */
+/** 输入胶囊（细金边，不是粗白圆角） */
 function InputCapsule({ value, onChangeText, onSubmit, placeholder }: InputCapsuleProps) {
   return (
     <View style={styles.inputCapsule}>
@@ -179,7 +202,7 @@ interface HotspotProps {
   onPress: () => void;
 }
 
-/** C · 房间物件热点（淡金双环光圈） */
+/** C · 房间物件热点（用 gold-rings 图，不是CSS圆） */
 function RoomHotspot({ x, y, size = 48, onPress }: HotspotProps) {
   const pulse = useRef(new Animated.Value(0.35)).current;
   
@@ -202,12 +225,15 @@ function RoomHotspot({ x, y, size = 48, onPress }: HotspotProps) {
   
   return (
     <TouchableOpacity
-      style={[styles.hotspot, { left: x, top: y, width: size, height: size, borderRadius: size / 2 }]}
+      style={[styles.hotspot, { left: x, top: y, width: size, height: size }]}
       onPress={onPress}
       activeOpacity={0.6}
     >
-      <Animated.View style={[styles.hotspotRingOuter, { opacity: pulse }]} />
-      <Animated.View style={[styles.hotspotRingInner, { opacity: pulse }]} />
+      <Animated.Image
+        source={ASSETS.goldRings}
+        style={[styles.hotspotImage, { opacity: pulse }]}
+        resizeMode="contain"
+      />
     </TouchableOpacity>
   );
 }
@@ -223,7 +249,7 @@ export interface ImmersiveTeahouseUIProps {
   onOpenArchive: () => void;
   
   // 左侧饮品
-  drinks: { id: string; icon: string; active: boolean }[];
+  drinks: { id: string; icon: string; iconSource?: any; active: boolean }[];
   onDrinkSelect: (drinkId: string) => void;
   
   // 校准
@@ -276,19 +302,19 @@ export default function ImmersiveTeahouseUI({
         <StatusBadge status={characterStatus} />
       </View>
       
-      {/* 右上：生茶罐 + 封瓶卷轴 */}
+      {/* 右上：生茶罐 + 封瓶卷轴（用图片不是emoji） */}
       <View style={[styles.topRight, { top: insets.top + 12 }]}>
-        <CircleIconButton icon="📝" onPress={onOpenIngest} size={48} />
+        <CircleIconButton iconSource={ASSETS.iconJar} onPress={onOpenIngest} size={48} />
         <View style={{ width: 12 }} />
-        <CircleIconButton icon="🏺" onPress={onOpenArchive} size={48} />
+        <CircleIconButton iconSource={ASSETS.iconScroll} onPress={onOpenArchive} size={48} />
       </View>
       
-      {/* 左侧：三杯饮品竖排 */}
+      {/* 左侧：三杯饮品竖排（用图片不是emoji，第三个不是齿轮） */}
       <View style={[styles.leftDrinks, { top: screenHeight * 0.28 }]}>
         {drinks.map((drink) => (
           <View key={drink.id} style={{ marginBottom: 16 }}>
             <CircleIconButton
-              icon={drink.icon}
+              iconSource={drink.iconSource}
               onPress={() => onDrinkSelect(drink.id)}
               size={52}
               active={drink.active}
@@ -299,7 +325,7 @@ export default function ImmersiveTeahouseUI({
       
       {/* 底部区域 */}
       <View style={[styles.bottomZone, { bottom: insets.bottom + 8 }]}>
-        {/* 对话丝带 */}
+        {/* 对话丝带（用 ribbon 图，不是白圆角View） */}
         {currentMessage && (
           <RibbonMessage text={currentMessage} characterName={characterName} />
         )}
@@ -311,7 +337,7 @@ export default function ImmersiveTeahouseUI({
           visible={showCalibration}
         />
         
-        {/* 四动作圆标 */}
+        {/* 四动作圆标（用图片，不是emoji） */}
         <ActionButtons
           onContinue={onContinue}
           onReflect={onReflect}
@@ -328,7 +354,7 @@ export default function ImmersiveTeahouseUI({
         />
       </View>
       
-      {/* C · 房间物件热点 */}
+      {/* C · 房间物件热点（用 gold-rings 图） */}
       {hotspots.map((hotspot) => (
         <RoomHotspot
           key={hotspot.id}
@@ -347,35 +373,35 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
   
-  // 状态名牌
+  // 状态名牌（细金边，不是大白卡）
   statusBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: YZ_COLORS.glassBright,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 253, 251, 0.72)',
     borderRadius: 999,
     borderWidth: 1,
     borderColor: `${YZ_COLORS.gold}99`,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(14px)',
+      backdropFilter: 'blur(12px)',
     }),
   },
   statusText: {
     fontFamily: YINZHI_FONTS.title,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     color: YZ_COLORS.text,
     fontWeight: '500',
   },
   
-  // 圆形按钮
+  // 圆形按钮（用图片，不是emoji）
   circleButton: {
-    backgroundColor: YZ_COLORS.glass,
-    borderWidth: 1.5,
+    backgroundColor: 'rgba(255, 253, 251, 0.66)',
+    borderWidth: 1,
     borderColor: `${YZ_COLORS.gold}99`,
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(12px)',
+      backdropFilter: 'blur(10px)',
     }),
   },
   circleButtonActive: {
@@ -386,18 +412,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  circleIcon: {
-    fontSize: 20,
-  },
   circleLabel: {
     marginTop: 4,
     fontFamily: YINZHI_FONTS.body,
     fontSize: 11,
-    lineHeight: 16,
+    lineHeight: 15,
     color: YZ_COLORS.accent,
   },
   
-  // 对话丝带
+  // 对话丝带（用 ribbon 图，不是白圆角View）
   ribbonContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -407,7 +430,7 @@ const styles = StyleSheet.create({
   ribbonNameTag: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: YZ_COLORS.glass,
+    backgroundColor: 'rgba(255, 253, 251, 0.66)',
     borderWidth: 1,
     borderColor: `${YZ_COLORS.gold}66`,
     borderRadius: 12,
@@ -415,7 +438,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     zIndex: 1,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(10px)',
+      backdropFilter: 'blur(8px)',
     }),
   },
   ribbonNameText: {
@@ -425,27 +448,23 @@ const styles = StyleSheet.create({
   },
   ribbon: {
     flex: 1,
+    minHeight: 50,
+    maxHeight: '14%',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: YZ_COLORS.glassBright,
-    borderRadius: 20,
-    borderTopLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: `${YZ_COLORS.gold}66`,
-    minHeight: 44,
-    maxHeight: '14%',
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(16px)',
-    }),
+    justifyContent: 'center',
+  },
+  ribbonImage: {
+    borderRadius: 16,
   },
   ribbonText: {
     fontFamily: YINZHI_FONTS.body,
-    fontSize: 16,
-    lineHeight: 23,
+    fontSize: 15,
+    lineHeight: 22,
     color: YZ_COLORS.text,
   },
   
-  // 校准胶囊
+  // 校准胶囊（细金边，不是粗圆角框）
   calibrationRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -453,15 +472,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   calibrationPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
     borderRadius: 999,
     borderWidth: 1,
-    minWidth: 70,
+    minWidth: 66,
     alignItems: 'center',
   },
   pillResonate: {
-    backgroundColor: `${YZ_COLORS.pink}22`,
+    backgroundColor: `${YZ_COLORS.pink}18`,
     borderColor: `${YZ_COLORS.pink}99`,
   },
   pillAdjust: {
@@ -470,11 +489,11 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontFamily: YINZHI_FONTS.body,
-    fontSize: 13,
+    fontSize: 12,
     color: YZ_COLORS.text,
   },
   
-  // 四动作行
+  // 四动作行（用图片，不是emoji）
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -482,66 +501,54 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   
-  // 输入胶囊
+  // 输入胶囊（细金边）
   inputCapsule: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: YZ_COLORS.glass,
+    backgroundColor: 'rgba(255, 253, 251, 0.66)',
     borderRadius: 999,
     borderWidth: 1,
     borderColor: `${YZ_COLORS.gold}99`,
-    minHeight: 40,
+    minHeight: 38,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(14px)',
+      backdropFilter: 'blur(12px)',
     }),
   },
   input: {
     flex: 1,
     fontFamily: YINZHI_FONTS.body,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     color: YZ_COLORS.text,
     paddingVertical: 0,
   },
   sendButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: YZ_COLORS.pink,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
   },
   sendIcon: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#fff',
-    lineHeight: 18,
+    lineHeight: 17,
   },
   
-  // 房间热点
+  // 房间热点（用 gold-rings 图，不是CSS圆）
   hotspot: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hotspotRingOuter: {
-    position: 'absolute',
+  hotspotImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: `${YZ_COLORS.gold}66`,
-  },
-  hotspotRingInner: {
-    position: 'absolute',
-    width: '80%',
-    height: '80%',
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: `${YZ_COLORS.gold}AA`,
   },
   
   // 定位

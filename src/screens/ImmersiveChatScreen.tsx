@@ -115,11 +115,17 @@ export default function ImmersiveChatScreen({ route, navigation }: Props) {
   // 获取当前状态
   const characterStatus = getCharacterStateLabel(character);
   
-  // 饮品数据（从 Harness 获取）
+  // 饮品数据（用图片不是emoji，第三个不是齿轮）
+  const drinkIconSources = {
+    oolong: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+    espresso: require('../../assets/ui/yinzhi-hud/icon-coffee_0eda.jpg'),
+    chamomile: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+  };
+  
   const drinks = [
-    { id: 'oolong', icon: '🍵', active: harness.baseDrink === 'oolong' },
-    { id: 'espresso', icon: '☕', active: harness.baseDrink === 'espresso' },
-    { id: 'chamomile', icon: '🌼', active: harness.baseDrink === 'chamomile' },
+    { id: 'oolong', icon: '🍵', iconSource: drinkIconSources.oolong, active: harness.baseDrink === 'oolong' },
+    { id: 'espresso', icon: '☕', iconSource: drinkIconSources.espresso, active: harness.baseDrink === 'espresso' },
+    { id: 'chamomile', icon: '🌼', iconSource: drinkIconSources.chamomile, active: harness.baseDrink === 'chamomile' },
   ];
   
   // 发送消息
