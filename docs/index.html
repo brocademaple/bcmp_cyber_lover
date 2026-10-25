@@ -184,6 +184,42 @@
         }
       }
 
+      /* 架构预览链接 */
+      .architecture-preview-link {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 10;
+        color: rgba(196, 165, 116, 0.9);
+        font-size: 0.875rem;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        background: rgba(26, 21, 18, 0.6);
+        border: 1px solid rgba(196, 165, 116, 0.5);
+        border-radius: 4px;
+        backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .architecture-preview-link:hover {
+        background: rgba(196, 165, 116, 0.2);
+        border-color: rgba(196, 165, 116, 0.8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(196, 165, 116, 0.3);
+      }
+
+      @media (max-width: 768px) {
+        .architecture-preview-link {
+          bottom: 1rem;
+          right: 1rem;
+          font-size: 0.8125rem;
+          padding: 0.4rem 0.8rem;
+        }
+      }
+
       /* 竖屏优先使用 9:16 资源 */
       @media (orientation: portrait) {
         .tearoom-video.landscape,
@@ -226,6 +262,11 @@
   <body>
     <!-- 品牌标记 -->
     <div class="tearoom-brand">饮之</div>
+
+    <!-- Harness v2 架构预览链接 -->
+    <a class="architecture-preview-link" href="./harness-v2-preview.html" title="查看 Agent Harness v2 架构">
+      🍵 Harness v2
+    </a>
 
     <!-- 视频背景 -->
     <div class="tearoom-background">
