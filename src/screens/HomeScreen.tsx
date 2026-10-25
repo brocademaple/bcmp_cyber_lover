@@ -30,6 +30,7 @@ import { getDefaultCharacterAssetSet, resolveDefaultCharacterAssetKey } from '..
 import { getVisibleCharacters } from '../utils/characterRelease';
 import { NOTO_SERIF_SC } from '../utils/appFonts';
 import { useThemeColors, useThemeId } from '../utils/theme';
+import ImmersiveTeahouseHome from './ImmersiveTeahouseHome';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Main'>;
 
@@ -601,111 +602,16 @@ export default function HomeScreen({ navigation }: Props) {
     }
   }, [characters, optimisticStatus]);
 
+  if (showLuyaHome && currentCharacter) {
+    return <ImmersiveTeahouseHome navigation={navigation} character={currentCharacter} />;
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.background }]} edges={['top', 'bottom']}>
       <StatusBar
         barStyle={statusBarStyle}
         backgroundColor={C.background}
       />
-
-      {showLuyaHome && currentCharacter && (
-        <View style={styles.luyaHomeStage}>
-          <View style={[styles.luyaScene, { width: homeSceneWidth, backgroundColor: C.inputBg }]}>
-            {/* The background extends landscape art; the clear foreground preserves the complete composition. */}
-            {displayedArtSource && (
-              <ResilientImage source={displayedArtSource} fallbackSources={classicFallbackSources}
-                retryKey={Number(isFocused)} style={styles.luyaSceneBackdrop} resizeMode="cover" blurRadius={24}
-                accessible={false} accessibilityElementsHidden importantForAccessibility="no" />
-            )}
-            <View style={[styles.luyaSceneArtArea, isWideLuyaHome && styles.luyaSceneArtAreaWide]}>
-              <ResilientImage key={`home-art-${homeArtMode}-${lifeSceneKey ?? 'portrait'}-${activeDisplayMood}`}
-                source={displayedArtSource} fallbackSources={classicFallbackSources}
-                retryKey={Number(isFocused)} style={styles.luyaArtImage} resizeMode="contain"
-                accessibilityLabel={showLifeScene ? `鹿芽生活插画：${lifeSceneLabel}` : `鹿芽经典立绘：${getMoodLabel(currentCharacter, activeDisplayMood)}`}
-                onError={() => { if (showLifeScene && lifeSceneKey) setFailedLifeArt(current => ({ ...current, [lifeSceneKey]: true })); }} />
-            </View>
-            <View style={styles.luyaFloatingHeader}>
-              <TouchableOpacity onPress={() => handleOpenProfile(currentCharacter)} activeOpacity={0.8}
-                accessibilityRole="button" accessibilityLabel="查看鹿芽档案"
-                style={[styles.luyaHomeIdentity, { backgroundColor: C.surface, borderColor: C.border }]}>
-                <ResilientImage source={getCharacterImageSource(activeIdentityImage)} fallbackSources={avatarFallbackSources}
-                  retryKey={Number(isFocused)} style={styles.luyaHomeAvatar} resizeMode="cover" accessibilityLabel="鹿芽头像" />
-                <View>
-                  <Text style={[styles.luyaHomeName, { color: C.text }]}>{currentCharacter.name}</Text>
-                  <Text style={[styles.luyaHomeRelationship, { color: C.textSecondary }]}>{LUYA_RELATIONSHIP_LABELS[currentCharacter.luyaRuntime?.relationship.stage ?? 'visitor']}</Text>
-                </View>
-                <Text style={[styles.luyaIdentityArrow, { color: C.textSecondary }]}>›</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.luyaSettingsButton, { backgroundColor: C.surface, borderColor: C.border }]}
-                onPress={() => navigation.navigate('Settings')} accessibilityRole="button" accessibilityLabel="打开设置">
-                <Text style={[styles.glassIconText, { color: C.text }]}>⚙</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.luyaModeToolbar, isWideLuyaHome && styles.luyaModeToolbarWide]}>
-              <View style={[styles.luyaArtSwitch, { backgroundColor: C.surface, borderColor: C.border }]}>
-                {(['life', 'classic'] as const).map(mode => {
-                  const selected = mode === 'life' ? showLifeScene : !showLifeScene;
-                  return (
-                    <TouchableOpacity key={mode} accessibilityRole="button"
-                      accessibilityLabel={mode === 'life' ? '展示当前生活画面' : '展示经典立绘'}
-                      accessibilityState={{ selected }}
-                      onPress={() => { setHomeArtMode(mode); if (mode === 'life') setFailedLifeArt({}); }}
-                      style={[styles.luyaArtSwitchOption, selected && { backgroundColor: C.primaryLight + '35' }]}>
-                      <Text style={[styles.luyaArtSwitchText, { color: selected ? C.text : C.textSecondary }]}>{mode === 'life' ? '生活画面' : '经典立绘'}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              {artFallbackExplanation && <Text style={[styles.luyaArtExplanation, { color: C.textSecondary, backgroundColor: C.surface }]}>{artFallbackExplanation}</Text>}
-            </View>
-            <View style={[styles.luyaFloatingDock, isWideLuyaHome && styles.luyaFloatingDockWide,
-              { backgroundColor: C.surface, borderColor: C.border }]}>
-              <View style={styles.luyaNowHeading}>
-                <View style={styles.luyaActivityCopy}>
-                  <Text style={[styles.luyaArtCaption, { color: C.textSecondary }]}>{lifeSceneLabel}</Text>
-                  <Text style={[styles.luyaActivityText, { color: C.text }]} numberOfLines={2}>{luyaProjection?.currentActivity ?? '她有自己的生活，也愿意与你交流。'}</Text>
-                </View>
-                <TouchableOpacity style={[styles.luyaMoodButton, { backgroundColor: C.inputBg, borderColor: C.border }]}
-                  accessibilityRole="button" accessibilityLabel={`当前状态：${getStatusOption(activeDisplayMood).label}，调整状态`}
-                  onPress={() => openStatusModal(currentCharacter)} activeOpacity={0.8}>
-                  <Text style={[styles.luyaMoodLabel, { color: C.textSecondary }]}>当前状态</Text>
-                  <Text style={[styles.luyaMoodButtonText, { color: C.text }]}>{getStatusOption(activeDisplayMood).label} · 调整⌄</Text>
-                </TouchableOpacity>
-              </View>
-              {statusSavedNotice && <Text accessibilityLiveRegion="polite" style={[styles.luyaSavedNotice, { color: C.textSecondary }]}>{statusSavedNotice}</Text>}
-              <TouchableOpacity style={[styles.luyaChatButton, { backgroundColor: C.primary }]}
-                onPress={() => handleOpenChat(currentCharacter)} accessibilityRole="button" accessibilityLabel="和鹿芽聊聊" activeOpacity={0.86}>
-                <Text style={styles.luyaChatButtonText}>和她聊聊</Text><Text style={styles.luyaChatButtonArrow}>↗</Text>
-              </TouchableOpacity>
-              <View style={styles.luyaHomeLinks}>
-                <TouchableOpacity style={[styles.luyaHomeLink, { backgroundColor: C.inputBg, borderColor: C.border }]}
-                  onPress={() => navigation.navigate('LuyaRoom')} accessibilityRole="button" activeOpacity={0.78}>
-                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>⌂  共同房间</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.luyaHomeLink, { backgroundColor: C.inputBg, borderColor: C.border }]}
-                  onPress={() => navigation.navigate('LuyaUnderstanding')} accessibilityRole="button" activeOpacity={0.78}>
-                  <Text style={[styles.luyaHomeLinkTitle, { color: C.text }]}>♡  怎样理解我</Text><Text style={[styles.luyaHomeLinkArrow, { color: C.textSecondary }]}>›</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.luyaSecondaryLinks}>
-                <TouchableOpacity onPress={() => handleOpenMemory(currentCharacter)} accessibilityRole="button" activeOpacity={0.78}
-                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>▧</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>故事与漫画</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleOpenProfile(currentCharacter)} accessibilityRole="button" activeOpacity={0.78}
-                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>♧</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>人物档案</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { persistSelectedCharacter(currentCharacter.id); navigation.navigate('LifeSettings'); }}
-                  accessibilityRole="button" activeOpacity={0.78}
-                  style={[styles.luyaSecondaryLink, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Text style={[styles.luyaSecondaryMark, { color: C.primary }]}>◷</Text><Text style={[styles.luyaSecondaryLinkText, { color: C.text }]}>提醒</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
 
       {/* 竖屏：单角色大图 + 名字 + 性格词 + 左右箭头 */}
       {!showLuyaHome && !isLandscape && (
