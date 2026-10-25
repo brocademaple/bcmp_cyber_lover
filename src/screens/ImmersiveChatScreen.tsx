@@ -115,11 +115,11 @@ export default function ImmersiveChatScreen({ route, navigation }: Props) {
   // 获取当前状态
   const characterStatus = getCharacterStateLabel(character);
   
-  // 饮品数据（用图片不是emoji，第三个不是齿轮）
+  // 饮品数据（用裁切好的单独图标，不是emoji，第三个不是齿轮）
   const drinkIconSources = {
-    oolong: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
-    espresso: require('../../assets/ui/yinzhi-hud/icon-coffee_0eda.jpg'),
-    chamomile: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
+    oolong: require('../../assets/ui/yinzhi-hud/drink-oolong_8d1f.png'),
+    espresso: require('../../assets/ui/yinzhi-hud/drink-coffee_8973.png'),
+    chamomile: require('../../assets/ui/yinzhi-hud/drink-chamomile_9a27.png'),
   };
   
   const drinks = [

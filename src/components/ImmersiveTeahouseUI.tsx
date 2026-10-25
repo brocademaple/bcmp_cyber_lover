@@ -34,18 +34,22 @@ const YZ_COLORS = {
   gold: '#C4A574',
 };
 
-// 定制素材路径
+// 定制素材路径（裁切后的独立图标）
 const ASSETS = {
-  ribbon: require('../../assets/ui/yinzhi-hud/ribbon_b6d8.jpg'),
-  goldRings: require('../../assets/ui/yinzhi-hud/gold-rings_900a.jpg'),
-  // 圆标图标（从 circle-icons 裁切，这里先用占位）
-  iconTea: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
-  iconCoffee: require('../../assets/ui/yinzhi-hud/icon-coffee_0eda.jpg'),
-  iconFlower: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
-  iconJar: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
-  iconScroll: require('../../assets/ui/yinzhi-hud/circle-icons_5ca6.jpg'),
-  // 四动作圆标
-  actionCircles: require('../../assets/ui/yinzhi-hud/action-circles_25d0.jpg'),
+  ribbon: require('../../assets/ui/yinzhi-hud/ribbon_fc4b.png'),
+  hotspotRing: require('../../assets/ui/yinzhi-hud/hotspot-ring_fac7.png'),
+  // 左三饮品圆标
+  drinkOolong: require('../../assets/ui/yinzhi-hud/drink-oolong_8d1f.png'),
+  drinkCoffee: require('../../assets/ui/yinzhi-hud/drink-coffee_8973.png'),
+  drinkChamomile: require('../../assets/ui/yinzhi-hud/drink-chamomile_9a27.png'),
+  // 右上入口圆标
+  btnIngest: require('../../assets/ui/yinzhi-hud/btn-ingest_3066.png'),
+  btnArchive: require('../../assets/ui/yinzhi-hud/btn-archive_781f.png'),
+  // 底部四动作圆标
+  actionContinue: require('../../assets/ui/yinzhi-hud/action-continue_5571.png'),
+  actionReflect: require('../../assets/ui/yinzhi-hud/action-reflect_f028.png'),
+  actionChallenge: require('../../assets/ui/yinzhi-hud/action-challenge_b8df.png'),
+  actionRest: require('../../assets/ui/yinzhi-hud/action-rest_3000.png'),
 };
 
 interface StatusBadgeProps {
@@ -85,8 +89,8 @@ function CircleIconButton({ iconSource, label, onPress, size = 52, active = fals
         {iconSource && (
           <Image
             source={iconSource}
-            style={{ width: size * 0.5, height: size * 0.5 }}
-            resizeMode="contain"
+            style={{ width: size, height: size }}
+            resizeMode="cover"
           />
         )}
       </TouchableOpacity>
@@ -152,16 +156,14 @@ interface ActionButtonsProps {
   onRest: () => void;
 }
 
-/** 四动作圆标（用 action-circles 图，不是emoji） */
+/** 四动作圆标（用裁切好的独立图标，不是emoji） */
 function ActionButtons({ onContinue, onReflect, onChallenge, onRest }: ActionButtonsProps) {
-  // TODO: 裁切 action-circles 为四个独立图标
-  // 当前用占位，文案固定：顺着聊/照照卡住/加冰挑刺/歇会儿
   return (
     <View style={styles.actionsRow}>
-      <CircleIconButton iconSource={ASSETS.actionCircles} label="顺着聊" onPress={onContinue} size={60} />
-      <CircleIconButton iconSource={ASSETS.actionCircles} label="照照卡住" onPress={onReflect} size={60} />
-      <CircleIconButton iconSource={ASSETS.actionCircles} label="加冰挑刺" onPress={onChallenge} size={60} />
-      <CircleIconButton iconSource={ASSETS.actionCircles} label="歇会儿" onPress={onRest} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionContinue} label="顺着聊" onPress={onContinue} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionReflect} label="照照卡住" onPress={onReflect} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionChallenge} label="加冰挑刺" onPress={onChallenge} size={60} />
+      <CircleIconButton iconSource={ASSETS.actionRest} label="歇会儿" onPress={onRest} size={60} />
     </View>
   );
 }
@@ -202,7 +204,7 @@ interface HotspotProps {
   onPress: () => void;
 }
 
-/** C · 房间物件热点（用 gold-rings 图，不是CSS圆） */
+/** C · 房间物件热点（用裁切好的金环图，不是白方块） */
 function RoomHotspot({ x, y, size = 48, onPress }: HotspotProps) {
   const pulse = useRef(new Animated.Value(0.35)).current;
   
@@ -230,9 +232,9 @@ function RoomHotspot({ x, y, size = 48, onPress }: HotspotProps) {
       activeOpacity={0.6}
     >
       <Animated.Image
-        source={ASSETS.goldRings}
+        source={ASSETS.hotspotRing}
         style={[styles.hotspotImage, { opacity: pulse }]}
-        resizeMode="contain"
+        resizeMode="cover"
       />
     </TouchableOpacity>
   );
@@ -304,9 +306,9 @@ export default function ImmersiveTeahouseUI({
       
       {/* 右上：生茶罐 + 封瓶卷轴（用图片不是emoji） */}
       <View style={[styles.topRight, { top: insets.top + 12 }]}>
-        <CircleIconButton iconSource={ASSETS.iconJar} onPress={onOpenIngest} size={48} />
+        <CircleIconButton iconSource={ASSETS.btnIngest} onPress={onOpenIngest} size={48} />
         <View style={{ width: 12 }} />
-        <CircleIconButton iconSource={ASSETS.iconScroll} onPress={onOpenArchive} size={48} />
+        <CircleIconButton iconSource={ASSETS.btnArchive} onPress={onOpenArchive} size={48} />
       </View>
       
       {/* 左侧：三杯饮品竖排（用图片不是emoji，第三个不是齿轮） */}
@@ -449,13 +451,12 @@ const styles = StyleSheet.create({
   ribbon: {
     flex: 1,
     minHeight: 50,
-    maxHeight: '14%',
     paddingHorizontal: 16,
     paddingVertical: 10,
     justifyContent: 'center',
   },
   ribbonImage: {
-    borderRadius: 16,
+    borderRadius: 0,
   },
   ribbonText: {
     fontFamily: YINZHI_FONTS.body,
