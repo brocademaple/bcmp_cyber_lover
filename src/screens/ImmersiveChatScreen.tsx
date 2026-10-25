@@ -104,7 +104,7 @@ export default function ImmersiveChatScreen({ route, navigation }: Props) {
   
   // 使用茶室蕾丝版立绘（非便利店开衫版）
   // 优先使用 tearoom hero 资产，符合 A+C 概念图
-  const teahouseHeroImage = require('../../docs/assets/tearoom/tearoom-hero-9x16.jpg');
+  const teahouseHeroImage = require('../../docs/assets/tearoom/hero-9x16.jpg');
   const backgroundSource = teahouseHeroImage;
   const backgroundFallbacks = [teahouseHeroImage];
   
