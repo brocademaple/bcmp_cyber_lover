@@ -8,7 +8,7 @@
       name="description"
       content="进来坐。茶还热着。"
     />
-    <meta property="og:image" content="./assets/tearoom/tearoom-hero-16x9.jpg" />
+    <meta property="og:image" content="./assets/tearoom/hero-16x9.jpg" />
     <link rel="icon" type="image/png" href="./assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -280,13 +280,13 @@
         preload="auto"
         aria-label="茶室氛围视频"
       >
-        <source src="./assets/tearoom/tearoom-loop-16x9.mp4" type="video/mp4" />
+        <source src="" type="video/mp4" data-loop-pool="landscape" />
       </video>
       
       <!-- 16:9 横屏海报 -->
       <img
         class="tearoom-poster landscape"
-        src="./assets/tearoom/tearoom-hero-16x9.jpg"
+        src="./assets/tearoom/hero-16x9.jpg"
         alt="茶室窗边，鹿芽在等候"
       />
 
@@ -300,13 +300,13 @@
         preload="auto"
         aria-label="茶室氛围视频"
       >
-        <source src="./assets/tearoom/tearoom-loop-9x16.mp4" type="video/mp4" />
+        <source src="" type="video/mp4" data-loop-pool="portrait" />
       </video>
       
       <!-- 9:16 竖屏海报 -->
       <img
         class="tearoom-poster portrait"
-        src="./assets/tearoom/tearoom-hero-9x16.jpg"
+        src="./assets/tearoom/hero-9x16.jpg"
         alt="茶室窗边，鹿芽在等候"
       />
     </div>
@@ -321,17 +321,40 @@
     </div>
 
     <script>
+      const TEAROOM_LOOP_POOLS = {
+        landscape: [
+          './assets/tearoom/loop-16x9-v1.mp4',
+          './assets/tearoom/loop-16x9-v2.mp4',
+          './assets/tearoom/loop-16x9-v3.mp4',
+        ],
+        portrait: [
+          './assets/tearoom/loop-9x16-v1.mp4',
+          './assets/tearoom/loop-9x16-v2.mp4',
+          './assets/tearoom/loop-9x16-v3.mp4',
+        ],
+      };
+
+      function pickRandomLoop(poolKey) {
+        const pool = TEAROOM_LOOP_POOLS[poolKey] || [];
+        return pool[Math.floor(Math.random() * pool.length)] || pool[0];
+      }
+
       // 视频加载完成后添加 loaded 类，隐藏海报
       document.addEventListener('DOMContentLoaded', () => {
         const videos = document.querySelectorAll('.tearoom-video');
-        
-        videos.forEach(video => {
-          // 当视频可以播放时
+
+        videos.forEach((video) => {
+          const source = video.querySelector('source[data-loop-pool]');
+          const poolKey = source?.getAttribute('data-loop-pool');
+          if (source && poolKey) {
+            source.src = pickRandomLoop(poolKey);
+            video.load();
+          }
+
           video.addEventListener('canplay', () => {
             video.classList.add('loaded');
           });
 
-          // 如果视频加载失败，确保海报仍然显示
           video.addEventListener('error', () => {
             console.warn('视频加载失败，显示静态海报');
           });

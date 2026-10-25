@@ -313,6 +313,8 @@ export type RootStackParamList = {
   Main: undefined;
   Chat: {
     characterId: string;
+    /** 从沉浸首页带入的输入草稿 */
+    initialInput?: string;
     autoGreet?: boolean;
     roomContext?: {
       itemName: string;

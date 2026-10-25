@@ -41,7 +41,7 @@ function genId() {
 }
 
 export default function ImmersiveChatScreen({ route, navigation }: Props) {
-  const { characterId } = route.params;
+  const { characterId, initialInput } = route.params;
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const harness = useTeahouseHarness();
@@ -57,8 +57,14 @@ export default function ImmersiveChatScreen({ route, navigation }: Props) {
   } = useChatStore();
   
   const { settings } = useSettingsStore();
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(initialInput ?? '');
   const [showCalibration, setShowCalibration] = useState(false);
+
+  useEffect(() => {
+    if (initialInput) {
+      setInputValue(initialInput);
+    }
+  }, [initialInput]);
   const [historyLoadedCharacterId, setHistoryLoadedCharacterId] = useState<string | null>(null);
   const isMountedRef = useRef(true);
   
